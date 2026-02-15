@@ -1,0 +1,7 @@
+{
+  "name": "Ruas",
+  "description": "Extracts OpenStreetMap data within a specified radius, visualizes it, and converts it into a 2.5D DXF file for CAD software. Includes building heights, infrastructure, and terrain features.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

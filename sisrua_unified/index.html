@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OSM to DXF 2.5D Exporter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="/theme-override.css">
+  <style>
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.7);
+      --glass-border: rgba(6, 182, 212, 0.2);
+      --accent-primary: #06b6d4;
+      --accent-secondary: #10b981;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #fbcfe8 50%, #fef3c7 100%) !important;
+    }
+
+    .glass {
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    }
+
+    /* Critical overrides for instant light theme */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #06b6d4 rgba(255, 255, 255, 0.3);
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #06b6d4;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #0891b2;
+    }
+
+    /* Force light theme on body */
+    body {
+      background: linear-gradient(135deg, #e0f2fe 0%, #fbcfe8 50%, #fef3c7 100%) !important;
+      color: #1e293b !important;
+    }
+
+    /* Leaflet map background */
+    .leaflet-container {
+      background: #e0f2fe !important;
+    }
+  </style>
+
+</head>
+
+<body class="antialiased overflow-hidden">
+  <script>
+    // Force light theme and remove any dark classes
+    document.documentElement.classList.remove('dark');
+    document.body.classList.remove('dark');
+    // Ensure background is visible immediately
+    document.body.style.background = 'linear-gradient(135deg, #e0f2fe 0%, #fbcfe8 50%, #fef3c7 100%)';
+  </script>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
