@@ -157,22 +157,32 @@ function App() {
     setIsSearching(true);
     setError(null);
 
-    const location = await findLocationWithGemini(searchQuery, settings.enableAI);
+    try {
+      // Direct call to backend search (which handles UTM + AI)
+      const response = await fetch('http://localhost:3001/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: searchQuery })
+      });
 
-    if (location) {
-      setAppState({ ...appState, center: location }, true);
-      setOsmData(null);
-      setTerrainData(null);
-      setStats(null);
-      showToast(`Location found: ${location.label}`, 'success');
-    } else {
-      const msg = settings.enableAI
-        ? "Could not find that location."
-        : "AI is disabled. Cannot search. (Enable AI in settings)";
+      if (!response.ok) throw new Error("Location not found");
+
+      const location = await response.json();
+
+      if (location) {
+        setAppState({ ...appState, center: location }, true);
+        setOsmData(null);
+        setTerrainData(null);
+        setStats(null);
+        showToast(`Location found: ${location.label}`, 'success');
+      }
+    } catch (err: any) {
+      const msg = err.message || "Search failed";
       setError(msg);
       showToast(msg, 'error');
+    } finally {
+      setIsSearching(false);
     }
-    setIsSearching(false);
   };
 
   const handleFetchAndAnalyze = async () => {
@@ -232,23 +242,16 @@ function App() {
     setIsDownloading(true);
     setStatusMessage('Generating DXF on server...');
     try {
-      // Construct API URL
-      let apiUrl = `http://localhost:3000/api/dxf?lat=${center.lat}&lon=${center.lng}&radius=${radius}&mode=${selectionMode}`;
+      const result = await generateDXF(
+        center.lat,
+        center.lng,
+        radius,
+        selectionMode,
+        polygon,
+        settings.layers
+      );
 
-      if (selectionMode === 'polygon' && polygon.length > 0) {
-        // Convert GeoLocation[] back to [number, number][] for params if needed, or send JSON
-        const points = polygon.map(p => [p.lat, p.lng]);
-        apiUrl += `&polygon=${JSON.stringify(points)}`;
-      }
-
-      // Add simplified settings params
-      apiUrl += `&buildings=${settings.layers.buildings}&roads=${settings.layers.roads}&contest=${settings.layers.contours}`;
-
-      // Fetch from backend
-      const response = await fetch(apiUrl);
-      const result = await response.json();
-
-      if (result.status === 'success' && result.url) {
+      if (result && result.url) {
         // Trigger download
         const a = document.createElement('a');
         a.href = result.url;
@@ -258,7 +261,7 @@ function App() {
         document.body.removeChild(a);
         showToast("DXF Downloaded", 'success');
       } else {
-        throw new Error(result.error || "Backend failed to generate DXF");
+        throw new Error("Backend failed to generate DXF");
       }
 
     } catch (e: any) {

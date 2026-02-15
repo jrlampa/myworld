@@ -78,16 +78,12 @@ class OSMController:
                 north += margin; south -= margin; east += margin; west -= margin
 
                 Logger.info("Step 3/5: Estimating terrain...", progress=50)
-                elev_points = fetch_elevation_grid(north, south, east, west, resolution=100) 
+                # fetch_elevation_grid now returns (points, rows, cols)
+                elev_points, rows, cols = fetch_elevation_grid(north, south, east, west, resolution=100) 
                 
                 if elev_points:
-                    Logger.info(f"Processing {len(elev_points)} terrain points...")
+                    Logger.info(f"Processing {len(elev_points)} terrain points ({rows}x{cols} grid)...")
                     transformer = Transformer.from_crs("EPSG:4326", gdf.crs, always_xy=True)
-                    
-                    # Re-calc 'step' to deduce columns for grid reconstruction
-                    step = (100 / 111000.0)
-                    cols = len(np.arange(west, east, step))
-                    if cols <= 0: cols = 1
                     
                     grid_rows = []
                     current_row = []
