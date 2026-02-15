@@ -1,0 +1,16 @@
+power,alt_name,highway,name,surface,source,cables,circuits,description,frequency,old_operator,operator,voltage,wires,location,substation,area_m2,length_m
+portal,,,,,,,,,,,,,,,,0.0,0.0
+tower,,,,,,,,,,,,,,,,0.0,0.0
+,Rua Quatro,residential,Rua 4,paved,,,,,,,,,,,,0.0,151.3093989562962
+,Rua 4,residential,Rua Quatro,paved,,,,,,,,,,,,0.0,642.8881375309871
+,,residential,Avenida Edmundo Antunes da Silva,,,,,,,,,,,,,0.0,518.7834983616266
+,,residential,Rua Irani Mendes Neto,,,,,,,,,,,,,0.0,240.36374177258773
+,,residential,Avenida José Alvares de Azevedo,paved,IBGE,,,,,,,,,,,0.0,639.9454707262737
+,Rua Onze,residential,Rua 11,,,,,,,,,,,,,0.0,215.53982016368772
+,Rua Dez,residential,Rua 10,,,,,,,,,,,,,0.0,251.58081732589358
+,,residential,Avenida 3,paved,IBGE,,,,,,,,,,,0.0,1045.5535729672956
+line,,,,,,6,2,LT Macaé/Cabiúnas,60,Ampla,Enel Distribuição Rio,69000,single,,,0.0,10640.752100823616
+line,,,,,,3,1,,60,Ampla,Enel Distribuição Rio,69000,single,,,0.0,60.889061195917165
+substation,,,Subestação Luiz Ajuda,,,,,,,Ampla,Enel Distribuição Rio,,,outdoor,distribution,1693.873561422297,187.84008788008805
+line,,,,,,6,2,LT Macaé/Cabiúnas,60,Ampla,Enel Distribuição Rio,69000,single,,,0.0,5117.356854972808
+,,residential,,paved,,,,,,,,,,,,0.0,189.2041834855235

@@ -1,0 +1,133 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 500px;
+  background: #1e293b;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  /* Override glass padding */
+  overflow: hidden;
+  animation: scaleIn 0.2s ease-out;
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+.modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.settings-section h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: #e2e8f0;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: #cbd5e1;
+}
+
+.crs-select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid #475569;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.confirm-btn:hover {
+  opacity: 0.9;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

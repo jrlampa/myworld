@@ -1,0 +1,5 @@
+highway,name,lanes,maxspeed,oneway,area_m2,length_m
+residential,Rua Olinda,,,,0.0,651.4156963719049
+tertiary,Rua Henrique Terra,2,40,yes,0.0,306.841855674453
+tertiary,Rua Henrique Terra,2,40,yes,0.0,312.6997017460966
+tertiary,Rua Henrique Terra,2,40,no,0.0,501.13903454487286
