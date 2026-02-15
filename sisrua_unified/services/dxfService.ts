@@ -3,23 +3,26 @@ import { OsmElement, GeoLocation, TerrainGrid } from '../types';
 const API_URL = 'http://localhost:3001/api';
 
 export const generateDXF = async (
-  elements: OsmElement[],
-  center: GeoLocation,
-  terrain?: TerrainGrid,
-  options: { simplify: boolean } = { simplify: false }
-): Promise<string> => {
+  lat: number,
+  lon: number,
+  radius: number,
+  mode: string,
+  polygon: any[],
+  layers: Record<string, boolean>
+): Promise<{ url: string }> => {
 
   const response = await fetch(`${API_URL}/dxf`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ elements, center, terrain, options })
+    body: JSON.stringify({ lat, lon, radius, mode, polygon, layers })
   });
 
   if (!response.ok) {
-    throw new Error('Backend generation failed');
+    const errorData = await response.json();
+    throw new Error(errorData.details || 'Backend generation failed');
   }
 
-  return await response.text();
+  return await response.json();
 };
 
 export const calculateStats = (elements: OsmElement[]) => {

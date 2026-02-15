@@ -1,10 +1,12 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
-import 'dotenv/config'; // Load env vars
+import 'dotenv/config';
 
 import { fileURLToPath } from 'url';
 import path from 'path';
 import Groq from 'groq-sdk';
+import { GeocodingService } from './services/geocodingService.js';
+import { generateDxf } from './pythonBridge.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,70 +24,51 @@ app.use((req, _res, next) => {
     next();
 });
 
-// Test Python Bridge Route
-app.get('/api/bridge-test', async (_req: Request, res: Response) => {
-    try {
-        console.log("Bridge Test: Executing python --version...");
-        const { exec } = await import('child_process');
-
-        exec('python --version', (error, stdout, stderr) => {
-            if (error) {
-                console.error("Bridge Test Error:", error);
-                return res.status(500).json({ error: 'Bridge failed', details: error.message });
-            }
-            console.log("Bridge Test Success:", stdout || stderr);
-            res.json({
-                status: 'success',
-                message: 'Node-Python Bridge is operational',
-                pythonOutput: stdout || stderr
-            });
-        });
-    } catch (err: any) {
-        console.error("Bridge Test Exception:", err);
-        res.status(500).json({ error: 'Bridge failed', details: err.message });
-    }
-});
-
 // Health Check
 app.get('/', (_req: Request, res: Response) => {
     res.json({
         status: 'online',
         service: 'sisRUA Unified Backend',
-        version: '1.0.0'
+        version: '1.2.0'
     });
 });
-
-import { generateDxf } from './pythonBridge.js'; // Note .js extension for ESM
 
 // Serve generated files
 app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
 
-// DXF Generation Endpoint
-app.get('/api/dxf', async (req: Request, res: Response) => {
+// DXF Generation Endpoint (POST for large polygons)
+app.post('/api/dxf', async (req: Request, res: Response) => {
     try {
-        const { lat, lon, radius } = req.query;
+        const { lat, lon, radius, mode, polygon, layers } = req.body;
 
         if (!lat || !lon || !radius) {
-            return res.status(400).json({ error: 'Missing lat, lon, or radius' });
+            return res.status(400).json({ error: 'Missing lat, lon, or radius in body' });
         }
 
         const filename = `dxf_${Date.now()}.dxf`;
         const outputFile = path.join(__dirname, '../public/dxf', filename);
 
-        console.log(`[API] Generatig DXF for ${lat}, ${lon} radius=${radius}`);
+        console.log(`[API] Generating DXF (POST) for ${lat}, ${lon} radius=${radius} mode=${mode}`);
 
-        // Call Python Engine
-        await generateDxf({
-            lat: parseFloat(lat as string),
-            lon: parseFloat(lon as string),
-            radius: parseFloat(radius as string),
-            mode: (req.query.mode as string) || 'circle',
-            polygon: (req.query.polygon as string) || '[]',
+        // Set a timeout for the python process
+        const generationPromise = generateDxf({
+            lat: parseFloat(lat),
+            lon: parseFloat(lon),
+            radius: parseFloat(radius),
+            mode: mode || 'circle',
+            polygon: typeof polygon === 'string' ? polygon : JSON.stringify(polygon || []),
+            layers: layers || {},
             outputFile
         });
 
-        const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
+        // Timeout race
+        const timeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('DXF Generation Timeout (60s)')), 60000)
+        );
 
+        await Promise.race([generationPromise, timeout]);
+
+        const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
         res.json({
             status: 'success',
             message: 'DXF Generated',
@@ -98,124 +81,32 @@ app.get('/api/dxf', async (req: Request, res: Response) => {
     }
 });
 
-// AI Search Endpoint
+// AI Search Endpoint (Using GeocodingService)
 app.post('/api/search', async (req: Request, res: Response) => {
     try {
         const { query } = req.body;
         if (!query) return res.status(400).json({ error: 'Query required' });
 
-        // Try to parse UTM coordinates first (format: "24K 0216330 7528658")
-        const utmMatch = query.match(/(\d{1,2})[KkLlMm]\s+(\d{6,7})\s+(\d{7})/);
+        const apiKey = process.env.GROQ_API_KEY || '';
+        const location = await GeocodingService.resolveLocation(query, apiKey);
 
-        if (utmMatch) {
-            const zone = parseInt(utmMatch[1]);
-            const easting = parseInt(utmMatch[2]);
-            const northing = parseInt(utmMatch[3]);
-
-            console.log(`Parsing UTM: Zone ${zone}K, Easting ${easting}, Northing ${northing}`);
-
-            // Convert UTM to Lat/Lon using pyproj-style calculation
-            // For Brazilian coordinates (zone 24K), hemisphere is 'S' (South)
-            const hemisphere = 'S';
-            const coords = utmToLatLon(zone, hemisphere, easting, northing);
-
-            if (coords) {
-                console.log(`UTM converted to: ${coords.lat}, ${coords.lng}`);
-                return res.json({
-                    lat: coords.lat,
-                    lng: coords.lng,
-                    label: `UTM ${zone}K ${easting} ${northing}`
-                });
-            }
+        if (location) {
+            res.json(location);
+        } else {
+            res.status(404).json({ error: 'Location not found' });
         }
-
-        // If not UTM, use AI for geocoding
-        const apiKey = process.env.GROQ_API_KEY;
-        if (!apiKey) return res.status(500).json({ error: 'GROQ_API_KEY not set' });
-
-        const groq = new Groq({ apiKey });
-
-        const prompt = `
-        You are a geocoding assistant. 
-        Geocode the following place name to latitude/longitude coordinates.
-        
-        Return ONLY a JSON object with { "lat": number, "lng": number, "label": string } for the query: "${query}". 
-        The label should be the formatted address.
-        Do not include markdown formatting.`;
-
-        const completion = await groq.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "llama-3.3-70b-versatile",
-        });
-
-        let text = completion.choices[0]?.message?.content || "";
-        console.log("AI Raw Response:", text);
-
-        // Find JSON object using regex
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            console.error("AI failed to return valid JSON:", text);
-            return res.status(500).json({ error: "AI failed to return valid JSON", raw: text });
-        }
-
-        const data = JSON.parse(jsonMatch[0]);
-        res.json(data);
     } catch (error: any) {
-        console.error("AI Search Error:", error);
+        console.error("Search Error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// UTM to Lat/Lon conversion function
-function utmToLatLon(zone: number, hemisphere: 'N' | 'S', easting: number, northing: number): { lat: number, lng: number } | null {
-    if (!zone || !easting || !northing) return null;
-
-    const a = 6378137; // WGS84 semi-major axis
-    const f = 1 / 298.257223563; // WGS84 flattening
-    const k0 = 0.9996; // UTM scale factor
-    const e = Math.sqrt(f * (2 - f));
-
-    const x = easting - 500000;
-    const y = hemisphere === 'S' ? northing - 10000000 : northing;
-
-    const m = y / k0;
-    const mu = m / (a * (1 - Math.pow(e, 2) / 4 - 3 * Math.pow(e, 4) / 64 - 5 * Math.pow(e, 6) / 256));
-
-    const e1 = (1 - Math.sqrt(1 - Math.pow(e, 2))) / (1 + Math.sqrt(1 - Math.pow(e, 2)));
-
-    const J1 = (3 * e1 / 2 - 27 * Math.pow(e1, 3) / 32);
-    const J2 = (21 * Math.pow(e1, 2) / 16 - 55 * Math.pow(e1, 4) / 32);
-    const J3 = (151 * Math.pow(e1, 3) / 96);
-    const J4 = (1097 * Math.pow(e1, 4) / 512);
-
-    const fp = mu + J1 * Math.sin(2 * mu) + J2 * Math.sin(4 * mu) + J3 * Math.sin(6 * mu) + J4 * Math.sin(8 * mu);
-
-    const e2 = Math.pow(e, 2) / (1 - Math.pow(e, 2));
-    const c1 = e2 * Math.pow(Math.cos(fp), 2);
-    const t1 = Math.pow(Math.tan(fp), 2);
-    const r1 = a * (1 - Math.pow(e, 2)) / Math.pow(1 - Math.pow(e, 2) * Math.pow(Math.sin(fp), 2), 1.5);
-    const n1 = a / Math.sqrt(1 - Math.pow(e, 2) * Math.pow(Math.sin(fp), 2));
-    const d = x / (n1 * k0);
-
-    const latRad = fp - (n1 * Math.tan(fp) / r1) * (Math.pow(d, 2) / 2 - (5 + 3 * t1 + 10 * c1 - 4 * Math.pow(c1, 2) - 9 * e2) * Math.pow(d, 4) / 24 + (61 + 90 * t1 + 298 * c1 + 45 * Math.pow(t1, 2) - 252 * e2 - 3 * Math.pow(c1, 2)) * Math.pow(d, 6) / 720);
-    const lngRad = (d - (1 + 2 * t1 + c1) * Math.pow(d, 3) / 6 + (5 - 2 * c1 + 28 * t1 - 3 * Math.pow(c1, 2) + 8 * e2 + 24 * Math.pow(t1, 2)) * Math.pow(d, 5) / 120) / Math.cos(fp);
-
-    const zoneCentralMeridian = (zone - 1) * 6 - 180 + 3;
-    const lng = (lngRad * 180 / Math.PI) + zoneCentralMeridian;
-    const lat = latRad * 180 / Math.PI;
-
-    return { lat, lng };
-}
-
-// Elevation Profile Endpoint (Smart Backend / Thin Client)
+// Elevation Profile Endpoint (Smart Backend)
 app.post('/api/elevation/profile', async (req: Request, res: Response) => {
     try {
-        const { start, end, steps = 20 } = req.body;
+        const { start, end, steps = 25 } = req.body;
         if (!start || !end) return res.status(400).json({ error: 'Start and and coordinates required' });
 
-        console.log(`[API] Calculating Elevation Profile: (${start.lat}, ${start.lng}) to (${end.lat}, ${end.lng})`);
-
-        // Generate points along the segment
         const points = [];
         for (let i = 0; i <= steps; i++) {
             const t = i / steps;
@@ -225,8 +116,6 @@ app.post('/api/elevation/profile', async (req: Request, res: Response) => {
             });
         }
 
-        // Fetch elevation from Open-Elevation
-        // Note: Using the same API as the frontend services for consistency
         const response = await fetch("https://api.open-elevation.com/api/v1/lookup", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -234,10 +123,9 @@ app.post('/api/elevation/profile', async (req: Request, res: Response) => {
         });
 
         if (!response.ok) throw new Error("Elevation API failed");
-
         const data = await response.json();
 
-        // Calculate distances (Simplified haversine for total, then linear interpolated)
+        // Calculate total distance (Haversine)
         const R = 6371e3;
         const φ1 = start.lat * Math.PI / 180;
         const φ2 = end.lat * Math.PI / 180;
@@ -267,67 +155,27 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         if (!apiKey) return res.status(500).json({ error: 'GROQ_API_KEY not set' });
 
         const groq = new Groq({ apiKey });
-
         const hasData = stats.buildings > 0 || stats.roads > 0 || stats.trees > 0;
 
-        const prompt = hasData ? `
-        Você é um analista urbano. Analise os dados de ${locationName}:
-        - Edificações: ${stats.buildings}
-        - Vias: ${stats.roads}  
-        - Vegetação: ${stats.trees}
-        - Área Total: ${stats.totalArea} m²
-        
-        Forneça 3-4 pontos técnicos sobre densidade, infraestrutura e recomendações.
-        RESPONDA EM PORTUGUÊS BRASILEIRO.
-        Retorne JSON: { "analysis": "análise em markdown com bullets" }
-        ` : `
-        A região ${locationName} não tem dados no OSM.
-        Explique em 3 pontos: (1) possíveis razões, (2) alternativas de dados, (3) como proceder.
-        RESPONDA EM PORTUGUÊS BRASILEIRO.
-        Retorne JSON: { "analysis": "explicação em markdown" }
-        `;
+        const prompt = hasData ?
+            `Analise urbana profissional em Português BR para ${locationName}: ${JSON.stringify(stats)}. Sugira melhorias. JSON: { "analysis": "markdown" }` :
+            `Explique falta de dados em ${locationName}. JSON: { "analysis": "markdown" }`;
 
         const completion = await groq.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
             model: "llama-3.3-70b-versatile",
+            temperature: 0.2
         });
 
-        let text = completion.choices[0]?.message?.content || "";
-        console.log("AI Analyze Raw Response:", text);
-
-        // Find JSON object using regex
+        const text = completion.choices[0]?.message?.content || "";
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            console.error("AI failed to return valid JSON for analysis:", text);
-            return res.status(500).json({ error: "AI failed to return valid JSON for analysis", raw: text });
-        }
-
-        const data = JSON.parse(jsonMatch[0]);
-        res.json(data);
+        res.json(jsonMatch ? JSON.parse(jsonMatch[0]) : { analysis: "Erro na análise AI." });
 
     } catch (error: any) {
-        console.error("AI Analysis Error:", error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Catch-all 404 for debugging
-app.use((req, res) => {
-    console.log(`[DEBUG] 404 on ${req.method} ${req.originalUrl}`);
-    res.status(404).json({
-        error: 'Route not found',
-        method: req.method,
-        path: req.originalUrl,
-        availableRoutes: ['/', '/api/bridge-test', '/api/dxf', '/api/search', '/api/analyze', '/api/elevation/profile']
-    });
-});
-
 app.listen(port, () => {
-    console.log(`
-  🚀 sisRUA Unified running on http://localhost:${port}
-  -----------------------------------------------
-  🐍 Python Bridge Test: /api/bridge-test
-  🏗️  DXF Generation:    /api/dxf?lat=...&lon=...&radius=...
-  -----------------------------------------------
-  `);
+    console.log(`🚀 sisRUA Backend v1.2.0 operational on http://localhost:${port}`);
 });

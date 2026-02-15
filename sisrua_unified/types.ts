@@ -88,6 +88,7 @@ export interface Violation {
 }
 
 export interface LayerConfig {
+  [key: string]: boolean;
   buildings: boolean;
   roads: boolean;
   curbs: boolean;
