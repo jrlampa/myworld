@@ -207,6 +207,58 @@ function utmToLatLon(zone: number, hemisphere: 'N' | 'S', easting: number, north
     return { lat, lng };
 }
 
+// Elevation Profile Endpoint (Smart Backend / Thin Client)
+app.post('/api/elevation/profile', async (req: Request, res: Response) => {
+    try {
+        const { start, end, steps = 20 } = req.body;
+        if (!start || !end) return res.status(400).json({ error: 'Start and and coordinates required' });
+
+        console.log(`[API] Calculating Elevation Profile: (${start.lat}, ${start.lng}) to (${end.lat}, ${end.lng})`);
+
+        // Generate points along the segment
+        const points = [];
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            points.push({
+                latitude: start.lat + (end.lat - start.lat) * t,
+                longitude: start.lng + (end.lng - start.lng) * t
+            });
+        }
+
+        // Fetch elevation from Open-Elevation
+        // Note: Using the same API as the frontend services for consistency
+        const response = await fetch("https://api.open-elevation.com/api/v1/lookup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ locations: points })
+        });
+
+        if (!response.ok) throw new Error("Elevation API failed");
+
+        const data = await response.json();
+
+        // Calculate distances (Simplified haversine for total, then linear interpolated)
+        const R = 6371e3;
+        const φ1 = start.lat * Math.PI / 180;
+        const φ2 = end.lat * Math.PI / 180;
+        const Δφ = (end.lat - start.lat) * Math.PI / 180;
+        const Δλ = (end.lng - start.lng) * Math.PI / 180;
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const totalDist = R * c;
+
+        const profile = data.results.map((r: any, i: number) => ({
+            dist: parseFloat(((totalDist * i) / steps).toFixed(1)),
+            elev: r.elevation
+        }));
+
+        res.json({ profile });
+    } catch (error: any) {
+        console.error("Elevation Profile Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // AI Analyze Endpoint
 app.post('/api/analyze', async (req: Request, res: Response) => {
     try {
@@ -266,7 +318,7 @@ app.use((req, res) => {
         error: 'Route not found',
         method: req.method,
         path: req.originalUrl,
-        availableRoutes: ['/', '/api/bridge-test', '/api/dxf', '/api/search', '/api/analyze']
+        availableRoutes: ['/', '/api/bridge-test', '/api/dxf', '/api/search', '/api/analyze', '/api/elevation/profile']
     });
 });
 

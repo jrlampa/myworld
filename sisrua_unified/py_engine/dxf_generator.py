@@ -23,6 +23,7 @@ class DXFGenerator:
         
         self.msp = self.doc.modelspace()
         self.project_info = {} # Store metadata for title block
+        self._offset_initialized = False
 
     # Legacy setup methods removed (handled by StyleManager)
 
@@ -35,10 +36,13 @@ class DXFGenerator:
             return
 
         # Center the drawing roughly around (0,0) based on the first feature
-        # Filter out NaN centroids if any
-        centroids = gdf.geometry.centroid
-        self.diff_x = centroids.x.dropna().mean() if not centroids.x.dropna().empty else 0
-        self.diff_y = centroids.y.dropna().mean() if not centroids.y.dropna().empty else 0
+        # AUTHORITATIVE OFFSET: Once set, it applies to everything (features, terrain, labels)
+        if not self._offset_initialized:
+            centroids = gdf.geometry.centroid
+            self.diff_x = centroids.x.dropna().mean() if not centroids.x.dropna().empty else 0
+            self.diff_y = centroids.y.dropna().mean() if not centroids.y.dropna().empty else 0
+            self._offset_initialized = True
+
         self.bounds = gdf.total_bounds # [minx, miny, maxx, maxy]
 
         for _, row in gdf.iterrows():
@@ -385,14 +389,18 @@ class DXFGenerator:
         for r, row in enumerate(grid_rows):
             for c, p in enumerate(row):
                 # Safeguard against NaN or invalid coords
-                # float() cast is for safety, p might be a tuple
                 try:
-                    safe_p = (
-                        float(p[0]) if not (np.isnan(p[0]) or np.isinf(p[0])) else 0.0,
-                        float(p[1]) if not (np.isnan(p[1]) or np.isinf(p[1])) else 0.0,
-                        float(p[2]) if not (np.isnan(p[2]) or np.isinf(p[2])) else 0.0
-                    )
-                except (IndexError, TypeError):
+                    # Apply AUTHORITATIVE OFFSET from feature centering if available
+                    # p[0] is X, p[1] is Y, p[2] is Z
+                    x = float(p[0]) - self.diff_x
+                    y = float(p[1]) - self.diff_y
+                    z = float(p[2])
+                    
+                    if math.isnan(x) or math.isnan(y) or math.isnan(z) or math.isinf(x) or math.isinf(y):
+                        safe_p = (0.0, 0.0, 0.0)
+                    else:
+                        safe_p = (x, y, z)
+                except (IndexError, TypeError, ValueError):
                     safe_p = (0.0, 0.0, 0.0)
                 
                 mesh.set_mesh_vertex((r, c), safe_p)
