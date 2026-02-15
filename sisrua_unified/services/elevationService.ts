@@ -3,7 +3,7 @@ import { GeoLocation, TerrainGrid, TerrainPoint } from '../types';
 export const fetchElevationGrid = async (center: GeoLocation, radius: number, gridSize: number = 12): Promise<TerrainGrid> => {
   // Bounding box calculation
   const R = 6378137; // Earth radius
-  
+
   // Calculate delta Lat/Lng for the radius
   const dLat = (radius / R) * (180 / Math.PI);
   // Adjust lng delta based on latitude
@@ -40,7 +40,7 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
     const elevations = data.elevation as number[];
 
     if (!elevations || elevations.length !== lats.length) {
-        throw new Error("Invalid elevation data received");
+      throw new Error("Invalid elevation data received");
     }
 
     // Reconstruct into 2D grid
@@ -65,16 +65,36 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
     // Return flat grid on error so app doesn't crash, just flat terrain
     const grid: TerrainGrid = [];
     for (let i = 0; i < gridSize; i++) {
-        const row: TerrainPoint[] = [];
-        for (let j = 0; j < gridSize; j++) {
-            row.push({
-                lat: minLat + i * latStep,
-                lng: minLng + j * lngStep,
-                elevation: 0
-            });
-        }
-        grid.push(row);
+      const row: TerrainPoint[] = [];
+      for (let j = 0; j < gridSize; j++) {
+        row.push({
+          lat: minLat + i * latStep,
+          lng: minLng + j * lngStep,
+          elevation: 0
+        });
+      }
+      grid.push(row);
     }
     return grid;
+  }
+};
+
+/**
+ * Fetches elevation profile from backend (Smart Backend Refinement)
+ */
+export const fetchElevationProfile = async (start: GeoLocation, end: GeoLocation) => {
+  try {
+    const response = await fetch('http://localhost:3001/api/elevation/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ start, end, steps: 25 })
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch elevation profile');
+    const data = await response.json();
+    return data.profile;
+  } catch (error) {
+    console.error('Error fetching elevation profile:', error);
+    return [];
   }
 };

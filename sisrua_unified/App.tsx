@@ -12,13 +12,12 @@ import ElevationProfile from './components/ElevationProfile';
 import Toast, { ToastType } from './components/Toast';
 import ProgressIndicator from './components/ProgressIndicator';
 import { useUndoRedo } from './hooks/useUndoRedo';
-import { generateElevationProfile } from './utils/geoMath';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { fetchOsmData } from './services/osmService';
 import { generateDXF, calculateStats } from './services/dxfService';
 import { findLocationWithGemini, analyzeArea } from './services/geminiService';
-import { fetchElevationGrid } from './services/elevationService';
+import { fetchElevationGrid, fetchElevationProfile } from './services/elevationService';
 import { parseKml } from './utils/kmlParser';
 
 function App() {
@@ -137,13 +136,14 @@ function App() {
     setAppState({ ...appState, selectionMode: mode, polygon: [], measurePath: [] }, true);
   };
 
-  const handleMeasurePathChange = (path: [number, number][]) => {
+  const handleMeasurePathChange = async (path: [number, number][]) => {
     // Convert to GeoLocation[]
     const geoPath = path.map(p => ({ lat: p[0], lng: p[1] }));
     setAppState({ ...appState, measurePath: geoPath }, false);
 
-    if (geoPath.length === 2 && terrainData) {
-      const profile = generateElevationProfile(geoPath[0], geoPath[1], terrainData);
+    if (geoPath.length === 2) {
+      // Fetch profile from backend (Smart Backend)
+      const profile = await fetchElevationProfile(geoPath[0], geoPath[1]);
       setElevationProfileData(profile);
     } else {
       setElevationProfileData([]);
