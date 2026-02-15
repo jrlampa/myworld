@@ -31,151 +31,111 @@ class OSMController:
         self.audit_summary = {"violations": 0, "coverageScore": 0}
 
     def run(self):
-        Logger.info(f"OSM Extraction Starting (Format: {self.export_format})", progress=5)
-        Logger.info(f"Fetching data for {self.lat}, {self.lon} (r={self.radius}m)...", "starting")
-
-        # 1. Build Tags
+        """Orchestrates the Osm2Dxf flow."""
+        Logger.info(f"OSM Audit & Export Starting (Format: {self.export_format})", progress=5)
+        
+        # 1. Prepare Layers
         tags = self._build_tags()
         if not tags:
-            Logger.error("No layers selected!")
+            Logger.error("No infrastructure layers selected!")
             return
 
-        # 2. Fetch Data
+        # 2. Fetch Features
         Logger.info("Step 1/5: Fetching OSM features...", progress=10)
+        gdf = self._fetch_features(tags)
+        if gdf is None or gdf.empty:
+            Logger.info("No architectural features found in radius.", "warning")
+            return
+
+        # 3. Spatial GIS Audit (Authoritative Logic)
+        Logger.info("Step 2/5: Running spatial audit...", progress=30)
+        analysis_gdf = self._run_audit(gdf)
+
+        # 4. Preview Data (GeoJSON)
+        self._send_geojson_preview(gdf, analysis_gdf)
+
+        # 5. Coordinate Offset & CAD Export
+        Logger.info("Step 3/5: Initializing DXF Generation...", progress=50)
+        dxf_gen = DXFGenerator(self.output_file)
+        dxf_gen.add_features(gdf) # Features set the AUTHORITATIVE OFFSET
+
+        # 6. Terrain & Contours (Optional)
+        if self.layers_config.get('terrain', False):
+            self._process_terrain(gdf, dxf_gen)
+
+        # 7. Cartographic Elements
+        if dxf_gen.bounds is not None:
+            self._add_cad_essentials(dxf_gen)
+
+        # 8. Save & Cleanup
+        Logger.info("Step 5/5: Finalizing export package...", progress=90)
+        dxf_gen.save()
+        self._export_csv_metadata(gdf)
+        Logger.success(f"Audit Complete: Generated {self.output_file}")
+
+    def _fetch_features(self, tags):
         try:
             if self.selection_mode == 'polygon':
-                 gdf = fetch_osm_data(self.lat, self.lon, self.radius, tags, crs=self.crs, polygon=self.polygon)
-            else:
-                 gdf = fetch_osm_data(self.lat, self.lon, self.radius, tags, crs=self.crs)
-        except Exception:
-            import traceback
-            Logger.error(f"Fetch failed: {traceback.format_exc()}")
-            return
+                 return fetch_osm_data(self.lat, self.lon, self.radius, tags, crs=self.crs, polygon=self.polygon)
+            return fetch_osm_data(self.lat, self.lon, self.radius, tags, crs=self.crs)
+        except Exception as e:
+            Logger.error(f"OSM Fetch Error: {str(e)}")
+            return None
 
-        if gdf.empty:
-            Logger.info("No features found in this area.", "warning")
-            return
-
-        # 3. Spatial GIS Audit (Heavy Logic move to Backend)
-        Logger.info("Step 2/5: Running spatial audit...", progress=30)
+    def _run_audit(self, gdf):
         try:
             audit_summary, analysis_gdf = run_spatial_audit(gdf)
             self.audit_summary = audit_summary
-            Logger.info(f"Audit completed: {audit_summary['violations']} violations found.")
+            Logger.info(f"Spatial Audit: {audit_summary['violations']} violations detected.")
+            return analysis_gdf
         except Exception as se:
-            Logger.error(f"Spatial Audit failed: {se}")
-            analysis_gdf = None
+            Logger.error(f"Spatial Audit internal failure: {se}")
+            return None
 
-        # 4. GeoJSON Preview (Enriched)
-        self._send_geojson_preview(gdf, analysis_gdf)
-
-        if self.layers_config.get('terrain', False): 
-            try:
-                north, south, east, west = gdf.limit_area_bbox() if hasattr(gdf, 'limit_area_bbox') else (gdf.total_bounds[3], gdf.total_bounds[1], gdf.total_bounds[2], gdf.total_bounds[0])
-                
-                # Expand slightly for mesh connectivity
-                margin = 0.001
-                north += margin; south -= margin; east += margin; west -= margin
-
-                Logger.info("Step 3/5: Estimating terrain...", progress=50)
-                # fetch_elevation_grid now returns (points, rows, cols)
-                elev_points, rows, cols = fetch_elevation_grid(north, south, east, west, resolution=100) 
-                
-                if elev_points:
-                    Logger.info(f"Processing {len(elev_points)} terrain points ({rows}x{cols} grid)...")
-                    transformer = Transformer.from_crs("EPSG:4326", gdf.crs, always_xy=True)
-                    
-                    grid_rows = []
-                    current_row = []
-                    
-                    for lat, lon, z in elev_points:
-                        x, y = transformer.transform(lon, lat)
-                        current_row.append((x, y, z))
-                        if len(current_row) >= cols:
-                            grid_rows.append(current_row)
-                            current_row = []
-                    
-                    if current_row:
-                        grid_rows.append(current_row)
-                        
-                    dxf_gen = DXFGenerator(self.output_file)
-                    dxf_gen.add_features(gdf) # Features set the AUTHORITATIVE OFFSET
-                    
-                    # Cartographic Essentials
-                    if dxf_gen.bounds is not None:
-                        min_x, min_y, max_x, max_y = dxf_gen.bounds
-                        dxf_gen.add_coordinate_grid(min_x, min_y, max_x, max_y, dxf_gen.diff_x, dxf_gen.diff_y)
-                        dxf_gen.add_cartographic_elements(min_x, min_y, max_x, max_y, dxf_gen.diff_x, dxf_gen.diff_y)
-
-                    Logger.info("Step 4/5: Generating 3D Mesh...", progress=70)
-                    dxf_gen.add_terrain_from_grid(grid_rows)
-                    
-                    # Generate Contours
-                    try:
-                        contours = generate_contours(grid_rows, interval=1.0 if not self.layers_config.get('high_res_contours') else 0.5)
-                        if contours:
-                            dxf_gen.add_contour_lines(contours)
-                            Logger.info(f"Generated {len(contours)} contour lines.")
-                    except Exception as ce:
-                        Logger.error(f"Contour generation error: {ce}")
-
-                    dxf_gen.save()
-                    self._export_csv_metadata(gdf) 
-                    Logger.success(f"Saved {len(gdf)} objects + Terrain to {self.output_file}")
-                    return 
-
-            except Exception:
-                import traceback
-                Logger.error(f"Terrain generation failed: {traceback.format_exc()}")
-
-        # 4. Export logic based on Format (Fallback for non-terrain or failure)
-        Logger.info("Step 5/5: Exporting CAD package...", progress=90)
+    def _process_terrain(self, gdf, dxf_gen):
         try:
-            if self.export_format == 'geojson':
-                Logger.info(f"Exporting to GeoJSON: {self.output_file}", "exporting")
-                gdf_wgs84 = gdf.to_crs(epsg=4326)
-                gdf_wgs84.to_file(self.output_file, driver='GeoJSON')
-                return
-
-            if self.export_format == 'kml':
-                Logger.info(f"Exporting to KML: {self.output_file}", "exporting")
-                try:
-                    import fiona
-                    fiona.drvsupport.supported_drivers['KML'] = 'rw'
-                    gdf_wgs84 = gdf.to_crs(epsg=4326)
-                    gdf_wgs84.to_file(self.output_file, driver='KML')
-                except Exception as e:
-                    Logger.warning(f"KML export failed or driver unavailable: {e}. Falling back to GeoJSON.")
-                    gdf_wgs84 = gdf.to_crs(epsg=4326)
-                    gdf_wgs84.to_file(self.output_file + ".geojson", driver='GeoJSON')
-                return
-
-            if self.export_format == 'shapefile':
-                Logger.info(f"Exporting to Shapefile: {self.output_file}", "exporting")
-                gdf_shp = gdf.copy()
-                new_cols = {col: col[:10] for col in gdf_shp.columns if col != 'geometry'}
-                gdf_shp = gdf_shp.rename(columns=new_cols)
-                for col in gdf_shp.columns:
-                    if col != 'geometry' and gdf_shp[col].apply(lambda x: isinstance(x, list)).any():
-                        gdf_shp[col] = gdf_shp[col].apply(lambda x: str(x) if isinstance(x, list) else x)
-                gdf_shp.to_file(self.output_file, driver='ESRI Shapefile')
-                return
-
-            # Default: DXF Flow
-            dxf_gen = DXFGenerator(self.output_file)
-            dxf_gen.add_features(gdf)
-            if dxf_gen.bounds is not None:
-                min_x, min_y, max_x, max_y = dxf_gen.bounds
-                dxf_gen.add_coordinate_grid(min_x, min_y, max_x, max_y, dxf_gen.diff_x, dxf_gen.diff_y)
-                dxf_gen.add_cartographic_elements(min_x, min_y, max_x, max_y, dxf_gen.diff_x, dxf_gen.diff_y)
-            dxf_gen.project_info = self.project_metadata
-            dxf_gen.save()
-            self._export_csv_metadata(gdf)
-            Logger.success(f"Saved {len(gdf)} objects to {self.output_file}")
+            north, south, east, west = gdf.limit_area_bbox() if hasattr(gdf, 'limit_area_bbox') else (gdf.total_bounds[3], gdf.total_bounds[1], gdf.total_bounds[2], gdf.total_bounds[0])
             
-        except Exception:
-            import traceback
-            Logger.error(f"Export failed: {traceback.format_exc()}")
+            # Resolution-aware expansion
+            margin = 0.001
+            elev_points, rows, cols = fetch_elevation_grid(north + margin, south - margin, east + margin, west - margin, resolution=100) 
+            
+            if elev_points:
+                Logger.info(f"Reconstructing {rows}x{cols} terrain grid...", progress=60)
+                transformer = Transformer.from_crs("EPSG:4326", gdf.crs, always_xy=True)
+                
+                grid_rows = []
+                current_row = []
+                for lat, lon, z in elev_points:
+                    x, y = transformer.transform(lon, lat)
+                    current_row.append((x, y, z))
+                    if len(current_row) >= cols:
+                        grid_rows.append(current_row)
+                        current_row = []
+                
+                if current_row: grid_rows.append(current_row)
+                dxf_gen.add_terrain_from_grid(grid_rows)
+                
+                # Contours
+                if self.layers_config.get('contours', False):
+                    self._add_contours(grid_rows, dxf_gen)
+        except Exception as e:
+            Logger.error(f"Terrain submodule failure: {str(e)}")
+
+    def _add_contours(self, grid_rows, dxf_gen):
+        try:
+            interval = 1.0 if not self.layers_config.get('high_res_contours') else 0.5
+            contours = generate_contours(grid_rows, interval=interval)
+            if contours:
+                dxf_gen.add_contour_lines(contours)
+                Logger.info(f"Integrated {len(contours)} contour lines.")
+        except Exception as ce:
+            Logger.error(f"Contour math error: {ce}")
+
+    def _add_cad_essentials(self, dxf_gen):
+        min_x, min_y, max_x, max_y = dxf_gen.bounds
+        dxf_gen.add_coordinate_grid(min_x, min_y, max_x, max_y, dxf_gen.diff_x, dxf_gen.diff_y)
+        dxf_gen.add_cartographic_elements(min_x, min_y, max_x, max_y, dxf_gen.diff_x, dxf_gen.diff_y)
 
     def _export_csv_metadata(self, gdf):
         try:
@@ -187,22 +147,17 @@ class OSMController:
             df_csv.to_csv(csv_file, index=False)
             Logger.info(f"Metadata exported to {os.path.basename(csv_file)}")
         except Exception as e:
-            Logger.error(f"CSV Export failed: {e}")
+            Logger.error(f"CSV Metadata Export failed: {e}")
 
     def _build_tags(self):
         tags = {}
         if self.layers_config.get('buildings', True): tags['building'] = True
         if self.layers_config.get('roads', True): tags['highway'] = True
-        if self.layers_config.get('trees', True):
-            tags['natural'] = ['tree', 'wood']
-            tags['landuse'] = ['forest', 'grass']
-        if self.layers_config.get('amenities', True):
-            tags['amenity'] = True
-            tags['leisure'] = True
-            tags['power'] = True
-            tags['telecom'] = True
+        if self.layers_config.get('nature', True):
+            tags['natural'] = ['tree', 'wood', 'scrub', 'water']
+            tags['landuse'] = ['forest', 'grass', 'park']
         if self.layers_config.get('furniture', False):
-            tags['amenity'] = ['bench', 'waste_basket', 'bicycle_parking', 'fountain']
+            tags['amenity'] = ['bench', 'waste_basket', 'bicycle_parking', 'fountain', 'bus_station']
             tags['highway'] = ['street_lamp']
         return tags
 
@@ -227,4 +182,4 @@ class OSMController:
             payload['audit_summary'] = self.audit_summary
             Logger.geojson(payload)
         except Exception as e:
-            Logger.error(f"GeoJSON Error: {str(e)}")
+            Logger.error(f"GeoJSON Sync Error: {str(e)}")

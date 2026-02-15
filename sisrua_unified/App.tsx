@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Map as MapIcon, Layers, Search, Loader2, AlertCircle, Settings, Mountain, TrendingUp } from 'lucide-react';
-import { OsmElement, AnalysisStats, TerrainGrid, GlobalState, AppSettings, GeoLocation, SelectionMode } from './types';
+import { AnalysisStats, GlobalState, AppSettings, GeoLocation, SelectionMode } from './types';
 import { DEFAULT_LOCATION, MAX_RADIUS, MIN_RADIUS } from './constants';
 import MapSelector from './components/MapSelector';
 import Dashboard from './components/Dashboard';
@@ -12,12 +12,11 @@ import ElevationProfile from './components/ElevationProfile';
 import Toast, { ToastType } from './components/Toast';
 import ProgressIndicator from './components/ProgressIndicator';
 import { useUndoRedo } from './hooks/useUndoRedo';
+import { useOsmEngine } from './hooks/useOsmEngine';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { fetchOsmData } from './services/osmService';
-import { generateDXF, calculateStats } from './services/dxfService';
-import { findLocationWithGemini, analyzeArea } from './services/geminiService';
-import { fetchElevationGrid, fetchElevationProfile } from './services/elevationService';
+import { generateDXF } from './services/dxfService';
+import { fetchElevationProfile } from './services/elevationService';
 import { parseKml } from './utils/kmlParser';
 
 function App() {
@@ -68,68 +67,44 @@ function App() {
     }
   });
 
-  // Derived state from undoable appState
+  // Derived state
   const { center, radius, selectionMode, polygon, measurePath, settings } = appState;
   const isDark = settings.theme === 'dark';
 
-  // Ephemeral State (No undo)
+  // Custom Hook for core logic (Modular Audit & Refinement)
+  const {
+    isProcessing,
+    progressValue,
+    statusMessage,
+    osmData,
+    terrainData,
+    stats,
+    analysisText,
+    error,
+    runAnalysis,
+    clearData,
+    setOsmData
+  } = useOsmEngine();
+
+  // Ephemeral State
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [progressValue, setProgressValue] = useState(0);
-
   const [showSettings, setShowSettings] = useState(false);
-
-  const [osmData, setOsmData] = useState<OsmElement[] | null>(null);
-  const [terrainData, setTerrainData] = useState<TerrainGrid | null>(null);
   const [elevationProfileData, setElevationProfileData] = useState<{ dist: number, elev: number }[]>([]);
-
-  const [stats, setStats] = useState<AnalysisStats | null>(null);
-  const [analysisText, setAnalysisText] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string>('');
-
-  // Toast State
   const [toast, setToast] = useState<{ message: string, type: ToastType } | null>(null);
 
   const showToast = (message: string, type: ToastType) => {
     setToast({ message, type });
   };
 
-  // Update Settings Wrapper
   const updateSettings = (newSettings: AppSettings) => {
     setAppState({ ...appState, settings: newSettings }, true);
   };
 
-  // Handlers
   const handleMapClick = (newCenter: GeoLocation) => {
-    // When manually clicking, we treat it as a new distinct action in history
     setAppState({ ...appState, center: newCenter }, true);
-
-    // Clear existing data as coordinates changed
-    setOsmData(null);
-    setTerrainData(null);
-    setStats(null);
-  };
-
-  const handlePolygonChange = (newPolygon: GeoLocation[]) => {
-    // Convert [lat,lng] arrays to GeoLocation if needed, but MapSelector gives [number, number][]
-    // Wait, MapSelector calls onPolygonChange with [number, number][].
-    // My GlobalState expects GeoLocation[]. I need to map it.
-    // Actually MapSelector usually manages internal state but reports back.
-    // Let's check MapSelector again. It calls setPolygonPoints with [number, number][].
-    // But here I'm using it in appState.
-    // I should map [number, number] to GeoLocation
-    // Wait, let's fix the type in GlobalState to match or map it here.
-    // GlobalState has polygon: GeoLocation[].
-    // MapSelector's onPolygonChange gives [number, number][].
-
-    // FIX logic:
-    // This function receives [number, number][] from MapSelector
-    // BUT MapSelector currently calls onPolygonChange with the raw array suitable for Leaflet.
-
-    // I need to adapt the callback in the JSX below.
+    clearData();
   };
 
   const handleSelectionModeChange = (mode: SelectionMode) => {
@@ -137,12 +112,10 @@ function App() {
   };
 
   const handleMeasurePathChange = async (path: [number, number][]) => {
-    // Convert to GeoLocation[]
     const geoPath = path.map(p => ({ lat: p[0], lng: p[1] }));
     setAppState({ ...appState, measurePath: geoPath }, false);
 
     if (geoPath.length === 2) {
-      // Fetch profile from backend (Smart Backend)
       const profile = await fetchElevationProfile(geoPath[0], geoPath[1]);
       setElevationProfileData(profile);
     } else {
@@ -155,92 +128,36 @@ function App() {
     if (!searchQuery.trim()) return;
 
     setIsSearching(true);
-    setError(null);
-
     try {
-      // Direct call to backend search (which handles UTM + AI)
       const response = await fetch('http://localhost:3001/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: searchQuery })
       });
-
       if (!response.ok) throw new Error("Location not found");
-
       const location = await response.json();
 
       if (location) {
         setAppState({ ...appState, center: location }, true);
-        setOsmData(null);
-        setTerrainData(null);
-        setStats(null);
-        showToast(`Location found: ${location.label}`, 'success');
+        clearData();
+        showToast(`Locality found: ${location.label}`, 'success');
       }
     } catch (err: any) {
-      const msg = err.message || "Search failed";
-      setError(msg);
-      showToast(msg, 'error');
+      showToast(err.message || "Search failed", 'error');
     } finally {
       setIsSearching(false);
     }
   };
 
   const handleFetchAndAnalyze = async () => {
-    setIsProcessing(true);
-    setError(null);
-    setStatusMessage('Starting...');
-    setProgressValue(10);
-
-    try {
-      // 1. Fetch OSM Data
-      setStatusMessage('Fetching OSM Data...');
-      const data = await fetchOsmData(center.lat, center.lng, radius);
-      if (data.length === 0) {
-        throw new Error("No data found in this area. Try increasing the radius.");
-      }
-      setOsmData(data);
-      setProgressValue(40);
-
-      // 2. Fetch Terrain Data
-      setStatusMessage('Fetching Elevation Data...');
-      const terrain = await fetchElevationGrid(center, radius);
-      setTerrainData(terrain);
-      setProgressValue(70);
-
-      // 3. Calculate Stats
-      const calculatedStats = calculateStats(data);
-      setStats(calculatedStats);
-      setProgressValue(85);
-
-      // 4. Get AI Analysis (Groq/Gemini)
-      if (settings.enableAI) {
-        setStatusMessage('Analyzing with AI...');
-        const text = await analyzeArea(calculatedStats, center.label || "the selected area", true);
-        setAnalysisText(text);
-      } else {
-        setAnalysisText("AI Analysis Disabled.");
-      }
-
-      setProgressValue(100);
-      showToast("Analysis Complete!", 'success');
-      setStatusMessage('');
-
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
-      setStatusMessage('');
-      showToast(err.message || 'Error', 'error');
-    } finally {
-      setTimeout(() => {
-        setIsProcessing(false);
-        setProgressValue(0);
-      }, 1000);
-    }
+    const success = await runAnalysis(center, radius, settings.enableAI);
+    if (success) showToast("Analysis Complete!", 'success');
+    else showToast("Audit failed. Check backend logs.", 'error');
   };
 
   const handleDownloadDxf = async () => {
     if (!osmData) return;
     setIsDownloading(true);
-    setStatusMessage('Generating DXF on server...');
     try {
       const result = await generateDXF(
         center.lat,
@@ -252,7 +169,6 @@ function App() {
       );
 
       if (result && result.url) {
-        // Trigger download
         const a = document.createElement('a');
         a.href = result.url;
         a.download = `dxf_export_${center.lat.toFixed(4)}_${center.lng.toFixed(4)}.dxf`;
@@ -263,14 +179,10 @@ function App() {
       } else {
         throw new Error("Backend failed to generate DXF");
       }
-
     } catch (e: any) {
-      console.error(e);
-      setError(`Failed to download DXF: ${e.message}`);
-      showToast("DXF Generation Failed", 'error');
+      showToast(`DXF Error: ${e.message}`, 'error');
     } finally {
       setIsDownloading(false);
-      setStatusMessage('');
     }
   };
 
@@ -281,11 +193,9 @@ function App() {
 
   const handleKmlDrop = async (file: File) => {
     try {
-      setStatusMessage('Parsing KML...');
       const points = await parseKml(file);
 
       if (points.length > 0) {
-        // Points are [lat, lng]
         const geoPoints = points.map(p => ({ lat: p[0], lng: p[1] }));
 
         setAppState({
@@ -298,15 +208,11 @@ function App() {
             label: file.name.replace('.kml', '')
           }
         }, true);
-
-        setStatusMessage('KML Imported Successfully');
+        clearData();
         showToast("KML Imported", 'success');
       }
     } catch (err: any) {
-      setError("KML Import Failed: " + err.message);
       showToast("KML Fail", 'error');
-    } finally {
-      setTimeout(() => setStatusMessage(''), 2000);
     }
   };
 

@@ -189,49 +189,35 @@ class DXFGenerator:
             self._draw_point(geom, layer, diff_x, diff_y, tags)
 
     def _draw_street_offsets(self, line, tags, diff_x, diff_y):
-        """Draws parallel lines (curbs) for streets"""
-        # Determine width (half-width)
+        """Draws parallel lines (curbs) for streets using authoritative widths."""
         highway = tags.get('highway', 'residential')
-        width = 4.0 # Default residential 8m
-        
-        if highway in ['motorway', 'trunk']:
-            width = 10.0
-        elif highway in ['primary', 'secondary']:
-            width = 7.0
-        elif highway in ['tertiary']:
-            width = 5.0
-        elif highway in ['service', 'living_street', 'track']:
-            width = 3.0
-        elif highway in ['footway', 'path', 'cycleway', 'pedestrian', 'steps']:
-            return # Don't draw curbs for paths
+        if highway in ['footway', 'path', 'cycleway', 'steps']:
+            return # Skip thin paths
             
+        # Get width from centralized StyleManager
+        width = DXFStyleManager.get_street_width(highway)
+        
         try:
-            # Create offsets
-            # Shapely's parallel_offset was deprecated for offset_curve in 2.0
-            # Check version or use offset_curve if available, otherwise parallel_offset
+            # Shapely 2.0+ uses offset_curve
             if hasattr(line, 'offset_curve'):
-                 left = line.offset_curve(width, join_style=2) # 2=mitre/round?
+                 left = line.offset_curve(width, join_style=2)
                  right = line.offset_curve(-width, join_style=2)
             else:
-                 # Fallback for older shapely
                  left = line.parallel_offset(width, 'left', join_style=2)
                  right = line.parallel_offset(width, 'right', join_style=2)
             
-            # Draw them
             for side_geom in [left, right]:
                 if side_geom.is_empty: continue
                 
                 if isinstance(side_geom, LineString):
                      pts = [(p[0] - diff_x, p[1] - diff_y) for p in side_geom.coords]
-                     self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 9})
+                     self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
                 elif isinstance(side_geom, MultiLineString):
                      for subline in side_geom.geoms:
-                         pts = [(p[0] - diff_x, p[1] - diff_y) for p in subline.coords]
-                         self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 9})
+                          pts = [(p[0] - diff_x, p[1] - diff_y) for p in subline.coords]
+                          self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
         except Exception as e:
-            # Offset can fail on complex geometries or self-intersections
-            Logger.info(f"Vias offset skipped for segment: {e}")
-            pass
+            Logger.info(f"Geometry offset skipped for segment: {e}")
 
     def _get_thickness(self, tags, layer):
         """Calculates extrusion height based on OSM tags"""

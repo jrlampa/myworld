@@ -11,6 +11,7 @@ class DXFStyleManager:
         DXFStyleManager.setup_text_styles(doc)
         DXFStyleManager.setup_layers(doc)
         DXFStyleManager.setup_blocks(doc)
+        DXFStyleManager.setup_logo(doc)
 
     @staticmethod
     def setup_linetypes(doc):
@@ -72,7 +73,6 @@ class DXFStyleManager:
             blk.add_circle((0, 0), radius=0.4, dxfattribs={'color': 7})
             blk.add_line((-0.3, -0.3), (0.3, 0.3))
             blk.add_line((-0.3, 0.3), (0.3, -0.3))
-            # Attdefs
             blk.add_attdef('ID', (0.5, 0.5), dxfattribs={'height': 0.3, 'color': 2})
             blk.add_attdef('TYPE', (0.5, 0.1), dxfattribs={'height': 0.2, 'color': 8})
             blk.add_attdef('V_LEVEL', (0.5, -0.3), dxfattribs={'height': 0.2, 'color': 1})
@@ -118,12 +118,29 @@ class DXFStyleManager:
             blk.add_text("5m", dxfattribs={'height': 1}).set_placement((5, -1.5), align=TextEntityAlignment.CENTER)
             blk.add_text("10m", dxfattribs={'height': 1}).set_placement((10, -1.5), align=TextEntityAlignment.CENTER)
 
-        # LOGO (Simple vector placeholder to prevent "Missing Block" errors)
+    @staticmethod
+    def setup_logo(doc):
+        """Unified system logo block."""
         if 'LOGO' not in doc.blocks:
             blk = doc.blocks.new(name='LOGO')
-            # Outer diamond
             blk.add_lwpolyline([(0, 5), (5, 0), (0, -5), (-5, 0)], close=True, dxfattribs={'color': 7})
-            # Inner dot
             blk.add_circle((0, 0), radius=1, dxfattribs={'color': 2})
-            # Mini Prologos text
             blk.add_text("RUAS", dxfattribs={'height': 1.5, 'color': 7}).set_placement((0, -7), align=TextEntityAlignment.CENTER)
+
+    @staticmethod
+    def get_street_width(highway_tag):
+        """Returns the authoritative half-width for a given highway type."""
+        # Cleaned up and centralized for geometric accuracy
+        widths = {
+            'motorway': 12.0,
+            'trunk': 10.0,
+            'primary': 8.0,
+            'secondary': 7.0,
+            'tertiary': 6.0,
+            'residential': 5.0,
+            'service': 3.5,
+            'living_street': 3.0,
+            'pedestrian': 4.0,
+            'track': 3.0
+        }
+        return widths.get(highway_tag, 5.0)
