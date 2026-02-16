@@ -13,6 +13,21 @@ const MapPreview: React.FC<MapPreviewProps> = ({ center, radius, onCenterChange 
   const mapInstanceRef = useRef<L.Map | null>(null);
   const circleRef = useRef<L.Circle | null>(null);
 
+  const flyToCenter = (map: L.Map, target: GeoLocation) => {
+    const next = L.latLng(target.lat, target.lng);
+    const current = map.getCenter();
+    const distance = current.distanceTo(next);
+    const zoom = map.getZoom();
+
+    if (distance < 1) {
+      map.setView(next, zoom, { animate: false });
+      return;
+    }
+
+    const duration = distance > 5000 ? 1.8 : distance > 1000 ? 1.3 : 0.9;
+    map.flyTo(next, zoom, { duration, easeLinearity: 0.2, noMoveStart: true });
+  };
+
   // Initialize Map
   useEffect(() => {
     if (mapContainerRef.current && !mapInstanceRef.current) {
@@ -41,7 +56,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({ center, radius, onCenterChange 
       onCenterChange({
         lat,
         lng,
-        label: `Selected Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`
+        label: `Selected Location (${lat.toFixed(6)}, ${lng.toFixed(6)})`
       });
     };
 
@@ -55,8 +70,7 @@ const MapPreview: React.FC<MapPreviewProps> = ({ center, radius, onCenterChange 
   // Update View and Circle when props change
   useEffect(() => {
     if (mapInstanceRef.current) {
-      // Smooth flyTo is nicer than setView for small adjustments
-      mapInstanceRef.current.flyTo([center.lat, center.lng], mapInstanceRef.current.getZoom());
+      flyToCenter(mapInstanceRef.current, center);
 
       // Remove old circle
       if (circleRef.current) {
