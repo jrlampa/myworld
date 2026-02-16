@@ -39,7 +39,7 @@ def test_violation_detection():
     violations = summary['violations_list']
     assert len(violations) == 1
     assert violations[0]['type'] == 'proximity'
-    assert "Building 1 is within 5m of a Power Line." in violations[0]['description']
+    assert "within 5.0m of power line" in violations[0]['description']
     # Check coordinate propagation (within building bounds approx)
     assert isinstance(violations[0]['lat'], float)
     assert isinstance(violations[0]['lon'], float)

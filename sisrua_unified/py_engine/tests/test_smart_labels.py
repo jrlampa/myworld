@@ -16,8 +16,8 @@ class TestSmartLabels:
         return DXFGenerator("test_labels.dxf")
 
     def test_rotation_horizontal(self, dxf_gen):
-        # Horizontal line (0 degrees)
-        line = LineString([(0,0), (10,0)])
+        # Horizontal line (0 degrees) - must be >= 30m to get a label
+        line = LineString([(0,0), (50,0)])
         gdf = GeoDataFrame({'geometry': [line], 'name': ['Rua Horizontal'], 'highway': ['residential']})
         
         dxf_gen.add_features(gdf)
@@ -31,8 +31,8 @@ class TestSmartLabels:
         assert abs(text.dxf.rotation - 0) < 1, f"Horizontal line should have 0 deg rotation, got {text.dxf.rotation}"
 
     def test_rotation_vertical(self, dxf_gen):
-        # Vertical line (90 degrees)
-        line = LineString([(0,0), (0,10)])
+        # Vertical line (90 degrees) - must be >= 30m to get a label
+        line = LineString([(0,0), (0,50)])
         gdf = GeoDataFrame({'geometry': [line], 'name': ['Rua Vertical'], 'highway': ['residential']})
         dxf_gen.add_features(gdf)
         
@@ -44,8 +44,8 @@ class TestSmartLabels:
         assert abs(text.dxf.rotation - 90) < 1, f"Vertical line should have 90 deg rotation, got {text.dxf.rotation}"
 
     def test_rotation_readability(self, dxf_gen):
-        # Line going left (180 degrees) -> Text should be flipped to 0 for readability
-        line = LineString([(10,0), (0,0)])
+        # Line going left (180 degrees) -> Text should be flipped to 0 for readability - must be >= 30m
+        line = LineString([(50,0), (0,0)])
         gdf = GeoDataFrame({'geometry': [line], 'name': ['Rua Invertida'], 'highway': ['residential']})
         dxf_gen.add_features(gdf)
         

@@ -22,8 +22,8 @@ class TestElevation:
         }
         mock_post.return_value = mock_resp
         
-        # Call
-        elevations = fetch_elevation_grid(10.1, 10.0, 10.2, 10.0, resolution=10000) # Big resolution for few points
+        # Call - function returns (elevations, rows, cols)
+        elevations, rows, cols = fetch_elevation_grid(10.1, 10.0, 10.2, 10.0, resolution=10000) # Big resolution for few points
         
         assert len(elevations) > 0
         assert elevations[0][2] == 100.0
@@ -35,8 +35,8 @@ class TestElevation:
         mock_resp.status_code = 500
         mock_post.return_value = mock_resp
         
-        # Call
-        elevations = fetch_elevation_grid(10.1, 10.0, 10.2, 10.0, resolution=10000)
+        # Call - function returns (elevations, rows, cols)
+        elevations, rows, cols = fetch_elevation_grid(10.1, 10.0, 10.2, 10.0, resolution=10000)
         
         # Should return 0 elevation on failure
         assert len(elevations) > 0
