@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon, MultiPolygon, LineString, MultiLineString, Point
+from shapely.ops import unary_union
 import geopandas as gpd
 import math
 
@@ -14,11 +15,16 @@ try:
         DEFAULT_TEXT_HEIGHT, MIN_LINE_LENGTH_FOR_LABEL,
         LABEL_ROTATION_SAMPLE_START, LABEL_ROTATION_SAMPLE_END,
         MIN_ANGLE_DEGREES, MAX_ANGLE_DEGREES, ANGLE_FLIP_OFFSET,
-        LAYER_EDIFICACAO, LAYER_VIAS, LAYER_VIAS_MEIO_FIO, LAYER_VEGETACAO,
+        LAYER_EDIFICACAO, LAYER_VIAS_MEIO_FIO, LAYER_VEGETACAO,
         LAYER_EQUIPAMENTOS, LAYER_HIDROGRAFIA, LAYER_INFRA_POWER_HV,
         LAYER_INFRA_POWER_LV, LAYER_INFRA_TELECOM, LAYER_MOBILIARIO_URBANO,
         LAYER_TEXTO, LAYER_DEFAULT, MIN_POLYGON_POINTS, MIN_LINE_POINTS,
-        COORDINATE_EPSILON
+        COORDINATE_EPSILON,
+        LAYER_VIAS_MOTORWAY, LAYER_VIAS_TRUNK, LAYER_VIAS_PRIMARY,
+        LAYER_VIAS_SECONDARY, LAYER_VIAS_TERTIARY, LAYER_VIAS_RESIDENTIAL,
+        LAYER_VIAS_SERVICE, LAYER_VIAS_UNCLASSIFIED, LAYER_VIAS_PEDESTRIAN,
+        LAYER_VIAS_FOOTWAY, LAYER_VIAS_CYCLEWAY, LAYER_VIAS_PATH,
+        LAYER_VIAS_DEFAULT, LAYER_QUADRO
     )
 except (ImportError, ValueError):
     from dxf_styles import DXFStyleManager
@@ -28,11 +34,16 @@ except (ImportError, ValueError):
         DEFAULT_TEXT_HEIGHT, MIN_LINE_LENGTH_FOR_LABEL,
         LABEL_ROTATION_SAMPLE_START, LABEL_ROTATION_SAMPLE_END,
         MIN_ANGLE_DEGREES, MAX_ANGLE_DEGREES, ANGLE_FLIP_OFFSET,
-        LAYER_EDIFICACAO, LAYER_VIAS, LAYER_VIAS_MEIO_FIO, LAYER_VEGETACAO,
+        LAYER_EDIFICACAO, LAYER_VIAS_MEIO_FIO, LAYER_VEGETACAO,
         LAYER_EQUIPAMENTOS, LAYER_HIDROGRAFIA, LAYER_INFRA_POWER_HV,
         LAYER_INFRA_POWER_LV, LAYER_INFRA_TELECOM, LAYER_MOBILIARIO_URBANO,
         LAYER_TEXTO, LAYER_DEFAULT, MIN_POLYGON_POINTS, MIN_LINE_POINTS,
-        COORDINATE_EPSILON
+        COORDINATE_EPSILON,
+        LAYER_VIAS_MOTORWAY, LAYER_VIAS_TRUNK, LAYER_VIAS_PRIMARY,
+        LAYER_VIAS_SECONDARY, LAYER_VIAS_TERTIARY, LAYER_VIAS_RESIDENTIAL,
+        LAYER_VIAS_SERVICE, LAYER_VIAS_UNCLASSIFIED, LAYER_VIAS_PEDESTRIAN,
+        LAYER_VIAS_FOOTWAY, LAYER_VIAS_CYCLEWAY, LAYER_VIAS_PATH,
+        LAYER_VIAS_DEFAULT, LAYER_QUADRO
     )
 
 from ezdxf.enums import TextEntityAlignment
@@ -58,6 +69,25 @@ class DXFGenerator:
         self.msp = self.doc.modelspace()
         self.project_info = {}  # Store metadata for title block
         self._offset_initialized = False
+
+    @staticmethod
+    def get_street_layer(highway_type):
+        """Map highway type to specific layer"""
+        layer_map = {
+            'motorway': LAYER_VIAS_MOTORWAY,
+            'trunk': LAYER_VIAS_TRUNK,
+            'primary': LAYER_VIAS_PRIMARY,
+            'secondary': LAYER_VIAS_SECONDARY,
+            'tertiary': LAYER_VIAS_TERTIARY,
+            'residential': LAYER_VIAS_RESIDENTIAL,
+            'service': LAYER_VIAS_SERVICE,
+            'unclassified': LAYER_VIAS_UNCLASSIFIED,
+            'pedestrian': LAYER_VIAS_PEDESTRIAN,
+            'footway': LAYER_VIAS_FOOTWAY,
+            'cycleway': LAYER_VIAS_CYCLEWAY,
+            'path': LAYER_VIAS_PATH,
+        }
+        return layer_map.get(highway_type, LAYER_VIAS_DEFAULT)
 
     def add_features(self, gdf):
         """
@@ -89,13 +119,118 @@ class DXFGenerator:
         else:
             self.bounds = [float(v) for v in b]
 
-        for _, row in gdf.iterrows():
+        # Process streets with improved intersection handling
+        streets_gdf = gdf[gdf.apply(lambda r: 'highway' in r and not pd.isna(r['highway']), axis=1)]
+        if not streets_gdf.empty:
+            Logger.debug(f"Processing {len(streets_gdf)} streets with intersection joins")
+            self._process_streets_with_joins(streets_gdf)
+        
+        # Process non-street features normally
+        non_streets_gdf = gdf[~gdf.apply(lambda r: 'highway' in r and not pd.isna(r['highway']), axis=1)]
+        for _, row in non_streets_gdf.iterrows():
             geom = row.geometry
             tags = row.drop('geometry')
             
             layer = self.determine_layer(tags, row)
             
             self._draw_geometry(geom, layer, self.diff_x, self.diff_y, tags)
+
+    def _process_streets_with_joins(self, streets_gdf):
+        """
+        Process all streets together to create proper intersections with joins.
+        Streets are buffered based on their width, then unified to merge overlaps.
+        """
+        if streets_gdf.empty:
+            return
+        
+        # Group streets by type for different widths and colors
+        street_groups = {}
+        for _, row in streets_gdf.iterrows():
+            highway_type = row.get('highway', 'unclassified')
+            if highway_type not in street_groups:
+                street_groups[highway_type] = []
+            street_groups[highway_type].append(row)
+        
+        labeled_street_names = set()
+
+        # Process each group
+        for highway_type, street_rows in street_groups.items():
+            width = DXFStyleManager.get_street_width(highway_type)
+            street_layer = self.get_street_layer(highway_type)
+            
+            # Collect all geometries for this type
+            geometries = []
+            street_data = []  # Store for labels
+            for row in street_rows:
+                geom = row.geometry
+                if isinstance(geom, LineString):
+                    geometries.append(geom)
+                    street_data.append(row)
+                elif isinstance(geom, MultiLineString):
+                    for line in geom.geoms:
+                        geometries.append(line)
+                        street_data.append(row)
+            
+            if not geometries:
+                continue
+            
+            # Create buffers for all streets
+            buffered = []
+            for geom in geometries:
+                try:
+                    # Buffer with rounded caps and mitered joins for clean intersections
+                    buf = geom.buffer(width, cap_style=2, join_style=2)  # cap_style=2 (flat), join_style=2 (mitered)
+                    if not buf.is_empty:
+                        buffered.append(buf)
+                except Exception as e:
+                    Logger.debug(f"Buffer failed for {highway_type}: {e}")
+                    continue
+            
+            if not buffered:
+                continue
+            
+            # Merge all buffers to create clean joins at intersections
+            try:
+                unified = unary_union(buffered)
+                Logger.debug(f"Unified {len(buffered)} {highway_type} streets into continuous geometry")
+            except Exception as e:
+                Logger.debug(f"Union failed for {highway_type}: {e}")
+                unified = buffered[0] if buffered else None
+            
+            if unified is None or unified.is_empty:
+                continue
+            
+            # Draw the unified geometry as solid areas (polygons) on highway-specific layer
+            if isinstance(unified, Polygon):
+                self._draw_polygon(unified, street_layer, self.diff_x, self.diff_y, {})
+            elif isinstance(unified, MultiPolygon):
+                for poly in unified.geoms:
+                    self._draw_polygon(poly, street_layer, self.diff_x, self.diff_y, {})
+            
+            # Draw centerlines for reference and pick one best label placement per street name
+            label_candidates = {}
+            for i, geom in enumerate(geometries):
+                # Draw centerline as thin reference
+                points = [self._safe_p((p[0] - self.diff_x, p[1] - self.diff_y)) for p in geom.coords]
+                points = self._validate_points(points, min_points=2)
+                if points:
+                    self.msp.add_lwpolyline(points, close=False, dxfattribs={'layer': street_layer})
+                
+                # Choose one label candidate per name (longest geometry wins)
+                if i < len(street_data):
+                    row = street_data[i]
+                    if 'name' in row and not pd.isna(row['name']):
+                        name = str(row['name']).strip()
+                        if name and name.lower() != 'nan' and geom.length >= 30.0:
+                            candidate = label_candidates.get(name)
+                            if candidate is None or geom.length > candidate.length:
+                                label_candidates[name] = geom
+
+            for name, label_geom in label_candidates.items():
+                if name in labeled_street_names:
+                    continue
+                self._add_street_label(label_geom, name, self.diff_x, self.diff_y)
+                labeled_street_names.add(name)
 
     def determine_layer(self, tags, row):
         """Maps OSM tags to DXF Layers using constants"""
@@ -117,7 +252,9 @@ class DXFGenerator:
         if 'building' in tags and not pd.isna(tags['building']):
             return LAYER_EDIFICACAO
         if 'highway' in tags and not pd.isna(tags['highway']):
-            return LAYER_VIAS
+            # Return specific layer based on highway type
+            highway_type = str(tags['highway']).lower()
+            return self.get_street_layer(highway_type)
         if 'natural' in tags and tags['natural'] in ['tree', 'wood', 'scrub']:
             return LAYER_VEGETACAO
         if 'amenity' in tags:
@@ -178,8 +315,8 @@ class DXFGenerator:
         if layer not in self.doc.layers:
             layer = LAYER_DEFAULT
 
-        # Draw Labels for Streets
-        if (layer == LAYER_VIAS or layer == LAYER_DEFAULT) and 'name' in tags:
+        # Draw Labels for Streets (any street layer starts with sisRUA_VIAS_)
+        if (layer.startswith('sisRUA_VIAS_') or layer == LAYER_DEFAULT) and 'name' in tags:
             name = str(tags['name'])
             if name.lower() != 'nan' and name.strip():
                 self._add_street_label(geom, name, diff_x, diff_y)
@@ -192,13 +329,13 @@ class DXFGenerator:
                 self._draw_polygon(poly, layer, diff_x, diff_y, tags)
         elif isinstance(geom, LineString):
             self._draw_linestring(geom, layer, diff_x, diff_y)
-            # Draw offsets for streets
-            if layer == LAYER_VIAS and 'highway' in tags:
+            # Draw offsets for streets (any street layer)
+            if layer.startswith('sisRUA_VIAS_') and 'highway' in tags:
                 self._draw_street_offsets(geom, tags, diff_x, diff_y)
         elif isinstance(geom, MultiLineString):
             for line in geom.geoms:
                 self._draw_linestring(line, layer, diff_x, diff_y)
-                if layer == LAYER_VIAS and 'highway' in tags:
+                if layer.startswith('sisRUA_VIAS_') and 'highway' in tags:
                     self._draw_street_offsets(line, tags, diff_x, diff_y)
         elif isinstance(geom, Point):
             self._draw_point(geom, layer, diff_x, diff_y, tags)
@@ -329,7 +466,7 @@ class DXFGenerator:
             return  # Skip invalid polygon
         self.msp.add_lwpolyline(points, close=True, dxfattribs=dxf_attribs)
         
-        if layer == 'EDIFICACAO':
+        if layer == LAYER_EDIFICACAO:
             try:
                 area = poly.area
                 centroid = poly.centroid
@@ -338,7 +475,7 @@ class DXFGenerator:
                     txt = self.msp.add_text(
                         f"{area:.1f} m2",
                         dxfattribs={
-                            'layer': 'ANNOT_AREA',
+                            'layer': 'sisRUA_ANNOT_AREA',
                             'height': 1.5,
                             'color': 7
                         }
@@ -364,7 +501,7 @@ class DXFGenerator:
 
                 clean_points = deduplicate_epsilon(points)
                 if clean_points and len(clean_points) >= 3:
-                    hatch = self.msp.add_hatch(color=253, dxfattribs={'layer': 'EDIFICACAO_HATCH'})
+                    hatch = self.msp.add_hatch(color=253, dxfattribs={'layer': 'sisRUA_EDIFICACAO_HATCH'})
                     hatch.set_pattern_fill('ANSI31', scale=0.5, angle=45.0)
                     hatch.paths.add_polyline_path(clean_points, is_closed=True)
             except Exception as he:
@@ -384,8 +521,8 @@ class DXFGenerator:
             return  # Skip invalid linestring
         self.msp.add_lwpolyline(points, close=False, dxfattribs={'layer': layer})
         
-        # Annotate length for roads
-        if layer == 'VIAS':
+        # Annotate length for roads (any street layer)
+        if layer.startswith('sisRUA_VIAS_'):
             try:
                 length = line.length
                 if not (math.isnan(length) or math.isinf(length)):
@@ -395,7 +532,7 @@ class DXFGenerator:
                         ltxt = self.msp.add_text(
                             f"{length:.1f}m",
                             dxfattribs={
-                                'layer': 'ANNOT_LENGTH',
+                                'layer': 'sisRUA_ANNOT_LENGTH',
                                 'height': 2.0,
                                 'color': 7,
                                 'rotation': 0.0
@@ -433,30 +570,30 @@ class DXFGenerator:
             'V_LEVEL': tags.get('voltage', '0V')
         })
 
-        if layer == 'VEGETACAO':
-             self.msp.add_blockref('ARVORE', (x, y))
-        elif layer == 'MOBILIARIO_URBANO':
-             amenity = tags.get('amenity')
-             highway = tags.get('highway')
-             if amenity == 'bench':
-                 self.msp.add_blockref('BANCO', (x, y))
-             elif amenity == 'waste_basket':
-                 self.msp.add_blockref('LIXEIRA', (x, y))
-             elif highway == 'street_lamp':
-                 self.msp.add_blockref('POSTE_LUZ', (x, y))
-             else:
-                 self.msp.add_circle((x, y), radius=0.3, dxfattribs={'layer': layer, 'color': 40})
-        elif layer == 'EQUIPAMENTOS':
-             self.msp.add_blockref('POSTE', (x, y)).add_auto_attribs(attribs)
+        if layer == LAYER_VEGETACAO:
+            self.msp.add_blockref('ARVORE', (x, y))
+        elif layer == LAYER_MOBILIARIO_URBANO:
+            amenity = tags.get('amenity')
+            highway = tags.get('highway')
+            if amenity == 'bench':
+                self.msp.add_blockref('BANCO', (x, y))
+            elif amenity == 'waste_basket':
+                self.msp.add_blockref('LIXEIRA', (x, y))
+            elif highway == 'street_lamp':
+                self.msp.add_blockref('POSTE_LUZ', (x, y))
+            else:
+                self.msp.add_circle((x, y), radius=0.3, dxfattribs={'layer': layer, 'color': 40})
+        elif layer == LAYER_EQUIPAMENTOS:
+            self.msp.add_blockref('POSTE', (x, y)).add_auto_attribs(attribs)
         elif 'INFRA_POWER' in layer:
-             if layer == 'INFRA_POWER_HV' or tags.get('power') == 'tower':
-                 self.msp.add_blockref('TORRE', (x, y)).add_auto_attribs(attribs)
-             else:
-                 self.msp.add_blockref('POSTE', (x, y)).add_auto_attribs(attribs)
-        elif layer == 'INFRA_TELECOM':
-             self.msp.add_blockref('POSTE', (x, y), dxfattribs={'xscale': 0.8, 'yscale': 0.8}).add_auto_attribs(attribs)
+            if layer == LAYER_INFRA_POWER_HV or tags.get('power') == 'tower':
+                self.msp.add_blockref('TORRE', (x, y)).add_auto_attribs(attribs)
+            else:
+                self.msp.add_blockref('POSTE', (x, y)).add_auto_attribs(attribs)
+        elif layer == LAYER_INFRA_TELECOM:
+            self.msp.add_blockref('POSTE', (x, y), dxfattribs={'xscale': 0.8, 'yscale': 0.8}).add_auto_attribs(attribs)
         else:
-             self.msp.add_circle((x, y), radius=0.5, dxfattribs={'layer': layer})
+            self.msp.add_circle((x, y), radius=0.5, dxfattribs={'layer': layer})
 
     def add_terrain_from_grid(self, grid_rows):
         """
@@ -472,7 +609,7 @@ class DXFGenerator:
         if rows < 2 or cols < 2:
             return
 
-        mesh = self.msp.add_polymesh(size=(rows, cols), dxfattribs={'layer': 'TERRENO', 'color': 252})
+        mesh = self.msp.add_polymesh(size=(rows, cols), dxfattribs={'layer': 'sisRUA_TERRENO', 'color': 252})
         
         for r, row in enumerate(grid_rows):
             for c, p in enumerate(row):
@@ -502,7 +639,7 @@ class DXFGenerator:
              if valid_line:
                  self.msp.add_polyline3d(
                      valid_line, 
-                     dxfattribs={'layer': 'TOPOGRAFIA_CURVAS', 'color': 8}
+                     dxfattribs={'layer': 'sisRUA_TOPOGRAFIA_CURVAS', 'color': 8}
                  )
 
     def add_cartographic_elements(self, min_x, min_y, max_x, max_y, diff_x, diff_y):
@@ -535,7 +672,7 @@ class DXFGenerator:
             (max_x - diff_x + 5, max_y - diff_y + 5),
             (min_x - diff_x - 5, max_y - diff_y + 5)
         ]
-        self.msp.add_lwpolyline(frame_pts, close=True, dxfattribs={'layer': 'QUADRO', 'color': 7})
+        self.msp.add_lwpolyline(frame_pts, close=True, dxfattribs={'layer': LAYER_QUADRO, 'color': 7})
 
         # Tick marks and labels (every 50m)
         step = 50.0
@@ -546,7 +683,7 @@ class DXFGenerator:
             if min_x - 5 <= x <= max_x + 5:
                 # Bottom label
                 try:
-                    self.msp.add_text(f"E: {x:.0f}", dxfattribs={'height': 2, 'layer': 'QUADRO'}).set_placement(
+                    self.msp.add_text(f"E: {x:.0f}", dxfattribs={'height': 2, 'layer': LAYER_QUADRO}).set_placement(
                         (dx, min_y - diff_y - 8), align=TextEntityAlignment.CENTER
                     )
                 except: pass
@@ -557,7 +694,7 @@ class DXFGenerator:
             if min_y - 5 <= y <= max_y + 5:
                 # Left label
                 try:
-                    self.msp.add_text(f"N: {y:.0f}", dxfattribs={'height': 2, 'layer': 'QUADRO', 'rotation': 90.0}).set_placement(
+                    self.msp.add_text(f"N: {y:.0f}", dxfattribs={'height': 2, 'layer': LAYER_QUADRO, 'rotation': 90.0}).set_placement(
                         (min_x - diff_x - 8, dy), align=TextEntityAlignment.CENTER
                     )
                 except: pass
@@ -570,25 +707,25 @@ class DXFGenerator:
         start_y = self._safe_v(max_y - self.diff_y)
         
         # Legend Header
-        self.msp.add_text("LEGENDA TÉCNICA", dxfattribs={'height': 4, 'style': 'PRO_STYLE', 'layer': 'QUADRO'}).set_placement((start_x, start_y))
+        self.msp.add_text("LEGENDA TÉCNICA", dxfattribs={'height': 4, 'style': 'PRO_STYLE', 'layer': LAYER_QUADRO}).set_placement((start_x, start_y))
         
         items = [
-            ("EDIFICAÇÕES", "EDIFICACAO", 5),
-            ("VIAS / RUAS", "VIAS", 1),
-            ("MEIO-FIO", "VIAS_MEIO_FIO", 9),
-            ("VEGETAÇÃO", "VEGETACAO", 3),
-            ("ILUMINAÇÃO PÚBLICA", "MOBILIARIO_URBANO", 2),
-            ("REDE ELÉTRICA (AT)", "INFRA_POWER_HV", 1),
-            ("REDE ELÉTRICA (BT)", "INFRA_POWER_LV", 30),
-            ("TELECOMUNICAÇÕES", "INFRA_TELECOM", 90),
-            ("CURVAS DE NÍVEL", "TOPOGRAFIA_CURVAS", 8)
+            ("EDIFICAÇÕES", "sisRUA_EDIFICACAO", 5),
+            ("VIAS / RUAS", "sisRUA_VIAS_PRIMARY", 1),
+            ("MEIO-FIO", "sisRUA_VIAS_MEIO_FIO", 9),
+            ("VEGETAÇÃO", "sisRUA_VEGETACAO", 3),
+            ("ILUMINAÇÃO PÚBLICA", "sisRUA_MOBILIARIO_URBANO", 2),
+            ("REDE ELÉTRICA (AT)", "sisRUA_INFRA_POWER_HV", 1),
+            ("REDE ELÉTRICA (BT)", "sisRUA_INFRA_POWER_LV", 30),
+            ("TELECOMUNICAÇÕES", "sisRUA_INFRA_TELECOM", 90),
+            ("CURVAS DE NÍVEL", "sisRUA_TOPOGRAFIA_CURVAS", 8)
         ]
         
         y_offset = -10
         for label, layer, color in items:
             # Sample Geometry
             self.msp.add_line((start_x, start_y + y_offset), (start_x + 10, start_y + y_offset), dxfattribs={'layer': layer, 'color': color})
-            self.msp.add_text(label, dxfattribs={'height': 2.5, 'layer': 'QUADRO'}).set_placement((start_x + 12, start_y + y_offset - 1))
+            self.msp.add_text(label, dxfattribs={'height': 2.5, 'layer': LAYER_QUADRO}).set_placement((start_x + 12, start_y + y_offset - 1))
             y_offset -= 8
 
     def add_title_block(self, client="N/A", project="Projeto Urbanístico", designer="sisRUA AI"):
@@ -600,7 +737,7 @@ class DXFGenerator:
         width, height = 420, 297
         
         # 2. Draw A3 Border
-        layout.add_lwpolyline([(0, 0), (width, 0), (width, height), (0, height)], close=True, dxfattribs={'layer': 'QUADRO', 'lineweight': 50})
+        layout.add_lwpolyline([(0, 0), (width, 0), (width, height), (0, height)], close=True, dxfattribs={'layer': LAYER_QUADRO, 'lineweight': 50})
         
         # 3. Create Viewport (Visualizing Model Space)
         # Place it inside the border
@@ -617,11 +754,11 @@ class DXFGenerator:
         cb_w, cb_h = 185, 50
         
         # Main box
-        layout.add_lwpolyline([(cb_x, cb_y), (cb_x + cb_w, cb_y), (cb_x + cb_w, cb_y + cb_h), (cb_x, cb_y + cb_h)], close=True, dxfattribs={'layer': 'QUADRO'})
+        layout.add_lwpolyline([(cb_x, cb_y), (cb_x + cb_w, cb_y), (cb_x + cb_w, cb_y + cb_h), (cb_x, cb_y + cb_h)], close=True, dxfattribs={'layer': LAYER_QUADRO})
         
         # Sub-divisions
-        layout.add_line((cb_x, cb_y + 25), (cb_x + cb_w, cb_y + 25), dxfattribs={'layer': 'QUADRO'})
-        layout.add_line((cb_x + 100, cb_y), (cb_x + 100, cb_y + 25), dxfattribs={'layer': 'QUADRO'})
+        layout.add_line((cb_x, cb_y + 25), (cb_x + cb_w, cb_y + 25), dxfattribs={'layer': LAYER_QUADRO})
+        layout.add_line((cb_x + 100, cb_y), (cb_x + 100, cb_y + 25), dxfattribs={'layer': LAYER_QUADRO})
         
         # Add Text Fields (Sanitized)
         import datetime
