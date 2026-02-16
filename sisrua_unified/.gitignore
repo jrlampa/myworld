@@ -35,6 +35,14 @@ test_utm*.dxf
 test_utm_validation.py
 test_api_v*.dxf
 
+# Coverage reports
+coverage/
+*.coverage
+.coverage
+htmlcov/
+.pytest_cache/
+coverage-final.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
