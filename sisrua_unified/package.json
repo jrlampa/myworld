@@ -7,6 +7,7 @@
     "dev": "concurrently \"npm run server\" \"vite\"",
     "client": "vite",
     "build": "tsc && vite build",
+    "build:all": "powershell -ExecutionPolicy Bypass -File scripts/build_release.ps1",
     "preview": "vite preview",
     "server": "tsx watch server/index.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
