@@ -287,13 +287,6 @@ function App() {
             onRedo={redo}
           />
 
-          <div className="hidden lg:flex items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-            <div className="flex items-center gap-1.5 border-l border-white/10 pl-4">
-              <div className={`w-1.5 h-1.5 rounded-full ${settings.enableAI ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`}></div>
-              <span>{settings.enableAI ? "AI Ready" : "AI Inactive"}</span>
-            </div>
-          </div>
-
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
