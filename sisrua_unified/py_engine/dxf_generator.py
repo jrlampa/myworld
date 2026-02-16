@@ -19,8 +19,8 @@ class DXFGenerator:
     def __init__(self, filename):
         self.filename = filename
         self.doc = ezdxf.new('R2013')
-        self.diff_x = 0
-        self.diff_y = 0
+        self.diff_x = 0.0
+        self.diff_y = 0.0
         self.bounds = [0.0, 0.0, 0.0, 0.0]  # Standard bounding box
         
         # Setup CAD standards via StyleManager (SRP Refactor)
@@ -44,8 +44,10 @@ class DXFGenerator:
         # AUTHORITATIVE OFFSET: Once set, it applies to everything (features, terrain, labels)
         if not self._offset_initialized:
             centroids = gdf.geometry.centroid
-            self.diff_x = centroids.x.dropna().mean() if not centroids.x.dropna().empty else 0
-            self.diff_y = centroids.y.dropna().mean() if not centroids.y.dropna().empty else 0
+            cx = centroids.x.dropna().mean() if not centroids.x.dropna().empty else 0.0
+            cy = centroids.y.dropna().mean() if not centroids.y.dropna().empty else 0.0
+            self.diff_x = self._safe_v(cx)
+            self.diff_y = self._safe_v(cy)
             self._offset_initialized = True
 
         # Validate and store bounds
@@ -96,36 +98,43 @@ class DXFGenerator:
             
         return '0' # Default layer
 
+    def _safe_v(self, v, default=0.0):
+        """Absolute guard for float values"""
+        try:
+            val = float(v)
+            if math.isnan(val) or math.isinf(val) or abs(val) > 1e11:
+                return default
+            return val
+        except:
+            return default
+
+    def _safe_p(self, p, default=(0.0, 0.0)):
+        """Absolute guard for point tuples"""
+        try:
+            return tuple(self._safe_v(v) for v in p)
+        except:
+            return default
+
     def _validate_points(self, points, min_points=2, is_3d=False):
-        """Validate points list for DXF entities to prevent read errors
-        
-        Args:
-            points: List of (x, y) or (x, y, z) tuples
-            min_points: Minimum required points
-            is_3d: If True, expects (x, y, z)
-            
-        Returns:
-            Validated list of points, or None if invalid
-        """
+        """Validate points list for DXF entities to prevent read errors"""
         if not points or len(points) < min_points:
             return None
             
-        # Filter out invalid coordinates and filter duplicate sequential points
         valid_points = []
         last_p = None
         for p in points:
             try:
-                vals = [float(v) for v in p]
-                if any(math.isnan(v) or math.isinf(v) or abs(v) > 1e11 for v in vals):
+                # Use our safe helper for each coordinate
+                vals = [self._safe_v(v, default=None) for v in p]
+                if None in vals:
                     continue
                 curr_p = tuple(vals)
                 if curr_p != last_p:
                     valid_points.append(curr_p)
                     last_p = curr_p
-            except (ValueError, TypeError, IndexError):
+            except:
                 continue
         
-        # Return None if we don't have enough valid points
         if len(valid_points) < min_points:
             return None
             
@@ -164,20 +173,21 @@ class DXFGenerator:
                             pass
 
                     try:
+                        safe_align = (self._safe_v(centroid.x - diff_x), self._safe_v(centroid.y - diff_y))
                         text = self.msp.add_text(
                             name, 
                             dxfattribs={
                                 'layer': 'TEXTO', 
                                 'height': 2.5,
-                                'rotation': float(rotation),
+                                'rotation': self._safe_v(rotation),
                                 'style': 'PRO_STYLE'
                             }
                         )
                         text.dxf.halign = 1
                         text.dxf.valign = 2
-                        text.dxf.align_point = (float(centroid.x - diff_x), float(centroid.y - diff_y))
-                    except Exception:
-                        pass
+                        text.dxf.align_point = safe_align
+                    except Exception as te:
+                        Logger.info(f"Label creation failed: {te}")
 
         if isinstance(geom, Polygon):
             self._draw_polygon(geom, layer, diff_x, diff_y, tags)
@@ -227,10 +237,10 @@ class DXFGenerator:
                         self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
                 elif isinstance(side_geom, MultiLineString):
                      for subline in side_geom.geoms:
-                          pts = [(p[0] - diff_x, p[1] - diff_y) for p in subline.coords]
-                          pts = self._validate_points(pts, min_points=2)
-                          if pts:
-                               self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
+                           pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in subline.coords]
+                           pts = self._validate_points(pts, min_points=2)
+                           if pts:
+                                self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
         except Exception as e:
             Logger.info(f"Geometry offset skipped: {e}")
 
@@ -264,7 +274,7 @@ class DXFGenerator:
         dxf_attribs = {'layer': layer, 'thickness': thickness}
 
         # Exterior
-        points = [(p[0] - diff_x, p[1] - diff_y) for p in poly.exterior.coords]
+        points = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in poly.exterior.coords]
         points = self._validate_points(points, min_points=3)  # Polygons need at least 3 points
         if not points:
             return  # Skip invalid polygon
@@ -275,6 +285,7 @@ class DXFGenerator:
                 area = poly.area
                 centroid = poly.centroid
                 if centroid and not (math.isnan(area) or math.isinf(area) or math.isnan(centroid.x) or math.isnan(centroid.y)):
+                    safe_p = (self._safe_v(centroid.x - diff_x), self._safe_v(centroid.y - diff_y))
                     self.msp.add_text(
                         f"{area:.1f} m2",
                         dxfattribs={
@@ -282,27 +293,29 @@ class DXFGenerator:
                             'height': 1.5,
                             'color': 7
                         }
-                    ).set_placement((float(centroid.x - diff_x), float(centroid.y - diff_y)), align=TextEntityAlignment.CENTER)
+                    ).set_placement(safe_p, align=TextEntityAlignment.CENTER)
             except Exception as e:
                 Logger.info(f"Area annotation failed: {e}")
 
             # High-Fidelity Hatching (ANSI31) - Use validated points
+            # Ensure we have at least 3 distinct points for a valid hatch
             try:
-                hatch = self.msp.add_hatch(color=253, dxfattribs={'layer': 'EDIFICACAO_HATCH'})
-                hatch.set_pattern_fill('ANSI31', scale=0.5, angle=45)
-                hatch.paths.add_polyline_path(points, is_closed=True)
+                if points and len(set(points)) >= 3:
+                    hatch = self.msp.add_hatch(color=253, dxfattribs={'layer': 'EDIFICACAO_HATCH'})
+                    hatch.set_pattern_fill('ANSI31', scale=0.5, angle=45)
+                    hatch.paths.add_polyline_path(points, is_closed=True)
             except Exception as he:
                 Logger.info(f"Hatch failed for building: {he}")
 
         # Holes (optional, complex polygons)
         for interior in poly.interiors:
-             points = [(p[0] - diff_x, p[1] - diff_y) for p in interior.coords]
+             points = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in interior.coords]
              points = self._validate_points(points, min_points=3)
              if points:
                  self.msp.add_lwpolyline(points, close=True, dxfattribs=dxf_attribs)
 
     def _draw_linestring(self, line, layer, diff_x, diff_y):
-        points = [(p[0] - diff_x, p[1] - diff_y) for p in line.coords]
+        points = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in line.coords]
         points = self._validate_points(points, min_points=2)
         if not points:
             return  # Skip invalid linestring
@@ -315,15 +328,16 @@ class DXFGenerator:
                 if not (math.isnan(length) or math.isinf(length)):
                     mid = line.interpolate(0.5, normalized=True)
                     if mid and not (math.isnan(mid.x) or math.isnan(mid.y)):
+                        safe_mid = (self._safe_v(mid.x - diff_x), self._safe_v(mid.y - diff_y))
                         self.msp.add_text(
                             f"{length:.1f}m",
                             dxfattribs={
                                 'layer': 'ANNOT_LENGTH',
                                 'height': 2.0,
                                 'color': 7,
-                                'rotation': 0 # Could calculate rotation from line tangent
+                                'rotation': 0.0
                             }
-                        ).set_placement((mid.x - diff_x, mid.y - diff_y), align=TextEntityAlignment.CENTER)
+                        ).set_placement(safe_mid, align=TextEntityAlignment.CENTER)
             except Exception as e:
                 Logger.info(f"Length annotation failed: {e}")
 
@@ -343,7 +357,7 @@ class DXFGenerator:
         if math.isnan(point.x) or math.isnan(point.y):
             return
             
-        x, y = point.x - diff_x, point.y - diff_y
+        x, y = self._safe_v(point.x - diff_x), self._safe_v(point.y - diff_y)
         
         # Prepare attributes
         attribs = self._sanitize_attribs({
@@ -387,28 +401,22 @@ class DXFGenerator:
         rows = len(grid_rows)
         cols = len(grid_rows[0])
         
-        # Use add_polymesh for structured M x N grid
+        # Ensure dimensions are valid for polymesh (min 2x2)
+        if rows < 2 or cols < 2:
+            return
+
         mesh = self.msp.add_polymesh(size=(rows, cols), dxfattribs={'layer': 'TERRENO', 'color': 252})
         
         for r, row in enumerate(grid_rows):
             for c, p in enumerate(row):
-                # Safeguard against NaN or invalid coords
                 try:
-                    # Apply AUTHORITATIVE OFFSET from feature centering if available
-                    # p[0] is X, p[1] is Y, p[2] is Z
-                    x = float(p[0]) - self.diff_x
-                    y = float(p[1]) - self.diff_y
-                    z = float(p[2])
-                    
-                    if math.isnan(x) or math.isnan(y) or math.isnan(z) or math.isinf(x) or math.isinf(y):
-                        safe_p = (0.0, 0.0, 0.0)
-                    else:
-                        safe_p = (x, y, z)
-                except (IndexError, TypeError, ValueError):
-                    safe_p = (0.0, 0.0, 0.0)
-                
-                mesh.set_mesh_vertex((r, c), safe_p)
-
+                    # Apply AUTHORITATIVE OFFSET with absolute safety
+                    x = self._safe_v(float(p[0]) - self.diff_x)
+                    y = self._safe_v(float(p[1]) - self.diff_y)
+                    z = self._safe_v(float(p[2]))
+                    mesh.set_mesh_vertex((r, c), (x, y, z))
+                except:
+                    mesh.set_mesh_vertex((r, c), (0.0, 0.0, 0.0))
 
     def add_contour_lines(self, contour_lines):
         """
@@ -435,21 +443,24 @@ class DXFGenerator:
         try:
             # Place North Arrow at top-right with margin
             margin = 10.0
-            na_x = float(max_x - diff_x - margin)
-            na_y = float(max_y - diff_y - margin)
-            if not math.isnan(na_x) and not math.isnan(na_y):
-                self.msp.add_blockref('NORTE', (na_x, na_y))
+            na_x = self._safe_v(max_x - diff_x - margin)
+            na_y = self._safe_v(max_y - diff_y - margin)
+            self.msp.add_blockref('NORTE', (na_x, na_y))
 
             # Place Scale Bar at bottom-right
-            sb_x = float(max_x - diff_x - 30.0)
-            sb_y = float(min_y - diff_y + margin)
-            if not math.isnan(sb_x) and not math.isnan(sb_y):
-                self.msp.add_blockref('ESCALA', (sb_x, sb_y))
+            sb_x = self._safe_v(max_x - diff_x - 30.0)
+            sb_y = self._safe_v(min_y - diff_y + margin)
+            self.msp.add_blockref('ESCALA', (sb_x, sb_y))
         except Exception as e:
             Logger.info(f"Cartographic elements failed: {e}")
 
     def add_coordinate_grid(self, min_x, min_y, max_x, max_y, diff_x, diff_y):
         """Draws a boundary frame with coordinate labels"""
+        # Strictly validate all grid inputs
+        min_x, max_x = self._safe_v(min_x), self._safe_v(max_x)
+        min_y, max_y = self._safe_v(min_y), self._safe_v(max_y)
+        diff_x, diff_y = self._safe_v(diff_x), self._safe_v(diff_y)
+
         # Outer Frame
         frame_pts = [
             (min_x - diff_x - 5, min_y - diff_y - 5),
@@ -460,32 +471,36 @@ class DXFGenerator:
         self.msp.add_lwpolyline(frame_pts, close=True, dxfattribs={'layer': 'QUADRO', 'color': 7})
 
         # Tick marks and labels (every 50m)
-        step = 50
+        step = 50.0
         # horizontal ticks (x)
-        for x in np.arange(np.floor(min_x/step)*step, max_x, step):
-            dx = x - diff_x
+        x_range = np.arange(np.floor(min_x/step)*step, max_x + 1, step)
+        for x in x_range[:50]: # Limit to 50 ticks max per axis
+            dx = self._safe_v(x - diff_x)
             if min_x - 5 <= x <= max_x + 5:
                 # Bottom label
-                self.msp.add_text(f"E: {x:.0f}", dxfattribs={'height': 2, 'layer': 'QUADRO'}).set_placement(
-                    (dx, min_y - diff_y - 8), align=TextEntityAlignment.CENTER
-                )
+                try:
+                    self.msp.add_text(f"E: {x:.0f}", dxfattribs={'height': 2, 'layer': 'QUADRO'}).set_placement(
+                        (dx, min_y - diff_y - 8), align=TextEntityAlignment.CENTER
+                    )
+                except: pass
         # vertical ticks (y)
-        for y in np.arange(np.floor(min_y/step)*step, max_y, step):
-            dy = y - diff_y
+        y_range = np.arange(np.floor(min_y/step)*step, max_y + 1, step)
+        for y in y_range[:50]:
+            dy = self._safe_v(y - diff_y)
             if min_y - 5 <= y <= max_y + 5:
                 # Left label
-                self.msp.add_text(f"N: {y:.0f}", dxfattribs={'height': 2, 'layer': 'QUADRO', 'rotation': 90}).set_placement(
-                    (min_x - diff_x - 8, dy), align=TextEntityAlignment.CENTER
-                )
+                try:
+                    self.msp.add_text(f"N: {y:.0f}", dxfattribs={'height': 2, 'layer': 'QUADRO', 'rotation': 90.0}).set_placement(
+                        (min_x - diff_x - 8, dy), align=TextEntityAlignment.CENTER
+                    )
+                except: pass
 
     def add_legend(self):
         """Adds a professional legend to the Model Space"""
-        if self.bounds is None: return
-        
         min_x, min_y, max_x, max_y = self.bounds
-        # Place to the right of the drawing
-        start_x = max_x - self.diff_x + 20
-        start_y = max_y - self.diff_y
+        # Place to the right of the drawing with safety
+        start_x = self._safe_v(max_x - self.diff_x + 20)
+        start_y = self._safe_v(max_y - self.diff_y)
         
         # Legend Header
         self.msp.add_text("LEGENDA TÉCNICA", dxfattribs={'height': 4, 'style': 'PRO_STYLE', 'layer': 'QUADRO'}).set_placement((start_x, start_y))
