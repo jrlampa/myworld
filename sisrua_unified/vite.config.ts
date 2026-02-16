@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
           }
         }
       },
-      chunkSizeWarningLimit: 600,
+      chunkSizeWarningLimit: 300,
       // Use esbuild minification (faster and already included)
       minify: 'esbuild',
       target: 'esnext'
