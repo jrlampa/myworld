@@ -1,4 +1,5 @@
 import ezdxf
+import os
 import numpy as np
 import pandas as pd
 from shapely.geometry import Polygon, MultiPolygon, LineString, MultiLineString, Point
@@ -9,6 +10,10 @@ try:
 except (ImportError, ValueError):
     from dxf_styles import DXFStyleManager
 from ezdxf.enums import TextEntityAlignment
+try:
+    from .utils.logger import Logger
+except (ImportError, ValueError):
+    from utils.logger import Logger
 
 class DXFGenerator:
     def __init__(self, filename):
@@ -16,7 +21,7 @@ class DXFGenerator:
         self.doc = ezdxf.new('R2013')
         self.diff_x = 0
         self.diff_y = 0
-        self.bounds = None
+        self.bounds = [0.0, 0.0, 0.0, 0.0]  # Standard bounding box
         
         # Setup CAD standards via StyleManager (SRP Refactor)
         DXFStyleManager.setup_all(self.doc)
@@ -43,7 +48,12 @@ class DXFGenerator:
             self.diff_y = centroids.y.dropna().mean() if not centroids.y.dropna().empty else 0
             self._offset_initialized = True
 
-        self.bounds = gdf.total_bounds # [minx, miny, maxx, maxy]
+        # Validate and store bounds
+        b = gdf.total_bounds
+        if any(math.isnan(v) or math.isinf(v) for v in b):
+             self.bounds = [0.0, 0.0, 100.0, 100.0]
+        else:
+             self.bounds = [float(v) for v in b]
 
         for _, row in gdf.iterrows():
             geom = row.geometry
@@ -100,14 +110,18 @@ class DXFGenerator:
         if not points or len(points) < min_points:
             return None
             
-        # Filter out invalid coordinates
+        # Filter out invalid coordinates and filter duplicate sequential points
         valid_points = []
+        last_p = None
         for p in points:
             try:
                 vals = [float(v) for v in p]
-                if any(math.isnan(v) or math.isinf(v) or abs(v) > 1e10 for v in vals):
+                if any(math.isnan(v) or math.isinf(v) or abs(v) > 1e11 for v in vals):
                     continue
-                valid_points.append(tuple(vals))
+                curr_p = tuple(vals)
+                if curr_p != last_p:
+                    valid_points.append(curr_p)
+                    last_p = curr_p
             except (ValueError, TypeError, IndexError):
                 continue
         
@@ -122,51 +136,48 @@ class DXFGenerator:
         if geom.is_empty:
             return
 
-        # Draw Labels for Streets
-        if layer == 'VIAS' and 'name' in tags:
-            name = str(tags['name'])
-            if name.lower() == 'nan' or not name.strip():
-                return
-                
-            # Use centroid of the line to place text
-            rotation = 0
-            centroid = geom.centroid
-            if centroid.is_empty or math.isnan(centroid.x) or math.isnan(centroid.y):
-                return
-            
-            if isinstance(geom, LineString):
-                try:
-                    # Get point at 45% and 55% to determine vector
-                    p1 = geom.interpolate(0.45, normalized=True)
-                    p2 = geom.interpolate(0.55, normalized=True)
-                    if p1 and p2:
-                        dx = p2.x - p1.x
-                        dy = p2.y - p1.y
-                        angle = np.degrees(np.arctan2(dy, dx))
-                        
-                        # Ensure text is readable (not upside down)
-                        if -90 <= angle <= 90:
-                             rotation = angle
-                        else:
-                             rotation = angle + 180
-                except Exception:
-                    pass
+        # Ensure layer exists in the document, or fallback to '0'
+        if layer not in self.doc.layers:
+            layer = '0'
 
-            try:
-                text = self.msp.add_text(
-                    name, 
-                    dxfattribs={
-                        'layer': 'TEXTO_RUAS', 
-                        'height': 2.5,
-                        'rotation': rotation,
-                        'style': 'PRO_STYLE'
-                    }
-                )
-                text.dxf.halign = 1
-                text.dxf.valign = 2
-                text.dxf.align_point = (centroid.x - diff_x, centroid.y - diff_y)
-            except Exception:
-                pass
+        # Draw Labels for Streets
+        if (layer == 'VIAS' or layer == '0') and 'name' in tags:
+            name = str(tags['name'])
+            if name.lower() != 'nan' and name.strip():
+                # Use centroid of the line to place text
+                rotation = 0.0
+                centroid = geom.centroid
+                if not centroid.is_empty and not math.isnan(centroid.x) and not math.isnan(centroid.y):
+                    if isinstance(geom, LineString) and geom.length > 0.1:
+                        try:
+                            # Get point at 45% and 55% to determine vector
+                            p1 = geom.interpolate(0.45, normalized=True)
+                            p2 = geom.interpolate(0.55, normalized=True)
+                            if p1 and p2:
+                                dx = p2.x - p1.x
+                                dy = p2.y - p1.y
+                                if abs(dx) > 1e-5 or abs(dy) > 1e-5:
+                                    angle = np.degrees(np.arctan2(dy, dx))
+                                    # Ensure text is readable (not upside down)
+                                    rotation = angle if -90 <= angle <= 90 else angle + 180
+                        except Exception:
+                            pass
+
+                    try:
+                        text = self.msp.add_text(
+                            name, 
+                            dxfattribs={
+                                'layer': 'TEXTO', 
+                                'height': 2.5,
+                                'rotation': float(rotation),
+                                'style': 'PRO_STYLE'
+                            }
+                        )
+                        text.dxf.halign = 1
+                        text.dxf.valign = 2
+                        text.dxf.align_point = (float(centroid.x - diff_x), float(centroid.y - diff_y))
+                    except Exception:
+                        pass
 
         if isinstance(geom, Polygon):
             self._draw_polygon(geom, layer, diff_x, diff_y, tags)
@@ -211,13 +222,17 @@ class DXFGenerator:
                 
                 if isinstance(side_geom, LineString):
                      pts = [(p[0] - diff_x, p[1] - diff_y) for p in side_geom.coords]
-                     self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
+                     pts = self._validate_points(pts, min_points=2)
+                     if pts:
+                        self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
                 elif isinstance(side_geom, MultiLineString):
                      for subline in side_geom.geoms:
                           pts = [(p[0] - diff_x, p[1] - diff_y) for p in subline.coords]
-                          self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
+                          pts = self._validate_points(pts, min_points=2)
+                          if pts:
+                               self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
         except Exception as e:
-            Logger.info(f"Geometry offset skipped for segment: {e}")
+            Logger.info(f"Geometry offset skipped: {e}")
 
     def _get_thickness(self, tags, layer):
         """Calculates extrusion height based on OSM tags"""
@@ -259,7 +274,7 @@ class DXFGenerator:
             try:
                 area = poly.area
                 centroid = poly.centroid
-                if not (math.isnan(area) or math.isinf(area) or math.isnan(centroid.x) or math.isnan(centroid.y)):
+                if centroid and not (math.isnan(area) or math.isinf(area) or math.isnan(centroid.x) or math.isnan(centroid.y)):
                     self.msp.add_text(
                         f"{area:.1f} m2",
                         dxfattribs={
@@ -267,14 +282,17 @@ class DXFGenerator:
                             'height': 1.5,
                             'color': 7
                         }
-                    ).set_placement((centroid.x - diff_x, centroid.y - diff_y), align=TextEntityAlignment.CENTER)
+                    ).set_placement((float(centroid.x - diff_x), float(centroid.y - diff_y)), align=TextEntityAlignment.CENTER)
             except Exception as e:
                 Logger.info(f"Area annotation failed: {e}")
 
-            # High-Fidelity Hatching (ANSI31)
-            hatch = self.msp.add_hatch(color=253, dxfattribs={'layer': 'EDIFICACAO_HATCH'})
-            hatch.set_pattern_fill('ANSI31', scale=0.5, angle=45)
-            hatch.paths.add_polyline_path(points, is_closed=True)
+            # High-Fidelity Hatching (ANSI31) - Use validated points
+            try:
+                hatch = self.msp.add_hatch(color=253, dxfattribs={'layer': 'EDIFICACAO_HATCH'})
+                hatch.set_pattern_fill('ANSI31', scale=0.5, angle=45)
+                hatch.paths.add_polyline_path(points, is_closed=True)
+            except Exception as he:
+                Logger.info(f"Hatch failed for building: {he}")
 
         # Holes (optional, complex polygons)
         for interior in poly.interiors:
@@ -414,16 +432,21 @@ class DXFGenerator:
 
     def add_cartographic_elements(self, min_x, min_y, max_x, max_y, diff_x, diff_y):
         """Adds North Arrow and Scale Bar to the drawing"""
-        # Place North Arrow at top-right with margin
-        margin = 10
-        na_x = max_x - diff_x - margin
-        na_y = max_y - diff_y - margin
-        self.msp.add_blockref('NORTE', (na_x, na_y))
+        try:
+            # Place North Arrow at top-right with margin
+            margin = 10.0
+            na_x = float(max_x - diff_x - margin)
+            na_y = float(max_y - diff_y - margin)
+            if not math.isnan(na_x) and not math.isnan(na_y):
+                self.msp.add_blockref('NORTE', (na_x, na_y))
 
-        # Place Scale Bar at bottom-right
-        sb_x = max_x - diff_x - 30 # 30m from right
-        sb_y = min_y - diff_y + margin
-        self.msp.add_blockref('ESCALA', (sb_x, sb_y))
+            # Place Scale Bar at bottom-right
+            sb_x = float(max_x - diff_x - 30.0)
+            sb_y = float(min_y - diff_y + margin)
+            if not math.isnan(sb_x) and not math.isnan(sb_y):
+                self.msp.add_blockref('ESCALA', (sb_x, sb_y))
+        except Exception as e:
+            Logger.info(f"Cartographic elements failed: {e}")
 
     def add_coordinate_grid(self, min_x, min_y, max_x, max_y, diff_x, diff_y):
         """Draws a boundary frame with coordinate labels"""
@@ -518,28 +541,38 @@ class DXFGenerator:
         layout.add_line((cb_x, cb_y + 25), (cb_x + cb_w, cb_y + 25), dxfattribs={'layer': 'QUADRO'})
         layout.add_line((cb_x + 100, cb_y), (cb_x + 100, cb_y + 25), dxfattribs={'layer': 'QUADRO'})
         
-        # Add Text Fields
+        # Add Text Fields (Sanitized)
         import datetime
         date_str = datetime.date.today().strftime("%d/%m/%Y")
         
         # Project Title
-        layout.add_text(f"PROJETO: {project.upper()}", dxfattribs={'height': 4, 'style': 'PRO_STYLE'}).set_placement((cb_x + 5, cb_y + 35))
-        layout.add_text(f"CLIENTE: {client}", dxfattribs={'height': 3}).set_placement((cb_x + 5, cb_y + 15))
+        p_name = str(project).upper()
+        c_name = str(client)
+        d_name = str(designer)
+        
+        layout.add_text(f"PROJETO: {p_name[:50]}", dxfattribs={'height': 4, 'style': 'PRO_STYLE'}).set_placement((cb_x + 5, cb_y + 35))
+        layout.add_text(f"CLIENTE: {c_name[:50]}", dxfattribs={'height': 3}).set_placement((cb_x + 5, cb_y + 15))
         layout.add_text(f"DATA: {date_str}", dxfattribs={'height': 2.5}).set_placement((cb_x + 105, cb_y + 15))
-        layout.add_text(f"ENGINE: sisRUA v1.5", dxfattribs={'height': 2}).set_placement((cb_x + 105, cb_y + 5))
+        layout.add_text(f"ENGINE: sisRUA Unified v1.5", dxfattribs={'height': 2}).set_placement((cb_x + 105, cb_y + 5))
         
         # Designer
-        layout.add_text(f"RESPONSÁVEL: {designer}", dxfattribs={'height': 2.5}).set_placement((cb_x + 5, cb_y + 5))
+        layout.add_text(f"RESPONSÁVEL: {d_name[:50]}", dxfattribs={'height': 2.5}).set_placement((cb_x + 5, cb_y + 5))
         
         # Logo
-        layout.add_blockref('LOGO', (cb_x + cb_w - 20, cb_y + cb_h - 10))
+        try:
+            layout.add_blockref('LOGO', (cb_x + cb_w - 20, cb_y + cb_h - 10))
+        except: pass
 
 
     def save(self):
         # Professional finalization
-        self.add_legend()
-        self.add_title_block(
-            client=self.project_info.get('client', 'CLIENTE PADRÃO'),
-            project=self.project_info.get('project', 'EXTRACAO ESPACIAL OSM')
-        )
-        self.doc.saveas(self.filename)
+        try:
+            self.add_legend()
+            self.add_title_block(
+                client=self.project_info.get('client', 'CLIENTE PADRÃO'),
+                project=self.project_info.get('project', 'EXTRACAO ESPACIAL OSM')
+            )
+            self.doc.saveas(self.filename)
+            Logger.info(f"DXF saved successfully: {os.path.basename(self.filename)}")
+        except Exception as e:
+            Logger.error(f"DXF Save Error: {e}")
