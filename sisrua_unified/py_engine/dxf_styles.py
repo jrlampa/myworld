@@ -31,24 +31,38 @@ class DXFStyleManager:
     def setup_layers(doc):
         """Define standard engineering layers."""
         layers = [
-            ('EDIFICACAO', 7, 0.30),    # White/Black
-            ('VIAS', 4, 0.35),          # Cyan (High visibility axis)
-            ('VIAS_MEIO_FIO', 8, 0.13), # Gray (Curbs)
-            ('VEGETACAO', 3, 0.13),      # Green
-            ('MOBILIARIO_URBANO', 40, 0.15),
-            ('EQUIPAMENTOS', 4, 0.15),
-            ('INFRA_POWER_HV', 1, 0.35), # Red
-            ('INFRA_POWER_LV', 30, 0.20),
-            ('INFRA_TELECOM', 94, 0.15),
-            ('TOPOGRAFIA_CURVAS', 252, 0.09),
-            ('MALHA_COORD', 253, 0.05),
-            ('ANNOT_AREA', 2, 0.13),
-            ('ANNOT_LENGTH', 2, 0.13),
-            ('LEGENDA', 7, 0.15),
-            ('TEXTO', 7, 0.15),
-            ('CURVAS_NIVEL_MESTRA', 251, 0.25),
-            ('CURVAS_NIVEL_INTERM', 252, 0.09),
-            ('QUADRO', 7, 0.50), # Border
+            ('sisRUA_EDIFICACAO', 5, 0.30),
+            ('sisRUA_VIAS_MOTORWAY', 1, 0.35),
+            ('sisRUA_VIAS_TRUNK', 1, 0.35),
+            ('sisRUA_VIAS_PRIMARY', 1, 0.35),
+            ('sisRUA_VIAS_SECONDARY', 30, 0.35),
+            ('sisRUA_VIAS_TERTIARY', 4, 0.30),
+            ('sisRUA_VIAS_RESIDENTIAL', 4, 0.25),
+            ('sisRUA_VIAS_SERVICE', 8, 0.20),
+            ('sisRUA_VIAS_UNCLASSIFIED', 8, 0.20),
+            ('sisRUA_VIAS_PEDESTRIAN', 3, 0.18),
+            ('sisRUA_VIAS_FOOTWAY', 3, 0.15),
+            ('sisRUA_VIAS_CYCLEWAY', 6, 0.15),
+            ('sisRUA_VIAS_PATH', 7, 0.13),
+            ('sisRUA_VIAS_DEFAULT', 4, 0.25),
+            ('sisRUA_VIAS_MEIO_FIO', 8, 0.13),
+            ('sisRUA_VEGETACAO', 3, 0.13),
+            ('sisRUA_EDIFICACAO_HATCH', 253, 0.09),
+            ('sisRUA_MOBILIARIO_URBANO', 40, 0.15),
+            ('sisRUA_EQUIPAMENTOS', 4, 0.15),
+            ('sisRUA_INFRA_POWER_HV', 1, 0.35),
+            ('sisRUA_INFRA_POWER_LV', 30, 0.20),
+            ('sisRUA_INFRA_TELECOM', 94, 0.15),
+            ('sisRUA_TOPOGRAFIA_CURVAS', 252, 0.09),
+            ('sisRUA_MALHA_COORD', 253, 0.05),
+            ('sisRUA_ANNOT_AREA', 2, 0.13),
+            ('sisRUA_ANNOT_LENGTH', 2, 0.13),
+            ('sisRUA_LEGENDA', 7, 0.15),
+            ('sisRUA_TEXTO', 7, 0.15),
+            ('sisRUA_CURVAS_NIVEL_MESTRA', 251, 0.25),
+            ('sisRUA_CURVAS_NIVEL_INTERM', 252, 0.09),
+            ('sisRUA_TERRENO', 252, 0.09),
+            ('sisRUA_QUADRO', 7, 0.50),
         ]
         
         # Standard CAD lineweights mapped (mm to internal int)
@@ -81,9 +95,9 @@ class DXFStyleManager:
         # ARVORE (Tree)
         if 'ARVORE' not in doc.blocks:
             blk = doc.blocks.new(name='ARVORE')
-            blk.add_circle((0, 0), radius=2, dxfattribs={'layer': 'VEGETACAO', 'color': 3})
-            blk.add_line((-1.5, 0), (1.5, 0), dxfattribs={'layer': 'VEGETACAO'})
-            blk.add_line((0, -1.5), (0, 1.5), dxfattribs={'layer': 'VEGETACAO'})
+            blk.add_circle((0, 0), radius=2, dxfattribs={'layer': 'sisRUA_VEGETACAO', 'color': 3})
+            blk.add_line((-1.5, 0), (1.5, 0), dxfattribs={'layer': 'sisRUA_VEGETACAO'})
+            blk.add_line((0, -1.5), (0, 1.5), dxfattribs={'layer': 'sisRUA_VEGETACAO'})
 
         # POSTE (Utility Pole)
         if 'POSTE' not in doc.blocks:
