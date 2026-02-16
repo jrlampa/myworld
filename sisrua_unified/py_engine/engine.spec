@@ -1,29 +1,41 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_all
+
+# Collect all for complex spatial libraries
+datas_ox, binaries_ox, hidden_ox = collect_all('osmnx')
+datas_gpd, binaries_gpd, hidden_gpd = collect_all('geopandas')
+datas_pj, binaries_pj, hidden_pj = collect_all('pyproj')
 
 a = Analysis(
     ['main.py'],
-    pathex=[],
-    binaries=[],
+    pathex=['py_engine', '.'],
+    binaries=binaries_ox + binaries_gpd + binaries_pj,
     datas=[
         ('utils', 'utils'),
-        ('dxf_styles.py', '.'),
-    ],
+    ] + datas_ox + datas_gpd + datas_pj,
     hiddenimports=[
         'ezdxf',
         'numpy',
         'pandas',
         'shapely',
-        'geopandas',
-        'pyproj',
-        'osmnx',
         'requests',
         'rasterio',
         'skimage',
         'scipy',
         'math',
         'json',
-        'sqlite3'
-    ],
+        'sqlite3',
+        'pyogrio',
+        'fiona',
+        'rtree',
+        'controller',
+        'dxf_generator',
+        'dxf_styles',
+        'osmnx_client',
+        'elevation_client',
+        'spatial_audit',
+        'contour_generator'
+    ] + hidden_ox + hidden_gpd + hidden_pj,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
