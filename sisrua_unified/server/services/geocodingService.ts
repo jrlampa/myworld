@@ -1,5 +1,3 @@
-import Groq from 'groq-sdk';
-
 export interface GeoLocation {
     lat: number;
     lng: number;
@@ -101,9 +99,9 @@ export class GeocodingService {
     }
 
     /**
-     * Resovles a query string into coordinates using either UTM parsing or AI Search
+     * Resolves a query string into coordinates using explicit parsing only.
      */
-    static async resolveLocation(query: string, apiKey: string): Promise<GeoLocation | null> {
+    static async resolveLocation(query: string): Promise<GeoLocation | null> {
         // 0. Try direct lat/lng
         const latLng = this.parseLatLng(query);
         if (latLng) {
@@ -117,24 +115,6 @@ export class GeocodingService {
             if (coords) {
                 return { ...coords, label: `UTM ${utm.zone}${utm.hemisphere} ${utm.easting} ${utm.northing}` };
             }
-        }
-
-        // 2. Try AI Geocoding
-        if (!apiKey) throw new Error('GROQ_API_KEY is missing');
-        const groq = new Groq({ apiKey });
-
-        const prompt = `Geocode binary JSON {lat, lng, label} for: "${query}". Format ONLY as JSON. No markdown.`;
-
-        const completion = await groq.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "llama-3.3-70b-versatile",
-            temperature: 0,
-        });
-
-        const text = completion.choices[0]?.message?.content || "";
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]) as GeoLocation;
         }
 
         return null;
