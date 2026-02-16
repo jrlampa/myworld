@@ -94,10 +94,13 @@ class OSMController:
 
     def _process_terrain(self, gdf, dxf_gen):
         try:
-            north, south, east, west = gdf.limit_area_bbox() if hasattr(gdf, 'limit_area_bbox') else (gdf.total_bounds[3], gdf.total_bounds[1], gdf.total_bounds[2], gdf.total_bounds[0])
+            # AUTHORITATIVE FIX: Convert project-space bounds to Lat/Lon for elevation API
+            gdf_4326 = gdf.to_crs(epsg=4326)
+            b = gdf_4326.total_bounds
+            north, south, east, west = b[3], b[1], b[2], b[0]
             
             # Resolution-aware expansion
-            margin = 0.001
+            margin = 0.0005 # Degrees
             elev_points, rows, cols = fetch_elevation_grid(north + margin, south - margin, east + margin, west - margin, resolution=100) 
             
             if elev_points:

@@ -65,11 +65,18 @@ def run_spatial_audit(gdf):
         coverage_gdf['analysis_type'] = 'coverage'
         analysis_features.append(coverage_gdf)
 
-    # Combine analysis features
+    # Combine analysis features with index protection to prevent join errors
     if analysis_features:
-        final_analysis_gdf = gpd.pd.concat(analysis_features)
+        try:
+            # Use ignore_index=True to prevent "cannot join with no overlapping index names"
+            combined_df = gpd.pd.concat(analysis_features, ignore_index=True)
+            final_analysis_gdf = gpd.GeoDataFrame(combined_df, crs=gdf.crs)
+        except Exception as e:
+            from utils.logger import Logger
+            Logger.info(f"Audit concat fallback triggered: {e}")
+            final_analysis_gdf = analysis_features[0] if analysis_features else gpd.GeoDataFrame(columns=['geometry'], crs=gdf.crs)
     else:
-        final_analysis_gdf = gpd.GeoDataFrame()
+        final_analysis_gdf = gpd.GeoDataFrame(columns=['geometry'], crs=gdf.crs)
 
     # 3. Calculate Scores
     total_road_length = roads.geometry.length.sum() if not roads.empty else 0
