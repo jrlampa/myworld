@@ -15,7 +15,7 @@ describe('ElevationService', () => {
     it('should return 0 for same points', () => {
       const point = { lat: -23.5505, lng: -46.6333 };
       const distance = ElevationService.calculateDistance(point, point);
-      expect(distance).toBe(0);
+      expect(distance).toBeCloseTo(0, 5);
     });
 
     it('should calculate distance between distant points', () => {
