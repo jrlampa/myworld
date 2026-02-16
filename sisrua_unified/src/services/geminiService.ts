@@ -5,7 +5,7 @@ const API_URL = 'http://localhost:3001/api';
 
 export const findLocationWithGemini = async (query: string, enableAI: boolean): Promise<GeoLocation | null> => {
   if (!enableAI) {
-    Logger.warn("AI is disabled. Cannot perform fuzzy search.");
+    Logger.warn("Analysis is disabled. Cannot perform fuzzy search.");
     return null;
     // In a full implementation, we would fallback to a standard Nominatim fetch here.
   }
@@ -26,7 +26,7 @@ export const findLocationWithGemini = async (query: string, enableAI: boolean): 
 };
 
 export const analyzeArea = async (stats: any, locationName: string, enableAI: boolean): Promise<string> => {
-  if (!enableAI) return "AI Analysis disabled by user.";
+  if (!enableAI) return "Analysis summary disabled.";
 
   try {
     Logger.debug(`Analyzing area: ${locationName}`);
@@ -37,10 +37,10 @@ export const analyzeArea = async (stats: any, locationName: string, enableAI: bo
     });
     if (!response.ok) return "Analysis failed.";
     const data = await response.json();
-    Logger.info("AI Analysis completed");
+    Logger.info("Analysis completed");
     return data.analysis;
   } catch (error) {
-    Logger.error("AI Analysis error:", error);
+    Logger.error("Analysis error:", error);
     return "Could not contact analysis backend.";
   }
 };

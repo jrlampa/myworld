@@ -43,13 +43,13 @@ export function useOsmEngine() {
             setStats(calculatedStats);
             setProgressValue(85);
 
-            // 4. Get AI Analysis
+            // 4. Get analysis narrative
             if (enableAI) {
-                setStatusMessage('Intelligence Synapse Processing...');
+                setStatusMessage('Generating analysis summary...');
                 const text = await analyzeArea(calculatedStats, center.label || "selected area", true);
                 setAnalysisText(text);
             } else {
-                setAnalysisText("AI Audit Disabled.");
+                setAnalysisText("Analysis summary disabled.");
             }
 
             setProgressValue(100);
