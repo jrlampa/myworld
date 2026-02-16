@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/91</span>
+                <span class='fraction'>0/105</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/91</span>
+                <span class='fraction'>0/105</span>
             </div>
         
             
@@ -153,7 +153,35 @@
 <a name='L88'></a><a href='#L88'>88</a>
 <a name='L89'></a><a href='#L89'>89</a>
 <a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -258,6 +286,21 @@
 <span class="cstat-no" title="statement not covered" >  const mapInstanceRef = useRef&lt;L.Map | null&gt;(null);</span>
 <span class="cstat-no" title="statement not covered" >  const circleRef = useRef&lt;L.Circle | null&gt;(null);</span>
 <span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >  const flyToCenter = (map: L.Map, target: GeoLocation) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    const next = L.latLng(target.lat, target.lng);</span>
+<span class="cstat-no" title="statement not covered" >    const current = map.getCenter();</span>
+<span class="cstat-no" title="statement not covered" >    const distance = current.distanceTo(next);</span>
+<span class="cstat-no" title="statement not covered" >    const zoom = map.getZoom();</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    if (distance &lt; 1) {</span>
+<span class="cstat-no" title="statement not covered" >      map.setView(next, zoom, { animate: false });</span>
+<span class="cstat-no" title="statement not covered" >      return;</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    const duration = distance &gt; 5000 ? 1.8 : distance &gt; 1000 ? 1.3 : 0.9;</span>
+<span class="cstat-no" title="statement not covered" >    map.flyTo(next, zoom, { duration, easeLinearity: 0.2, noMoveStart: true });</span>
+<span class="cstat-no" title="statement not covered" >  };</span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  // Initialize Map</span>
 <span class="cstat-no" title="statement not covered" >  useEffect(() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (mapContainerRef.current &amp;&amp; !mapInstanceRef.current) {</span>
@@ -286,7 +329,7 @@
 <span class="cstat-no" title="statement not covered" >      onCenterChange({</span>
 <span class="cstat-no" title="statement not covered" >        lat,</span>
 <span class="cstat-no" title="statement not covered" >        lng,</span>
-<span class="cstat-no" title="statement not covered" >        label: `Selected Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`</span>
+<span class="cstat-no" title="statement not covered" >        label: `Selected Location (${lat.toFixed(6)}, ${lng.toFixed(6)})`</span>
 <span class="cstat-no" title="statement not covered" >      });</span>
 <span class="cstat-no" title="statement not covered" >    };</span>
 <span class="cstat-no" title="statement not covered" ></span>
@@ -300,8 +343,7 @@
 <span class="cstat-no" title="statement not covered" >  // Update View and Circle when props change</span>
 <span class="cstat-no" title="statement not covered" >  useEffect(() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (mapInstanceRef.current) {</span>
-<span class="cstat-no" title="statement not covered" >      // Smooth flyTo is nicer than setView for small adjustments</span>
-<span class="cstat-no" title="statement not covered" >      mapInstanceRef.current.flyTo([center.lat, center.lng], mapInstanceRef.current.getZoom());</span>
+<span class="cstat-no" title="statement not covered" >      flyToCenter(mapInstanceRef.current, center);</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      // Remove old circle</span>
 <span class="cstat-no" title="statement not covered" >      if (circleRef.current) {</span>
@@ -340,7 +382,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-16T13:49:05.952Z
+                at 2026-02-16T21:29:33.310Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
