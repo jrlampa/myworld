@@ -14,24 +14,25 @@ def fetch_elevation_grid(north, south, east, west, resolution=50):
     Logger.info("Generating terrain grid...", "info")
     
     # 1 degree approx 111km. 
-    step = (resolution / 111000.0) 
+    # CRITICAL: If resolution and distance mismatch (e.g. UTM vs Degrees), step could be tiny
+    # Ensure step is at least 0.0001 (approx 11m) to prevent millions of points
+    step = max(0.0001, (resolution / 111000.0))
     
-    lats = np.arange(south, north, step)
-    lons = np.arange(west, east, step)
+    # Calculate dimensions and cap them to prevent memory explosions
+    # Calculate dimensions and cap them to 10,000 points total budget (100x100)
+    # This prevents astronomical grids while maintaining complete coverage for the requested resolution
+    rows = min(100, int(np.ceil((north - south) / step)))
+    cols = min(100, int(np.ceil((east - west) / step)))
     
-    rows = len(lats)
-    cols = len(lons)
+    lats = np.linspace(south, north, rows)
+    lons = np.linspace(west, east, cols)
     
     # Create grid points
     locations = []
-    # Grid should be ordered: for each latitude, all longitudes
+    # Grid order: for each latitude (row), all longitudes (cols)
     for lat in lats:
         for lon in lons:
-            locations.append({'latitude': lat, 'longitude': lon})
-            if len(locations) > 10000: # Slightly higher cap for high-res
-                break
-        if len(locations) > 10000:
-            break
+            locations.append({'latitude': float(lat), 'longitude': float(lon)})
             
     total_points = len(locations)
     Logger.info(f"Querying elevation for {total_points} points ({rows}x{cols} grid)...")
