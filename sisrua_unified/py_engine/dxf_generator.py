@@ -161,11 +161,13 @@ class DXFGenerator:
     def _merge_contiguous_lines(self, lines_with_tags):
         """
         Attempts to merge LineStrings that share endpoints and have identical tags.
+        Uses a small distance threshold to handle coordinate noise.
         """
         if not lines_with_tags: return []
         
         merged_results = []
         processed = set()
+        dist_threshold = 0.5 # Max 50cm gap for auto-merging
         
         for i, (line, tags) in enumerate(lines_with_tags):
             if i in processed: continue
@@ -173,7 +175,6 @@ class DXFGenerator:
             curr_line = line
             processed.add(i)
             
-            # Simple greedy merge
             changed = True
             while changed:
                 changed = False
@@ -184,19 +185,22 @@ class DXFGenerator:
                     if tags.get('name') != other_tags.get('name') or tags.get('highway') != other_tags.get('highway'):
                         continue
                         
-                    # Check endpoints
                     p1_start, p1_end = curr_line.coords[0], curr_line.coords[-1]
                     p2_start, p2_end = other_line.coords[0], other_line.coords[-1]
                     
+                    # Helper to check distance
+                    def get_dist(pa, pb):
+                        return math.sqrt((pa[0]-pb[0])**2 + (pa[1]-pb[1])**2)
+
                     new_coords = None
-                    if p1_end == p2_start:
+                    if get_dist(p1_end, p2_start) < dist_threshold:
                         new_coords = list(curr_line.coords) + list(other_line.coords)[1:]
-                    elif p1_start == p2_end:
+                    elif get_dist(p1_start, p2_end) < dist_threshold:
                         new_coords = list(other_line.coords) + list(curr_line.coords)[1:]
-                    elif p1_start == p2_start:
+                    elif get_dist(p1_start, p2_start) < dist_threshold:
                         new_coords = list(reversed(other_line.coords)) + list(curr_line.coords)[1:]
-                    elif p1_end == p2_end:
-                        new_coords = list(curr_line.coords) + list(reversed(other_line.coords))[:-1]
+                    elif get_dist(p1_end, p2_end) < dist_threshold:
+                        new_coords = list(curr_line.coords) + list(reversed(other_line.coords))[1:]
                         
                     if new_coords:
                         curr_line = LineString(new_coords)
@@ -206,6 +210,7 @@ class DXFGenerator:
             
             merged_results.append((curr_line, tags))
             
+        Logger.info(f"Geometry Merging: Reduced {len(lines_with_tags)} segments to {len(merged_results)} polylines.")
         return merged_results
 
     def _draw_geometry(self, geom, layer, diff_x, diff_y, tags):
@@ -403,10 +408,9 @@ class DXFGenerator:
                  self.msp.add_lwpolyline(points, close=True, dxfattribs=dxf_attribs)
 
     def _draw_linestring(self, line, layer, diff_x, diff_y):
-        # Apply simplification (Shapely based)
-        if layer == 'VIAS' and line.length > 5:
-            line = self._simplify_line(line, tolerance=0.1)
-            
+        # Temporarily disabled simplification to troubleshoot distortion
+        # pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in line.coords]
+        
         pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in line.coords]
         points = self._validate_points(pts, min_points=2)
         if not points:
