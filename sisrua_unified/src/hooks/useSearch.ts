@@ -12,8 +12,36 @@ export function useSearch({ onLocationFound, onError }: UseSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
 
+  const parseLatLng = (query: string): GeoLocation | null => {
+    const normalized = query
+      .replace(/\(([^)]+)\)/g, '$1')
+      .replace(/(\d),(\d)/g, '$1.$2')
+      .replace(/,/g, ' ');
+
+    const numbers = normalized.match(/[-+]?\d+(?:\.\d+)?/g);
+    if (!numbers || numbers.length < 2) return null;
+
+    const lat = parseFloat(numbers[0]);
+    const lng = parseFloat(numbers[1]);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+
+    return {
+      lat,
+      lng,
+      label: `Lat/Lng ${lat.toFixed(6)}, ${lng.toFixed(6)}`
+    };
+  };
+
   const executeSearch = async (query: string) => {
     if (!query.trim()) {
+      return;
+    }
+
+    const directLocation = parseLatLng(query.trim());
+    if (directLocation) {
+      onLocationFound(directLocation);
       return;
     }
 

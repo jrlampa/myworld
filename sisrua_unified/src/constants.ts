@@ -8,6 +8,11 @@ export const MIN_RADIUS = 10;
 export const MAX_RADIUS = 2000;
 
 export const OVERPASS_API_URL = "https://overpass-api.de/api/interpreter";
+export const OVERPASS_API_ENDPOINTS = [
+  OVERPASS_API_URL,
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.nchc.org.tw/api/interpreter"
+];
 
 // Layer Colors for DXF (AutoCAD Color Index)
 export const LAYERS = {

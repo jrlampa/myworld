@@ -7,6 +7,56 @@ export interface GeoLocation {
 }
 
 export class GeocodingService {
+    private static parseLatLng(query: string): GeoLocation | null {
+        const normalized = query
+            .replace(/\(([^)]+)\)/g, '$1')
+            .replace(/(\d),(\d)/g, '$1.$2')
+            .replace(/,/g, ' ');
+
+        const numbers = normalized.match(/[-+]?\d+(?:\.\d+)?/g);
+        if (!numbers || numbers.length < 2) return null;
+
+        const lat = parseFloat(numbers[0]);
+        const lng = parseFloat(numbers[1]);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+
+        return {
+            lat,
+            lng,
+            label: `Lat/Lng ${lat.toFixed(6)}, ${lng.toFixed(6)}`
+        };
+    }
+
+    private static parseUtm(query: string): { zone: number; hemisphere: 'N' | 'S'; easting: number; northing: number } | null {
+        const normalized = query
+            .replace(/(\d),(\d)/g, '$1.$2')
+            .replace(/,/g, ' ')
+            .trim();
+
+        const utmMatch = normalized.match(/(\d{1,2})([C-HJ-NP-X]|[NS])?\s+(\d{6,7}(?:\.\d+)?)\s+(\d{7}(?:\.\d+)?)/i);
+        if (!utmMatch) return null;
+
+        const zone = parseInt(utmMatch[1], 10);
+        const zoneLetter = utmMatch[2]?.toUpperCase();
+        const easting = parseFloat(utmMatch[3]);
+        const northing = parseFloat(utmMatch[4]);
+
+        if (!Number.isFinite(zone) || !Number.isFinite(easting) || !Number.isFinite(northing)) return null;
+
+        let hemisphere: 'N' | 'S' = 'S';
+        if (zoneLetter) {
+            if (zoneLetter === 'N' || zoneLetter === 'S') {
+                hemisphere = zoneLetter as 'N' | 'S';
+            } else {
+                hemisphere = zoneLetter >= 'N' ? 'N' : 'S';
+            }
+        }
+
+        return { zone, hemisphere, easting, northing };
+    }
+
     /**
      * Converts UTM coordinates to Latitude/Longitude
      */
@@ -54,15 +104,18 @@ export class GeocodingService {
      * Resovles a query string into coordinates using either UTM parsing or AI Search
      */
     static async resolveLocation(query: string, apiKey: string): Promise<GeoLocation | null> {
+        // 0. Try direct lat/lng
+        const latLng = this.parseLatLng(query);
+        if (latLng) {
+            return latLng;
+        }
+
         // 1. Try UTM
-        const utmMatch = query.match(/(\d{1,2})[KkLlMm]\s+(\d{6,7})\s+(\d{7})/);
-        if (utmMatch) {
-            const zone = parseInt(utmMatch[1]);
-            const easting = parseInt(utmMatch[2]);
-            const northing = parseInt(utmMatch[3]);
-            const coords = this.utmToLatLon(zone, 'S', easting, northing);
+        const utm = this.parseUtm(query);
+        if (utm) {
+            const coords = this.utmToLatLon(utm.zone, utm.hemisphere, utm.easting, utm.northing);
             if (coords) {
-                return { ...coords, label: `UTM ${zone}K ${easting} ${northing}` };
+                return { ...coords, label: `UTM ${utm.zone}${utm.hemisphere} ${utm.easting} ${utm.northing}` };
             }
         }
 

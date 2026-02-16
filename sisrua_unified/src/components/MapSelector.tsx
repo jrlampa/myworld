@@ -45,7 +45,7 @@ const SelectionManager = ({
                 onLocationChange({
                     lat: e.latlng.lat,
                     lng: e.latlng.lng,
-                    label: `Selected (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`
+                    label: `Selected (${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)})`
                 });
             } else if (selectionMode === 'polygon') {
                 onPolygonChange([...polygonPoints, [e.latlng.lat, e.latlng.lng]]);
@@ -60,9 +60,24 @@ const SelectionManager = ({
         },
     });
 
+    const flyToCenter = (target: { lat: number; lng: number }) => {
+        const next = L.latLng(target.lat, target.lng);
+        const current = map.getCenter();
+        const distance = current.distanceTo(next);
+        const zoom = map.getZoom();
+
+        if (distance < 1) {
+            map.setView(next, zoom, { animate: false });
+            return;
+        }
+
+        const duration = distance > 5000 ? 1.8 : distance > 1000 ? 1.3 : 0.9;
+        map.flyTo(next, zoom, { duration, easeLinearity: 0.2, noMoveStart: true });
+    };
+
     // Fly to center when it changes
     React.useEffect(() => {
-        map.flyTo([center.lat, center.lng], map.getZoom());
+        flyToCenter(center);
     }, [center.lat, center.lng, map]);
 
     // Fix map size on mount and when window resizes
