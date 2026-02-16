@@ -26,6 +26,12 @@ venv/
 ENV/
 .python-history
 
+# Test Coverage
+coverage/
+.coverage
+htmlcov/
+*.lcov
+
 # Generated Files
 *.dxf
 public/dxf/*.dxf
