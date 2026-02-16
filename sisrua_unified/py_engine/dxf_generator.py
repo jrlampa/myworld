@@ -63,8 +63,13 @@ class DXFGenerator:
             tags = row.drop('geometry')
             layer = self.determine_layer(tags, row)
             
-            if layer == 'VIAS' and isinstance(geom, LineString):
-                vias_queue.append((geom, tags))
+            if layer == 'VIAS':
+                if isinstance(geom, LineString):
+                    vias_queue.append((geom, tags))
+                elif isinstance(geom, MultiLineString):
+                    for part in geom.geoms:
+                        if isinstance(part, LineString):
+                            vias_queue.append((part, tags))
             else:
                 self._draw_geometry(geom, layer, self.diff_x, self.diff_y, tags)
 
@@ -149,23 +154,9 @@ class DXFGenerator:
             
         return valid_points
 
-    def _simplify_line(self, points, tolerance=0.1):
-        """Simplifies points using basic radial distance or can be upgraded to Douglas-Peucker."""
-        if len(points) < 3:
-            return points
-        
-        # Simple RDP-like or distance based reduction
-        simplified = [points[0]]
-        for i in range(1, len(points) - 1):
-            p1 = points[i-1]
-            p2 = points[i]
-            # Perpendicular distance check (Simplified)
-            dist = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
-            if dist > tolerance:
-                simplified.append(p2)
-        
-        simplified.append(points[-1])
-        return simplified
+    def _simplify_line(self, line, tolerance=0.1):
+        """Uses shapely's built-in simplification for robust results."""
+        return line.simplify(tolerance, preserve_topology=True)
 
     def _merge_contiguous_lines(self, lines_with_tags):
         """
@@ -180,7 +171,6 @@ class DXFGenerator:
             if i in processed: continue
             
             curr_line = line
-            curr_tags = tags
             processed.add(i)
             
             # Simple greedy merge
@@ -204,9 +194,9 @@ class DXFGenerator:
                     elif p1_start == p2_end:
                         new_coords = list(other_line.coords) + list(curr_line.coords)[1:]
                     elif p1_start == p2_start:
-                        new_coords = list(reversed(curr_line.coords)) + list(other_line.coords)[1:]
+                        new_coords = list(reversed(other_line.coords)) + list(curr_line.coords)[1:]
                     elif p1_end == p2_end:
-                        new_coords = list(curr_line.coords) + list(reversed(other_line.coords[1:]))
+                        new_coords = list(curr_line.coords) + list(reversed(other_line.coords))[:-1]
                         
                     if new_coords:
                         curr_line = LineString(new_coords)
@@ -214,7 +204,7 @@ class DXFGenerator:
                         changed = True
                         break
             
-            merged_results.append((curr_line, curr_tags))
+            merged_results.append((curr_line, tags))
             
         return merged_results
 
@@ -413,12 +403,11 @@ class DXFGenerator:
                  self.msp.add_lwpolyline(points, close=True, dxfattribs=dxf_attribs)
 
     def _draw_linestring(self, line, layer, diff_x, diff_y):
-        pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in line.coords]
-        
-        # Apply simplification for long lines
-        if len(pts) > 5:
-            pts = self._simplify_line(pts, tolerance=0.15)
+        # Apply simplification (Shapely based)
+        if layer == 'VIAS' and line.length > 5:
+            line = self._simplify_line(line, tolerance=0.1)
             
+        pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in line.coords]
         points = self._validate_points(pts, min_points=2)
         if not points:
             return  # Skip invalid linestring
