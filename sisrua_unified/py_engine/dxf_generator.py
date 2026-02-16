@@ -57,27 +57,12 @@ class DXFGenerator:
         else:
              self.bounds = [float(v) for v in b]
 
-        vias_queue = []
         for _, row in gdf.iterrows():
             geom = row.geometry
             tags = row.drop('geometry')
             layer = self.determine_layer(tags, row)
             
-            if layer == 'VIAS':
-                if isinstance(geom, LineString):
-                    vias_queue.append((geom, tags))
-                elif isinstance(geom, MultiLineString):
-                    for part in geom.geoms:
-                        if isinstance(part, LineString):
-                            vias_queue.append((part, tags))
-            else:
-                self._draw_geometry(geom, layer, self.diff_x, self.diff_y, tags)
-
-        # Process VIAS with merging and simplification
-        if vias_queue:
-            merged_vias = self._merge_contiguous_lines(vias_queue)
-            for geom, tags in merged_vias:
-                self._draw_geometry(geom, 'VIAS', self.diff_x, self.diff_y, tags)
+            self._draw_geometry(geom, layer, self.diff_x, self.diff_y, tags)
 
     def determine_layer(self, tags, row):
         """Maps OSM tags to DXF Layers"""
@@ -112,22 +97,25 @@ class DXFGenerator:
             
         return '0' # Default layer
 
-    def _safe_v(self, v, default=0.0):
-        """Absolute guard for float values"""
+    def _safe_v(self, v, fallback_val=None):
+        """Absolute guard for float values. Returns fallback_val if invalid."""
         try:
             val = float(v)
             if math.isnan(val) or math.isinf(val) or abs(val) > 1e11:
-                return default
+                return fallback_val if fallback_val is not None else 0.0
             return val
         except:
-            return default
+            return fallback_val if fallback_val is not None else 0.0
 
-    def _safe_p(self, p, default=(0.0, 0.0)):
-        """Absolute guard for point tuples"""
+    def _safe_p(self, p):
+        """Absolute guard for point tuples. Uses centroid fallbacks if possible."""
         try:
-            return tuple(self._safe_v(v) for v in p)
+            # Fallback to current drawing centroid to avoid spikes to 0,0
+            cx = self.bounds[0] + (self.bounds[2] - self.bounds[0])/2
+            cy = self.bounds[1] + (self.bounds[3] - self.bounds[1])/2
+            return (self._safe_v(p[0], fallback_val=cx), self._safe_v(p[1], fallback_val=cy))
         except:
-            return default
+            return (0.0, 0.0)
 
     def _validate_points(self, points, min_points=2, is_3d=False):
         """Validate points list for DXF entities to prevent read errors"""
@@ -139,7 +127,7 @@ class DXFGenerator:
         for p in points:
             try:
                 # Use our safe helper for each coordinate
-                vals = [self._safe_v(v, default=None) for v in p]
+                vals = [self._safe_v(v, fallback_val=None) for v in p]
                 if None in vals:
                     continue
                 curr_p = tuple(vals)
@@ -307,16 +295,16 @@ class DXFGenerator:
                 if side_geom.is_empty: continue
                 
                 if isinstance(side_geom, LineString):
-                     pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in side_geom.coords]
-                     pts = self._validate_points(pts, min_points=2)
-                     if pts:
-                        self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO'})
+                    pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in side_geom.coords]
+                    pts = self._validate_points(pts, min_points=2)
+                    if pts:
+                        self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
                 elif isinstance(side_geom, MultiLineString):
-                     for subline in side_geom.geoms:
-                           pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in subline.coords]
-                           pts = self._validate_points(pts, min_points=2)
-                           if pts:
-                                self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO'})
+                    for subline in side_geom.geoms:
+                        pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in subline.coords]
+                        pts = self._validate_points(pts, min_points=2)
+                        if pts:
+                            self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
         except Exception as e:
             Logger.info(f"Street offset failed: {e}")
 
@@ -331,16 +319,16 @@ class DXFGenerator:
                 # Handle "10 m" or "10"
                 h = str(tags['height']).split(' ')[0]
                 val = float(h)
-                return self._safe_v(val, default=3.5)
+                return self._safe_v(val, fallback_val=3.5)
             
             # Try levels
             if 'building:levels' in tags:
                 val = float(tags['building:levels']) * 3.0
-                return self._safe_v(val, default=3.5)
+                return self._safe_v(val, fallback_val=3.5)
             
             if 'levels' in tags:
-                 val = float(tags['levels']) * 3.0
-                 return self._safe_v(val, default=3.5)
+                val = float(tags['levels']) * 3.0
+                return self._safe_v(val, fallback_val=3.5)
 
             # Default for buildings
             return 3.5
@@ -636,12 +624,22 @@ class DXFGenerator:
         layout.add_lwpolyline([(0, 0), (width, 0), (width, height), (0, height)], close=True, dxfattribs={'layer': 'QUADRO', 'lineweight': 50})
         
         # 3. Create Viewport (Visualizing Model Space)
-        # Place it inside the border
+        # AUTHORITATIVE FIX: Viewport must point to the drawing centroid, not (0,0)
+        # This prevents the drawing "vanishing" in georeferenced mode.
+        cx = (self.bounds[0] + self.bounds[2]) / 2
+        cy = (self.bounds[1] + self.bounds[3]) / 2
+        view_x = cx - self.diff_x
+        view_y = cy - self.diff_y
+        
+        # Calculate appropriate zoom height based on bounds
+        v_height = max(abs(self.bounds[2] - self.bounds[0]), abs(self.bounds[3] - self.bounds[1])) * 1.2
+        if v_height < 50: v_height = 200 # Fallback for small areas
+        
         vp = layout.add_viewport(
             center=(width/2, height/2 + 20),
             size=(width - 40, height - 80),
-            view_center_point=(0, 0),
-            view_height=200 # Zoom level
+            view_center_point=(view_x, view_y),
+            view_height=200 # Fixed zoom for consistency
         )
         vp.dxf.status = 1
         

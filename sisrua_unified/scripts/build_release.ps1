@@ -33,12 +33,20 @@ if ($LASTEXITCODE -ne 0) { Write-Host "ERROR: Backend compilation failed" -Foreg
 # 4. Python Engine (PyInstaller)
 Write-Host "[4/4] Bundling Python Engine (PyInstaller)..." -ForegroundColor Cyan
 cd py_engine
-# Check if PyInstaller is available
-if (-not (Get-Command pyinstaller -ErrorAction SilentlyContinue)) {
+# Check if PyInstaller is available as a command or via python -m
+if (Get-Command pyinstaller -ErrorAction SilentlyContinue) {
+    $PyCmd = "pyinstaller"
+}
+elseif (& python -m PyInstaller --version) {
+    $PyCmd = "python -m PyInstaller"
+}
+
+if (-not $PyCmd) {
     Write-Host "WARNING: PyInstaller not found. Skipping engine bundling." -ForegroundColor Yellow
 }
 else {
-    pyinstaller --noconfirm engine.spec
+    Write-Host "Using $PyCmd for bundling..." -ForegroundColor Gray
+    Invoke-Expression "$PyCmd --noconfirm engine.spec"
     if ($LASTEXITCODE -ne 0) { 
         Write-Host "ERROR: Engine bundling failed" -ForegroundColor Red
         cd ..

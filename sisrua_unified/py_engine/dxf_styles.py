@@ -32,8 +32,8 @@ class DXFStyleManager:
         """Define standard engineering layers."""
         layers = [
             ('EDIFICACAO', 7, 0.30),    # White/Black
-            ('VIAS', 4, 0.35),          # Cyan (High visibility axis)
-            ('VIAS_MEIO_FIO', 8, 0.13), # Gray (Curbs)
+            ('VIAS', 8, 0.15),          # Gray
+            ('VIAS_MEIO_FIO', 251, 0.09), # Light Gray
             ('VEGETACAO', 3, 0.13),      # Green
             ('MOBILIARIO_URBANO', 40, 0.15),
             ('EQUIPAMENTOS', 4, 0.15),
@@ -151,15 +151,15 @@ class DXFStyleManager:
         """Returns the authoritative half-width for a given highway type."""
         # Cleaned up and centralized for geometric accuracy
         widths = {
-            'motorway': 12.0,
-            'trunk': 10.0,
-            'primary': 8.0,
-            'secondary': 7.0,
-            'tertiary': 6.0,
-            'residential': 5.0,
-            'service': 3.5,
+            'motorway': 10.0,
+            'trunk': 9.0,
+            'primary': 7.0,
+            'secondary': 6.0,
+            'tertiary': 5.0,
+            'residential': 4.0,
+            'service': 3.0,
             'living_street': 3.0,
-            'pedestrian': 4.0,
+            'pedestrian': 3.0,
             'track': 3.0
         }
         return widths.get(highway_tag, 5.0)

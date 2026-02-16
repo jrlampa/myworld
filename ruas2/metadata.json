@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Ruas",
+  "description": "Extrai dados do OpenStreetMap dentro de um raio especificado, visualiza e converte para um arquivo DXF 2.5D para software CAD. Inclui alturas de edifícios, infraestrutura e características do terreno.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

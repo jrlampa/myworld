@@ -17,28 +17,50 @@ interface DxfOptions {
 
 export const generateDxf = (options: DxfOptions): Promise<string> => {
     return new Promise((resolve, reject) => {
+        const isProduction = process.env.NODE_ENV === 'production';
+
+        // Path logic for standalone EXE vs source
+        const exeName = 'sisrua_engine.exe';
+        const prodExePath = path.join(__dirname, '../../engine', exeName);
+        const devExePath = path.join(__dirname, '../py_engine/dist', exeName);
         const scriptPath = path.join(__dirname, '../py_engine/main.py');
 
-        // Arguments for main.py
-        // --lat --lon --radius --output --layers
-        const args = [
-            scriptPath,
+        let command: string;
+        let args: string[];
+
+        // Check if EXE exists in expected production or dev dist location
+        if (isProduction || require('fs').existsSync(devExePath)) {
+            const finalExePath = isProduction ? prodExePath : devExePath;
+            if (require('fs').existsSync(finalExePath)) {
+                command = finalExePath;
+                args = [];
+            } else {
+                command = 'python';
+                args = [scriptPath];
+            }
+        } else {
+            command = 'python';
+            args = [scriptPath];
+        }
+
+        // Add DXF arguments
+        args.push(
             '--lat', options.lat.toString(),
             '--lon', options.lon.toString(),
             '--radius', options.radius.toString(),
             '--output', options.outputFile,
             '--selection_mode', options.mode || 'circle',
             '--polygon', options.polygon || '[]',
-            '--no-preview' // For now, we don't need the preview JSON in the response
-        ];
+            '--no-preview'
+        );
 
         if (options.layers) {
             args.push('--layers', JSON.stringify(options.layers));
         }
 
-        console.log(`[PythonBridge] Spawning: python ${args.join(' ')}`);
+        console.log(`[PythonBridge] Spawning: ${command} ${args.join(' ')}`);
 
-        const pythonProcess = spawn('python', args);
+        const pythonProcess = spawn(command, args);
 
         let stdoutData = '';
         let stderrData = '';

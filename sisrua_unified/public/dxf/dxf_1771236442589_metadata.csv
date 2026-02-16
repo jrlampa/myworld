@@ -1,0 +1,22 @@
+addr:city,addr:housenumber,addr:postcode,addr:street,addr:suburb,amenity,bench,bin,bus,level,name,name:en,public_transport,ref,shelter,building,religion,natural,water,opening_hours,payment:cash,payment:credit_cards,shop,air_conditioning,building:levels,payment:debit_cards,payment:pix,stroller,toilets,wheelchair,area_m2,length_m
+São José do Vale do Rio Preto,235,25780-000,Rua Professora Maria Emilia Esteves,Centro,bus_station,yes,yes,yes,0,Terminal Rodoviário de São José do Vale do Rio Preto,Sao Jose do Vale do Rio Preto bus station,station,235,yes,,,,,,,,,,,,,,,,0.0,0.0
+,,,,,place_of_worship,,,,,Capela Monsenhor Sérgio Guimarâes da Silva,,,,,chapel,christian,,,,,,,,,,,,,,0.0,0.0
+,,,,,place_of_worship,,,,,Maçonaria,,,,,temple,christian,,,,,,,,,,,,,,0.0,0.0
+,,,,,place_of_worship,,,,,Primeira Igreja Batista Valeriopretana,,,,,temple,christian,,,,,,,,,,,,,,0.0,0.0
+,,,,,,,,,,,,,,,,,water,lake,,,,,,,,,,,,15572.749947552624,586.8700490281249
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,149013.90137431005,1987.066808829293
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,507871.36197884043,5848.25033013289
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,1532594.0115108294,8009.676304729313
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,1046483.9875573039,9161.957028241695
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,24052.15467475251,683.0211283557062
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,429401.397826688,5225.141522313693
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,4369101.068345312,25402.90643372296
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,691786.8044025361,4904.254348388908
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,67491.85362210807,2000.9551742595893
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,505286.40681538294,4741.733612033531
+,,,,,,,,,,,,,,,,,wood,,,,,,,,,,,,,54971.29942513404,2109.5557093591174
+São José do Vale do Rio Preto,1045,25780-000,Estrada das Pedras Brancas,Pedras Brancas,,,,,,Mercearia da Andreza,,,,,yes,,,,Mo-Sa 08:00-20:00,yes,yes,convenience,,,,,,,,98.64783720032312,40.12162000368277
+,,,,,,,,,,,,,,,house,,,,,,,,,,,,,,,104.10427920349412,43.09442290394375
+,,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,64.69169481183671,32.17678208184351
+São José do Vale do Rio Preto,56,25780-000,Praça João Werneck,Centro,,,,,,Shopping da Praça,,,,,yes,,,,Mo-Su 10:00-19:00,yes,yes,mall,no,3,yes,yes,yes,yes,yes,842.996461532112,120.1002226781911
+São José do Vale do Rio Preto,235,25780-000,Rua Professora Maria Emilia Esteves,Centro,bus_station,,,yes,,Terminal Rodoviário de São José do Vale do Rio Preto,,station,,,,,,,,,,,,,,,,,,139.1704125626939,71.12893397455935

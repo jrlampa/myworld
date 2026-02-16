@@ -56,9 +56,18 @@ class OSMController:
         self._send_geojson_preview(gdf, analysis_gdf)
 
         # 5. Coordinate Offset & CAD Export
-        Logger.info("Step 3/5: Initializing DXF Generation...", progress=50)
+        # AUTHORITATIVE FIX: Check if we want Georeferenced (Absolute) or Localized (0,0)
+        use_georef = self.layers_config.get('georef', True)
+        
+        Logger.info(f"Step 3/5: Initializing DXF Generation (Georef: {use_georef})...", progress=50)
         dxf_gen = DXFGenerator(self.output_file)
-        dxf_gen.add_features(gdf) # Features set the AUTHORITATIVE OFFSET
+        
+        if use_georef:
+            dxf_gen.diff_x = 0.0
+            dxf_gen.diff_y = 0.0
+            dxf_gen._offset_initialized = True
+            
+        dxf_gen.add_features(gdf) # Features set the offset ONLY if not initialized above
 
         # 6. Terrain & Contours (Optional)
         if self.layers_config.get('terrain', False):
