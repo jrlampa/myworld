@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+draft_ruas/dist/
+draft_ruas/**/app.asar
 *.local
 .env
 .env.*
