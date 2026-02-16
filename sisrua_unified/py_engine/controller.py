@@ -12,6 +12,7 @@ from spatial_audit import run_spatial_audit
 from elevation_client import fetch_elevation_grid
 from contour_generator import generate_contours
 from utils.logger import Logger
+from utils.geo import sirgas2000_utm_epsg
 
 class OSMController:
     def __init__(self, lat, lon, radius, output_file, layers_config, crs, export_format='dxf', selection_mode='circle', polygon=None):
@@ -83,6 +84,16 @@ class OSMController:
             return None
 
     def _run_audit(self, gdf):
+        """Runs spatial analysis on the fetched features."""
+        # 1. Determine Target CRS (EPSG)
+        target_epsg = self.crs
+        if self.crs == 'auto':
+            # Use centroid of the data to find the best SIRGAS 2000 UTM zone
+            centroid = gdf.geometry.centroid
+            avg_lat = centroid.y.mean()
+            avg_lon = centroid.x.mean()
+            target_epsg = f"EPSG:{sirgas2000_utm_epsg(avg_lat, avg_lon)}"
+            Logger.info(f"Auto-selected CRS: {target_epsg} (SIRGAS 2000 UTM)")
         try:
             audit_summary, analysis_gdf = run_spatial_audit(gdf)
             self.audit_summary = audit_summary

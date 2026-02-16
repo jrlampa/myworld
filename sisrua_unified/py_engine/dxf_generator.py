@@ -57,13 +57,22 @@ class DXFGenerator:
         else:
              self.bounds = [float(v) for v in b]
 
+        vias_queue = []
         for _, row in gdf.iterrows():
             geom = row.geometry
             tags = row.drop('geometry')
-            
             layer = self.determine_layer(tags, row)
             
-            self._draw_geometry(geom, layer, self.diff_x, self.diff_y, tags)
+            if layer == 'VIAS' and isinstance(geom, LineString):
+                vias_queue.append((geom, tags))
+            else:
+                self._draw_geometry(geom, layer, self.diff_x, self.diff_y, tags)
+
+        # Process VIAS with merging and simplification
+        if vias_queue:
+            merged_vias = self._merge_contiguous_lines(vias_queue)
+            for geom, tags in merged_vias:
+                self._draw_geometry(geom, 'VIAS', self.diff_x, self.diff_y, tags)
 
     def determine_layer(self, tags, row):
         """Maps OSM tags to DXF Layers"""
@@ -139,6 +148,75 @@ class DXFGenerator:
             return None
             
         return valid_points
+
+    def _simplify_line(self, points, tolerance=0.1):
+        """Simplifies points using basic radial distance or can be upgraded to Douglas-Peucker."""
+        if len(points) < 3:
+            return points
+        
+        # Simple RDP-like or distance based reduction
+        simplified = [points[0]]
+        for i in range(1, len(points) - 1):
+            p1 = points[i-1]
+            p2 = points[i]
+            # Perpendicular distance check (Simplified)
+            dist = math.sqrt((p2[0]-p1[0])**2 + (p2[1]-p1[1])**2)
+            if dist > tolerance:
+                simplified.append(p2)
+        
+        simplified.append(points[-1])
+        return simplified
+
+    def _merge_contiguous_lines(self, lines_with_tags):
+        """
+        Attempts to merge LineStrings that share endpoints and have identical tags.
+        """
+        if not lines_with_tags: return []
+        
+        merged_results = []
+        processed = set()
+        
+        for i, (line, tags) in enumerate(lines_with_tags):
+            if i in processed: continue
+            
+            curr_line = line
+            curr_tags = tags
+            processed.add(i)
+            
+            # Simple greedy merge
+            changed = True
+            while changed:
+                changed = False
+                for j, (other_line, other_tags) in enumerate(lines_with_tags):
+                    if j in processed: continue
+                    
+                    # Tags must match exactly (basic check)
+                    if tags.get('name') != other_tags.get('name') or tags.get('highway') != other_tags.get('highway'):
+                        continue
+                        
+                    # Check endpoints
+                    p1_start, p1_end = curr_line.coords[0], curr_line.coords[-1]
+                    p2_start, p2_end = other_line.coords[0], other_line.coords[-1]
+                    
+                    new_coords = None
+                    if p1_end == p2_start:
+                        new_coords = list(curr_line.coords) + list(other_line.coords)[1:]
+                    elif p1_start == p2_end:
+                        new_coords = list(other_line.coords) + list(curr_line.coords)[1:]
+                    elif p1_start == p2_start:
+                        new_coords = list(reversed(curr_line.coords)) + list(other_line.coords)[1:]
+                    elif p1_end == p2_end:
+                        new_coords = list(curr_line.coords) + list(reversed(other_line.coords[1:]))
+                        
+                    if new_coords:
+                        curr_line = LineString(new_coords)
+                        processed.add(j)
+                        changed = True
+                        break
+            
+            merged_results.append((curr_line, curr_tags))
+            
+        return merged_results
 
     def _draw_geometry(self, geom, layer, diff_x, diff_y, tags):
         """Recursive geometry drawing with text support"""
@@ -335,8 +413,13 @@ class DXFGenerator:
                  self.msp.add_lwpolyline(points, close=True, dxfattribs=dxf_attribs)
 
     def _draw_linestring(self, line, layer, diff_x, diff_y):
-        points = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in line.coords]
-        points = self._validate_points(points, min_points=2)
+        pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in line.coords]
+        
+        # Apply simplification for long lines
+        if len(pts) > 5:
+            pts = self._simplify_line(pts, tolerance=0.15)
+            
+        points = self._validate_points(pts, min_points=2)
         if not points:
             return  # Skip invalid linestring
         self.msp.add_lwpolyline(points, close=False, dxfattribs={'layer': layer})
