@@ -1,0 +1,939 @@
+crossing,highway,natural,lanes,maxspeed,name,oneway,ref,surface,junction,bridge,layer,source,alt_name,building,service,intermittent,water,alt_name2,landuse,building:levels,alt_name:en,footway,access,shop,smoothness,width,amenity,healthcare,operator,operator:type,area_m2,length_m
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,turning_circle,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,turning_circle,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+traffic_signals,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+uncontrolled,crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,,tree,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,,tree,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,,tree,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,,tree,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,,tree,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,,tree,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,,tree,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+,tertiary,,2,60,Estrada do Imburo,yes,MC-201,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,188.65230755672636
+,primary,,2,,,,,paved,roundabout,,,,,,,,,,,,,,,,,,,,,,0.0,385.02649397740305
+,tertiary,,2,60,Estrada do Imburo,yes,MC-201,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,173.15686850566308
+,tertiary,,2,60,Estrada do Imburo,,MC-201,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,197.43879958325297
+,primary,,2,80,Avenida Lacerda Agostinho,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,4222.330011209178
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,473.69475192242993
+,tertiary,,2,60,Estrada do Imburo,,MC-201,paved,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,37.51481260078461
+,tertiary,,2,60,Estrada do Imburo,,MC-201,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,1734.3654132245777
+,tertiary,,2,,Rua Doutor Benedito Carlos Ferreira,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,776.3319460520947
+,primary_link,,1,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,34.462985614344014
+,primary,,2,80,Avenida Industrial,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,3747.7557268539144
+,tertiary,,2,,Rua Doutor Benedito Carlos Ferreira,,,,,,,Bing;IBGE,,,,,,,,,,,,,,,,,,,0.0,423.17359271431064
+,tertiary_link,,1,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,71.36910681138384
+,tertiary_link,,1,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,74.32193616259647
+,tertiary,,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,171.83897343463894
+,residential,,,,Rua São João,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,69.45774532044838
+,residential,,2,,,,,,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,18.92726212763786
+,residential,,,,Rua São João,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,72.16141138967066
+,tertiary,,2,,Rua Alaíde Mota,,,paved,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,19.466972368369824
+,residential,,,,Rua Boa Vista,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,59.13112194873269
+,tertiary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,67.97322217089803
+,residential,,,,Avenida Presidente Tancredo Neves,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,1196.1284820497538
+,residential,,,,Avenida Santo Antônio,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,121.02393289625066
+,residential,,,,Avenida José Alvares de Azevedo,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,36.331663740405716
+,primary_link,,2,,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,31.093485737957533
+,primary_link,,2,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,20.688398935991145
+,primary_link,,1,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,28.91124531340116
+,primary_link,,2,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,16.58334965446455
+,primary,,2,80,Avenida Lacerda Agostinho,yes,,paved,,,,,Rodovia Lacerda Agostinho,,,,,,,,,,,,,,,,,,0.0,4223.958682418827
+,tertiary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,79.88107144678038
+,primary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,29.001263853555052
+,primary_link,,2,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,42.6873067420377
+,primary_link,,1,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,33.85388607399721
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,32.41645774322643
+,residential,,,,Rua Santa Amaro,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,246.02636570883124
+,unclassified,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,471.6663366670214
+,tertiary,,2,,Avenida do Canal,,MC-03,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,2723.1057909785495
+,residential,,,,Rua São João,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,250.11136221405374
+,residential,,,,Rua Joaquim Rosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,627.8735384983939
+,tertiary,,2,,Estrada Municipal do Incra,no,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,473.1994438948353
+,primary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,33.285572167332944
+,tertiary,,2,,Rua São José,yes,MC-03,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,162.29185945355584
+,primary_link,,1,,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,33.980135743693666
+,residential,,,,Rua Joaquim Rosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,643.4783655620726
+,residential,,,,Rua Irmã Angela Puerari,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,514.5992438094852
+,tertiary_link,,2,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,29.65069608330358
+,primary,,2,60,Avenida Industrial,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,95.58620679908384
+,residential,,,,Rua Principal,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,1152.8838019411164
+,tertiary,,2,,Rua Professor Antônio Avarez Parada,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,1325.562478222263
+,residential,,,,Avenida Deputado Aristoteles de Miranda Mello,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,630.8515934835165
+,residential,,,,Rua 110,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,122.5399854466298
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,472.6451151375618
+,tertiary,,2,,Rua Antônio Cesario,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,574.3114130136136
+,primary,,2,60,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,35.571882393466005
+,tertiary,,2,,Estrada Antônio Guimarães Mosqueira,no,,,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,1394.9541048200686
+,residential,,,,Rua Maria Lúcia Piersante,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,453.0508257355388
+,residential,,,,Rua Nelson Correia Brum,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,726.8902016469544
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,62.27628999575583
+,residential,,,,Rua Suely Campos Lima,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,64.20138929983146
+,residential,,,,Rua 44,,,paved,,,,,Rua Quarenta e Quatro,,,,,,,,,,,,,,,,,,0.0,51.01657418938441
+,residential,,,,Rua João Pinto Osório,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,61.61817358356554
+,residential,,,,Rua Itamar Nogueira Riso,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,63.9058559818935
+,residential,,,,Rua 98,,,paved,,,,,Rua Noventa e Oito,,,,,,,,,,,,,,,,,,0.0,54.908263249787666
+,residential,,,,Rua 96,,,paved,,,,,Rua Noventa e Seis,,,,,,,,,,,,,,,,,,0.0,50.57042803664934
+,residential,,,,Rua 58,,,paved,,,,,Rua Cinquenta e Oito,,,,,,,,,,,,,,,,,,0.0,47.3424517626583
+,residential,,,,Rua Vereador Rubens Santos,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,66.08979227879817
+,residential,,,,Rua Maciel José Vilarindo,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,61.24612319283676
+,residential,,,,Rua Francisco de Mattos,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,199.6935270324676
+,residential,,,,Rua Francisco Dias da Silva,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,66.67368379844629
+,residential,,,,Rua F,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,183.30556144313042
+,residential,,,,Rua L,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,450.7279239333235
+,residential,,,,Rua E,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,183.7378186956931
+,residential,,,,Rua 46,,,paved,,,,,Rua Quarenta e Seis,,,,,,,,,,,,,,,,,,0.0,49.93246179300072
+,residential,,,,Rua Maria Cacilda de Oliveira,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,62.90037534885502
+,residential,,,,Rua D,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,187.14881012190517
+,residential,,,,Rua Wilson Ferreira,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,65.42916339770096
+,residential,,,,Rua Evilazio José Rodrigues,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,63.5131654242644
+,residential,,,,Rua 27,,,paved,,,,,Rua Vinte e Sete,,,,,,,,,,,,,,,,,,0.0,63.36877940322927
+,residential,,,,Rua C,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,188.89155262886328
+,residential,,,,Rua Daniel Silva,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,261.59965440599984
+,residential,,,,Rua 99,,,paved,,,,,Rua Noventa e Nove,,,,,,,,,,,,,,,,,,0.0,210.16622467747507
+,residential,,,,Rua B,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,170.58721500908274
+,residential,,,,Rua Alvaro da Paixão Junior,yes,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,393.8200424349551
+,residential,,,,Rua Durvalina Moura de Andrade,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,227.98879281805745
+,residential,,,,Rua Francisco Teixeira Junior,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,261.763159616464
+,residential,,,,Rua Padre Vicente Cariou,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,323.71783326410394
+,residential,,,,Rua Arnaldo Crespo,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,209.07581435462953
+,residential,,,,Rua Paulo Roberto Possati,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,213.6978816886409
+,residential,,,,Rua Braulino Alves Simões,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,346.81404790410255
+,residential,,,,Rua Elizio Dias Curvello,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,346.36370583380295
+,residential,,,,Rua Doutor Silas Fontes Caetano,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,95.46780040095224
+,residential,,,,Rua Demerval Gonçalves Matos,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,62.29407563336068
+,residential,,,,Rua 25,,,paved,,,,,Rua Vinte e Cinco,,,,,,,,,,,,,,,,,,0.0,62.0940351348013
+,residential,,,,Rua 55,,,paved,,,,,Rua Cinquenta e Cinco,,,,,,,,,,,,,,,,,,0.0,62.72679345766396
+,residential,,,,Rua Fabio Azevedo,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,62.17556257961054
+,residential,,,,Rua 40,,,paved,,,,,Rua Quarenta,,,,,,,,,,,,,,,,,,0.0,62.69277797975729
+,residential,,,,Rua 71,,,paved,,,,,Rua Setenta e Um,,,,,,,,,,,,,,,,,,0.0,63.15669334607832
+,residential,,,,Rua 36,,,paved,,,,,Rua Trinta e Seis,,,,,,,,,,,,,,,,,,0.0,61.536523209148804
+,residential,,,,Rua Orvalho,,,paved,,,,,Rua Setenta e Quatro;Rua 74,,,,,,,,,,,,,,,,,,0.0,62.901085151253106
+,residential,,,,Rua 34,,,paved,,,,,Rua Trinta e Quatro,,,,,,,,,,,,,,,,,,0.0,64.01565777340788
+,residential,,,,Rua 80,,,paved,,,,,Rua Oitenta,,,,,,,,,,,,,,,,,,0.0,64.39316633178711
+,residential,,,,Rua 15,,,paved,,,,,Rua Quinze,,,,,,,,,,,,,,,,,,0.0,55.77461024386541
+,residential,,,,Rua 84,,,paved,,,,,Rua Oitenta e Quatro,,,,,,,,,,,,,,,,,,0.0,62.811205633883056
+,residential,,,,Rua Vira Copos,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,69.7950760260625
+,residential,,,,Rua 14,,,paved,,,,,Rua Quatorze,,,,,,,,,,,,,,,,,,0.0,46.623383447926365
+,residential,,,,Rua Alfredo de Souza LIvramento,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,27.997822906243243
+,residential,,,,Rua Francisco Frederico Massom Sobrinho,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,67.48805256843134
+,residential,,,,Rua Jairo Ramalho,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,56.6945986972126
+,residential,,,,Rua Oswando Miguel Marcos,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,64.32718084356125
+,residential,,,,Rua Carlos Drumond de Andrade,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,63.25636379259911
+,residential,,,,Rua 56,,,paved,,,,,Rua Cinquenta e Seis,,,,,,,,,,,,,,,,,,0.0,61.989902626289854
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,63.69149559135626
+,residential,,,,Rua 86,,,paved,,,,,Rua Oitenta e Seis,,,,,,,,,,,,,,,,,,0.0,62.35636825266852
+,residential,,,,Rua 89,,,paved,,,,,Rua Oitenta e Nove,,,,,,,,,,,,,,,,,,0.0,65.53445251266015
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,13.40881002622597
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,59.45329930792903
+,residential,,,,Rua 90 A,,,paved,,,,,Rua Noventa A,,,,,,,,,,,,,,,,,,0.0,64.4178377107246
+,residential,,,,Rua 09,,,paved,,,,,Rua 9; Rua Nove,,,,,,,,,,,,,,,,,,0.0,68.72267639802357
+,residential,,,,Rua Ana Francisca de Souza,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,60.56304661454203
+,residential,,,,Rua 56 A,,,paved,,,,,Rua Cinquenta e Seis A,,,,,,,,,,,,,,,,,,0.0,63.416596679269105
+,residential,,,,Rua 82 A,,,paved,,,,,Rua Oitenta e Dois A,,,,,,,,,,,,,,,,,,0.0,64.24984961653324
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,59.36430076562901
+,residential,,,,Rua 23,,,paved,,,,,Rua Vinte e Três,,,,,,,,,,,,,,,,,,0.0,65.42815695442877
+,residential,,,,Rua 54,,,paved,,,,,Rua Cinquenta e Quatro,,,,,,,,,,,,,,,,,,0.0,62.66658664467715
+,residential,,,,Rua 24,,,paved,,,,,Rua Vinte e Quatro,,,,,,,,,,,,,,,,,,0.0,64.25395507181315
+,residential,,,,Rua Doutor Bezerra de Menezes,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,64.2711104485587
+,residential,,,,Rua 11,,,paved,,,,,Rua Onze,,,,,,,,,,,,,,,,,,0.0,66.32561919657269
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,63.38122275568953
+,residential,,,,Rua 7,,,paved,,,,,Rua Sete,,,,,,,,,,,,,,,,,,0.0,53.592977782115554
+,residential,,,,Rua 85,,,paved,,,,,Rua Oitenta e Cinco,,,,,,,,,,,,,,,,,,0.0,62.77238709277766
+,residential,,,,Rua 22,,,paved,,,,,Rua Vinte e Dois,,,,,,,,,,,,,,,,,,0.0,60.22207443472405
+,residential,,,,Rua 33,,,paved,,,,,Rua Trinta e Três,,,,,,,,,,,,,,,,,,0.0,62.25549095797717
+,residential,,,,Rua Fernando Soares Pessanha,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,63.13460706698025
+,residential,,,,Rua 81,,,paved,,,,,Rua Oitenta e Um,,,,,,,,,,,,,,,,,,0.0,63.954525562756395
+,residential,,,,Rua 88,,,paved,,,,,Rua Oitenta e Oito,,,,,,,,,,,,,,,,,,0.0,63.6045682163368
+,residential,,,,Rua Norberto T. Lacerda,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,55.48134959348446
+,residential,,,,Rua 72,,,paved,,,,,Rua Setenta e Dois,,,,,,,,,,,,,,,,,,0.0,62.78659424191837
+,residential,,,,Rua 35,,,paved,,,,,Rua Trinta e Cinco,,,,,,,,,,,,,,,,,,0.0,62.31022030993062
+,residential,,,,Rua Francisco Maia,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,55.986465814288486
+,residential,,,,Rua 73,,,paved,,,,,Rua Setenta e Três,,,,,,,,,,,,,,,,,,0.0,61.56979888721222
+,residential,,,,Rua Arc,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,229.98759015328903
+,residential,,,,Rua Martins 1,,,paved,,,,,Rua Martins Um,,,,,,,,,,,,,,,,,,0.0,245.9054947798598
+,residential,,,,Rua Manoel Teixeira,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,185.76152392113238
+,residential,,,,Rua Irmã Laurinda Freitas Carvalho,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,135.6174210493206
+,residential,,,,Rua 12,,,paved,,,,,Rua Doze,,,,,,,,,,,,,,,,,,0.0,123.64562850090758
+,residential,,,,Rua 26,,,paved,,,,,Rua Vinte e Seis,,,,,,,,,,,,,,,,,,0.0,164.4081781448362
+,residential,,,,Rua Berta Lutz,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,210.48330582550668
+,residential,,,,Rua Kurunkango,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,209.1734447580447
+,residential,,,,Rua Professor Valdir Celem,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,311.55199026460923
+,residential,,,,Rua Elbo Sodré,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,209.91754994256135
+,residential,,,,Rua José Inocencio de Andrade,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,211.0493840143879
+,residential,,,,Rua 39,,,paved,,,,,Rua Trinta e Nove,,,,,,,,,,,,,,,,,,0.0,209.86452316607432
+,residential,,,,Rua Alcides Rafael,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,209.28925676272192
+,residential,,,,Rua Antônio Agostinho Ferreira,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,578.7755541397136
+,residential,,,,Rua José de Freitas Castro,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,291.41371702453506
+,residential,,,,Rua 106,,,paved,,,,,Rua Cento e Seis,,,,,,,,,,,,,,,,,,0.0,52.05096968233072
+,residential,,,,Rua 108,,,paved,,,,,Rua Cento e Oito,,,,,,,,,,,,,,,,,,0.0,52.25908970080654
+,residential,,,,Rua 60,,,paved,,,,,Rua Sessenta,,,,,,,,,,,,,,,,,,0.0,50.46226881124785
+,tertiary,,1,,Rodovia Amaral Peixoto,yes,RJ-106,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,583.6867679410276
+,primary,,2,60,Rodovia Amaral Peixoto,yes,RJ-106,paved,,,,GPS,,,,,,,,,,,,,,,,,,,0.0,870.1009602857453
+,tertiary,,2,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,7.1661626072300875
+,unclassified,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,200.75381450341212
+,tertiary,,2,,Rua Rotary Club,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,592.4727662454972
+,tertiary,,2,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,652.072781648056
+,tertiary,,1,,Rua Antônio Cesario,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,22.052386609621855
+,tertiary,,2,,Rua Dídimo Nunes Sá Filho,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,890.593280670973
+,tertiary,,2,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,8.33611238788457
+,tertiary,,2,,Avenida São José Barreto,,,asphalt,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,659.130816791476
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,11381.86503129113,470.4497534465468
+,residential,,,,Avenida Raphael Chrysanto Sampaio Guerra,,,ground,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,1497.6754278411938
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,104.7039931465468
+,residential,,,,Avenida Gvernador Geremias de Mattos Fontes,,,ground,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,2364.2035943357378
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,398.3066504751282
+,residential,,,,Rua Betel,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,110.91284148553135
+,residential,,,,Rua Eliete Vicente Ferreira,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,174.42231262748368
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,205.27653780732092
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,49.96882607914761
+,residential,,,,Rua Nelson Ribeiro,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,170.79115803405838
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,41.301591600223524
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,238.56409170197068
+,residential,,,,Rua Passos Dias,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,182.5009248516709
+,residential,,,,Rua da Paz,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,182.18517263923303
+,residential,,,,Rua Tim Maia,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,342.0849699875255
+,residential,,,,Rua Ruy Moutinho de Almeida,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,107.52805686609354
+,residential,,,,Rua Leony de Souza Alvarenga,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,299.41107366709707
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,42.135078506654125
+,residential,,,,Rua José Ferreira,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,171.40171588298767
+,residential,,,,Rua Wilson de Santana,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,113.59433176706389
+,residential,,,,Rua Linguado,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,238.9595371991998
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,90.25376848229557
+,residential,,,,Rua José Roberto Bertrami,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,172.9851743928515
+,residential,,,,Rua Mota Carvalho,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,293.4544656063758
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,259.4469932297499
+,residential,,,,Vila Adalgisa,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,213.4023027874776
+,residential,,,,Rua Tom Jobim,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,342.5623022344515
+,residential,,,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,35.12398213400286
+,residential,,,,Rua Ivandro Lúcio do Amaral Drumond,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,117.88635137878059
+,residential,,,,Rua Alfredo Motta,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,297.5229566228617
+,residential,,,,Rua Viola,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,222.72682351452434
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,95.16877161603976
+,residential,,,,Travessa 1,,,paved,,,,,Travessa Um,,,,,,,,,,,,,,,,,,0.0,92.64923389862989
+,residential,,,,Travessa 4,,,paved,,,,,Travessa Quatro,,,,,,,,,,,,,,,,,,0.0,114.43489761607404
+,residential,,,,Rua Raul Seixas,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,388.34316659415975
+,residential,,,,Travessa 3,,,paved,,,,,Travessa Três,,,,,,,,,,,,,,,,,,0.0,108.25679278245147
+,residential,,,,Rua Dourado,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,263.9407033580313
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,73.1027956309876
+,residential,,,,Rua Novo Horizonte,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,289.51181819383305
+,residential,,,,Rua 1,,,ground,,,,,Rua Um,,,,,,,,,,,,,,,,,,0.0,132.40401376635916
+,residential,,,,Rua Atum,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,244.04067966032622
+,residential,,,,Rua Maria da Conceição Crespo,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,176.31568994285522
+,residential,,,,Rua Marlim,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,241.43302151449848
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,60.76873861863672
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,60.633564251566455
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,57.114098827534136
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,60.55846181585952
+,residential,,,,Rua Hilda Brandão deMiranda,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,253.3239649232221
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,61.18926899614753
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,215.37352808866984
+,residential,,,,,,,ground,,,,,,,,,,,,,,,,,,,,,,,0.0,85.55256081318687
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,60.37452271619604
+,residential,,,,Rua Cazuza,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,391.7978040368607
+,service,,,,,yes,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,43.16778610970215
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,60.36151462465333
+,service,,,,,yes,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,43.43094186879313
+,residential,,,,Rua Maria da Conceição Crespo,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,218.66503748132203
+,tertiary_link,,2,,Rua AlaídeMota,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,19.22934317297905
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,409.8900670434223
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,52.442869940924794
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,409.43050353996534
+,residential,,,,Rua Antônio Cesario,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,231.71031498055186
+,residential,,,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,153.40699316855006
+,residential,,,,Rua Elis Regina,yes,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,403.63167540401133
+,tertiary_link,,1,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,13.75742161578137
+,residential,,,,Rua Irani Mendes Neto,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,507.82931655041193
+,residential,,,,Rua 66,,,paved,,,,,Rua Sessenta e Seis,,,,,,,,,,,,,,,,,,0.0,126.5778223359052
+,residential,,,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,138.30615911757747
+,residential,,,,Rua José Recorder,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,677.9485680504179
+,residential,,,,Rua Raul Seixas,yes,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,77.29279253076821
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,263.61811192842407
+,residential,,,,Rua Dom Eugenio Salles,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,498.3821249917621
+,residential,,,,Rua Wilde Brandão Wileman,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,77.55447967480139
+,residential,,,,Rua Alaíde Mota,yes,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,314.43046640921807
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,106.54244397753827
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,102.75927889413752
+,residential,,,,Travessa 2,,,,,,,,Travessa Dois,,,,,,,,,,,,,,,,,,0.0,78.40473514184913
+,residential,,,,Rua Ana Maria Teixeira,,,,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,182.14609759013277
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,125.75972736922628
+,tertiary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,58.944112650577864
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,26.015384450389526
+,residential,,,,Rua 4,,,paved,,,,,Rua Quatro,,,,,,,,,,,,,,,,,,0.0,151.3093989562962
+,residential,,,,Rua Quatro,,,paved,,,,,Rua 4,,,,,,,,,,,,,,,,,,0.0,642.8881375309871
+,residential,,,,,yes,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,553.6121136519333
+,residential,,,,Rua Irmã Angela Puerari,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,473.79594956773434
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,239.5396075143741
+,residential,,,,Rua Lins Vasconcelos,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,258.8835852965094
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,136.59876875613875
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,244.4480336729662
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,162.65179688524444
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,348.0656989705957
+,primary,,2,60,Rodovia Amaral Peixoto,yes,,paved,,,,GPS,,,,,,,,,,,,,,,,,,,0.0,694.643766905131
+,,water,,,Lagoa da Ajuda,,,,,,,,,,,no,basin,,,,,,,,,,,,,,25505.282839514555,1332.586561215626
+,primary,,2,80,Avenida Industrial,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,3617.430498393739
+,primary,,2,60,Avenida Industrial,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,82.44161340392094
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,834.8523384317059
+,residential,,,,Rua Felismino Ribeiro,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,234.95098579683957
+,residential,,,,Rua O,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,136.1792066756777
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,105.57905709457461
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,118.43139414654
+,residential,,,,Rua T,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,137.45417951213062
+,residential,,,,Rua T,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,57.754851690875306
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,220.63317230610997
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,913.3889737013764
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,235.13780587390502
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,254.44956434178224
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,820.671937106602
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,110.2401614981596
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,725.8384395845093
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,599.6688975645526
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,741.9911760755889
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,49.89573565428637
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,81.84976435429789
+,residential,,,,Rua 41,,,,,,,,Rua Quarenta e Um,,,,,,,,,,,,,,,,,,0.0,753.173153759274
+,residential,,,,Rua Antônio Geraldo de Miranda,,,,,,,,,,,,,Rua 1,,,,,,,,,,,,,0.0,100.0710590895214
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,73.18743179623345
+,residential,,,,Rua Enfermeiro Wilson Valença,,,,,,,,Rua 2;Rua Dois,,,,,,,,,,,,,,,,,,0.0,146.89302972531777
+,residential,,,,Rua Três,,,,,,,,Rua Laercia Barros de Oliveira,,,,,,,,,,,,,,,,,,0.0,190.88673816481955
+,residential,,,,Rua Doutora Moema Passos Alonso,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,235.65302325735064
+,residential,,,,Rua José Marques da Silva,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,276.49741229165545
+,residential,,,,Rua Seis,,,,,,,,Rua Ary Luiz Pimentel,,,,,,,,,,,,,,,,,,0.0,288.26282068092473
+,residential,,,,Rua Sete,,,,,,,IBGE,Rua Waltair Fernandes Pinto,,,,,,,,,,,,,,,,,,0.0,279.131948525172
+,residential,,,,Rua 8,,,,,,,IBGE,Rua Oito,,,,,,,,,,,,,,,,,,0.0,271.1489150577259
+,residential,,,,Rua 9,,,,,,,,Rua Nove,,,,,,,,,,,,,,,,,,0.0,265.2544188461
+,residential,,,,Rua 10,,,,,,,,Rua Dez,,,,,,,,,,,,,,,,,,0.0,257.4451734099958
+,residential,,,,Rua 11,,,,,,,,Rua Onze,,,,,,,,,,,,,,,,,,0.0,250.77700495405693
+,residential,,,,Rua 41,,,,,,,IBGE,Rua Quarenta e Um,,,,,,,,,,,,,,,,,,0.0,72.80329966371188
+,residential,,,,Rua 41,,,,,,,IBGE,Rua Quarenta e Um,,,,,,,,,,,,,,,,,,0.0,262.06441698523275
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,84.75036985166832
+,residential,,,,Rua 13,,,,,,,IBGE,Rua Treze,,,,,,,,,,,,,,,,,,0.0,147.02446327453532
+,residential,,,,Rua 14,,,,,,,,Rua Quatorze,,,,,,,,,,,,,,,,,,0.0,131.5537350966419
+,residential,,,,Rua 15,,,,,,,IBGE,Rua Quinze,,,,,,,,,,,,,,,,,,0.0,113.376404571006
+,residential,,,,Rua 16,,,,,,,IBGE,Rua Dezesseis,,,,,,,,,,,,,,,,,,0.0,96.71977268324882
+,residential,,,,Rua 41,,,,,,,IBGE,Rua Quarenta e Um;Rua 44;Rua Quarenta e Quatro,,,,,,,,,,,,,,,,,,0.0,567.3932057640311
+,residential,,,,Rua 18,,,,,,,,Rua Dezoito,,,,,,,,,,,,,,,,,,0.0,146.82872125997787
+,residential,,,,Rua 19,,,,,,,,Rua Dezenove,,,,,,,,,,,,,,,,,,0.0,146.57513110633803
+,residential,,,,Rua 20,,,,,,,IBGE,Rua Vinte,,,,,,,,,,,,,,,,,,0.0,145.3005328507461
+,residential,,,,Rua 21,,,,,,,,Rua Vinte e Um,,,,,,,,,,,,,,,,,,0.0,143.5958568063264
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,256.4739368077583
+,residential,,,,Rua Viriato Figueira da Silva,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,59.92055496760284
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,77.57385364290627
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,96.8629059464386
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,94.80122501191869
+,residential,,,,Rua 22,,,,,,,IBGE,Rua Vinte e Dois,,,,,,,,,,,,,,,,,,0.0,142.65250703318316
+,residential,,,,Rua 23,,,,,,,,Rua Vinte e Três,,,,,,,,,,,,,,,,,,0.0,142.43656694161731
+,residential,,,,Rua 24,,,,,,,,Rua Vinte e Quatro,,,,,,,,,,,,,,,,,,0.0,142.38633306542758
+,residential,,,,Rua 25,,,,,,,IBGE,Rua Vinte e Cinco,,,,,,,,,,,,,,,,,,0.0,138.10515031681277
+,residential,,,,Rua 26,,,,,,,,Rua Vinte e Seis,,,,,,,,,,,,,,,,,,0.0,123.48585761058781
+,residential,,,,Rua 27,,,,,,,,Rua Vinte e Sete,,,,,,,,,,,,,,,,,,0.0,101.94241470903725
+,residential,,,,Rua 28,,,,,,,,Rua Vinte e Oito,,,,,,,,,,,,,,,,,,0.0,80.27909463602253
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,336.82706695173533
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,298.17748303822015
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,208.0260227429949
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,487.73306119756637
+,residential,,,,Rua W 3,,,,,,,,Rua W Três,,,,,,,,,,,,,,,,,,0.0,163.82087873503303
+,residential,,,,Rua 2,,,,,,,,Rua Dois,,,,,,,,,,,,,,,,,,0.0,86.6668553820135
+,residential,,,,Rua 1,,,,,,,,Rua Um,,,,,,,,,,,,,,,,,,0.0,69.83294444092004
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,437.41462462238803
+,residential,,,,Rua 5,,,,,,,,Rua Cinco,,,,,,,,,,,,,,,,,,0.0,215.44535680557274
+,residential,,,,Rua 10,,,,,,,,Rua Dez,,,,,,,,,,,,,,,,,,0.0,109.69750546014413
+,residential,,,,Rua 11,,,,,,,,Rua Onze,,,,,,,,,,,,,,,,,,0.0,98.72486159860053
+,path,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,49.689317186809994
+,residential,,,,Rua 12,,,,,,,,Rua Doze,,,,,,,,,,,,,,,,,,0.0,95.90144837087387
+,residential,,,,Rua 13,,,,,,,,Rua Treze,,,,,,,,,,,,,,,,,,0.0,80.65796768709501
+,residential,,,,Rua 9,,,,,,,,Rua Nove,,,,,,,,,,,,,,,,,,0.0,160.0055078710821
+,residential,,,,Rua 7,,,,,,,,Rua Sete,,,,,,,,,,,,,,,,,,0.0,77.40848792705222
+,residential,,,,Rua 6,,,,,,,,Rua Seis,,,,,,,,,,,,,,,,,,0.0,76.29442371614454
+,residential,,,,Rua 3,,,,,,,,Rua Três,,,,,,,,,,,,,,,,,,0.0,159.35403828460676
+,residential,,,,Rua W 5,,,,,,,,Rua W Cinco,,,,,,,,,,,,,,,,,,0.0,129.21147466828887
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,236.3654734475581
+,residential,,,,Rua 7,,,,,,,,Rua Sete,,,,,,,,,,,,,,,,,,0.0,440.5622401303669
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,226.64516602906576
+,residential,,,,Avenida Edmundo Antunes da Silva,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,518.7834983616266
+,residential,,,,Avenida 2,,,,,,,,Avenida Dois,,,,,,,,,,,,,,,,,,0.0,362.43343225181695
+,residential,,,,Rua Wilde Brandão Wilemen,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,245.87524998812088
+,residential,,,,Avenida 2,,,,,,,,Avenida Dois,,,,,,,,,,,,,,,,,,0.0,399.1949208250439
+,residential,,,,,,,,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,10.476640936207682
+,residential,,,,Rua E,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,116.19531520624827
+,residential,,,,Avenida Nossa Senhora da Ajuda,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,289.8663143874784
+,residential,,,,Rua A,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,70.67846871509191
+,residential,,,,Rua C,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,208.91058693401754
+,residential,,,,Rua B,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,140.4682362601245
+,residential,,,,Rua Irani Mendes Neto,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,240.36374177258773
+,residential,,,,Rua 3,,,,,,,,Rua Três,,,,,,,,,,,,,,,,,,0.0,91.68748635789315
+,residential,,,,Rua 3,,,,,,,,Rua Três,,,,,,,,,,,,,,,,,,0.0,183.86254767626227
+,residential,,,,Travessa 2,,,,,,,,Travessa Dois,,,,,,,,,,,,,,,,,,0.0,99.53088329289417
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,280.0196402871519
+,residential,,,,Travessa 1,,,,,,,,Travessa Um,,,,,,,,,,,,,,,,,,0.0,88.25005641488876
+,residential,,,,Travessa 2,,,,,,,,Travessa Dois,,,,,,,,,,,,,,,,,,0.0,55.049872640972374
+,residential,,,,Rua 8,,,,,,,,Rua Oito,,,,,,,,,,,,,,,,,,0.0,186.95344311274363
+,residential,,,,Avenida José Alvares de Azevedo,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,639.9454707262737
+,residential,,,,Rua 1,,,,,,,,Rua Um,,,,,,,,,,,,,,,,,,0.0,199.76596953345788
+,residential,,,,Rua 11,,,,,,,,Rua Onze,,,,,,,,,,,,,,,,,,0.0,215.53982016368772
+,residential,,,,Rua 10,,,,,,,,Rua Dez,,,,,,,,,,,,,,,,,,0.0,251.58081732589358
+,residential,,,,Rua 9,,,,,,,,Rua Nove,,,,,,,,,,,,,,,,,,0.0,234.53100549724763
+,residential,,,,Rua 1,,,,,,,,Rua Um,,,,,,,,,,,,,,,,,,0.0,36.35593333318714
+,residential,,,,Rua 5,,,,,,,,Rua Cinco,,,,,,,,,,,,,,,,,,0.0,101.27641171024354
+,residential,,,,Rua 4,,,,,,,,Rua Quatro,,,,,,,,,,,,,,,,,,0.0,124.91694033512837
+,residential,,,,Rua 3,,,,,,,,Rua Três,,,,,,,,,,,,,,,,,,0.0,144.48977111413777
+,residential,,,,Rua 2,,,,,,,,Rua Dois,,,,,,,,,,,,,,,,,,0.0,147.75898539704207
+,residential,,,,Rua 6,,,,,,,,Rua Seis,,,,,,,,,,,,,,,,,,0.0,71.45847539605465
+,residential,,,,Rua 9,,,,,,,,Rua Nove,,,,,,,,,,,,,,,,,,0.0,131.1629994054426
+,residential,,,,Rua do Incra,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,531.4650860017691
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,32.94435047717504
+,residential,,,,Avenida 2,,,,,,,,Avenida Dois,,,,,,,,,,,,,,,,,,0.0,236.1278218137727
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,112.14964479745805
+,residential,,,,Rua Um,,,,,,,,Rua 1,,,,,,,,,,,,,,,,,,0.0,213.578993533898
+,residential,,,,Rua São José Barreto,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,429.2379650924747
+,residential,,,,Rua Antônio Curvelo Benjamin,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,249.40843654624595
+,residential,,,,Rua Elias Agostinho,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,144.310223086174
+,residential,,,,Rua Sete,,,,,,,,Rua 7,,,,,,,,,,,,,,,,,,0.0,172.72947407457536
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,123.54854533822817
+,residential,,,,Rua Guiomar Schueller,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,89.16889507173552
+,service,,,,,,,,,,,,,,alley,,,,,,,,,,,,,,,,0.0,163.65314225813023
+,residential,,,,Rua Elias Agostinho,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,165.95654202026085
+,residential,,,,Rua Dois,,,,,,,,Rua 2,,,,,,,,,,,,,,,,,,0.0,218.98130971037176
+,residential,,,,Rua Quatro,,,,,,,,Rua 4,,,,,,,,,,,,,,,,,,0.0,145.64828535699826
+,residential,,,,Rua São José,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,100.67239922082078
+,residential,,,,Rua José Lúcio Medeiros,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,203.91467005811577
+,,,,,,,,,,,,,,,,,,,grass,,,,,,,,,,,,9833.583745270382,351.8049052706979
+,,,,,,,,,,,,,,yes,,,,,industrial,4,,,,,,,,,,,1630.496671406649,165.59117300017977
+,,,,,,,,,,,,,,yes,,,,,,4,,,,,,,,,,,750.6910495284195,112.16525323479715
+,,,,,,,,,,,,,,yes,,,,,,4,,,,,,,,,,,1630.9329782875138,165.5353443040972
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.105220059348,82.49759844110173
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.1060025141455,82.49771317625634
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.3971960573259,82.51739752595326
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.1047343574162,82.49752699988576
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.1043334759951,82.49746810168816
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.2793509203851,82.51226626728942
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.1034959093037,82.49734491551776
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.10312670789835,82.4972909057186
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.1027179344974,82.49723106749936
+,,,,,,,,,,,,,,apartments,,,,,,9,,,,,,,,,,,347.1023032370384,82.49716996312725
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,3489.264849549565,345.6301709068381
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.5037161673305,119.13627739014603
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.505478796952,119.13645289295295
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.4724563022382,119.02850092046111
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.5061578379941,119.10829382272871
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.3898508886577,119.09394794203185
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.5027960145395,119.11138215311716
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.412766900984,119.08808924361125
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.4711178506105,119.09658075828236
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.4981512150642,119.0864340662931
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.5869362530306,119.1050139808128
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.4512377747235,119.08999153935855
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,712.379822615249,119.10168582836724
+,,,,,,,,,,,,,,industrial,,,,,,4,,,,,,,,,,,3040.9507864163775,220.61415222342538
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.20980794005436,62.289049882471915
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.25059150478182,62.28925249930789
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.23155758515986,62.29137676535701
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.17400445516245,62.29011365510995
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.17385653367035,62.290089866094014
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.24998809669887,62.2891555237711
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.3182494303127,62.30347536563539
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.10510405711037,62.275672841148264
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.1049583006258,62.275649435293516
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.3193466863238,62.303653266241355
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.17434418009594,62.29016989536582
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.19301706298884,62.28799001574001
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.1738046904826,62.29008337334861
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.2194260628894,62.274861366389715
+,,,,,,,,,,,,,,yes,,,,,,2,,,,,,,,,,,205.14209763561882,62.27480792748168
+,,,,,,,,,,,,,,yes,,,,,,3,,,,,,,,,,,636.1904077647893,104.35115759798188
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,13486.79761081011,464.6864616930163
+,,,,,,,,,,,,,,industrial,,,,,,3,,,,,,,,,,,1764.7312191252076,173.58528393885203
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,479.4006678823481
+,residential,,,,Rua 5,,,,,,,,Rua Cinco,,,,,,,,,,,,,,,,,,0.0,225.52056339766307
+,residential,,,,Rua 1,,,,,,,,Avenida Nadia Maria,,,,,,,,,,,,,,,,,,0.0,373.99397146744286
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,782.8831560686481
+,residential,,,,Rua Falcão,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,295.7084288205395
+,residential,,,,Rua 1,,,,,,,,Rua Um,,,,,,,,,,,,,,,,,,0.0,322.9830310462097
+,residential,,,,Rua 2,,,,,,,,Rua Dois,,,,,,,,,,,,,,,,,,0.0,55.740026933147355
+,residential,,,,Rua 3,,,,,,,,Rua Três,,,,,,,,,,,,,,,,,,0.0,55.052053435625176
+,residential,,,,Rua 4,,,,,,,,Rua Quatro,,,,,,,,,,,,,,,,,,0.0,55.47071952927055
+,residential,,,,Rua 5,,,,,,,,Rua Cinco,,,,,,,,,,,,,,,,,,0.0,55.99785957066222
+,residential,,,,Rua 6,,,,,,,,Rua Seis,,,,,,,,,,,,,,,,,,0.0,55.47526473192669
+,residential,,,,Rua 7,,,,,,,,Rua Sete,,,,,,,,,,,,,,,,,,0.0,54.044174749194426
+,residential,,,,Rua 8,,,,,,,,Rua Oito,,,,,,,,,,,,,,,,,,0.0,54.278398517720014
+,residential,,,,Rua 9,,,,,,,,Rua Nove,,,,,,,,,,,,,,,,,,0.0,53.97450501979673
+,residential,,,,Rua 10,,,,,,,,Rua Dez,,,,,,,,,,,,,,,,,,0.0,55.45895777642373
+,residential,,,,Rua 1',,,,,,,,Rua Dez,,,,,,,,Rua 1,,,,,,,,,,0.0,247.14421815919883
+,residential,,,,Rua das Ciências,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,286.9650521980876
+,residential,,,,Rua 13,,,,,,,,Rua Treze,,,,,,,,,,,,,,,,,,0.0,56.350192226206985
+,residential,,,,Rua Morena,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,57.312026773882444
+,residential,,,,Rua Tatu,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,55.44429267770867
+,residential,,,,Rua Pavão,,,,,,,,Rua 2,,,,,,,,,,,,,,,,,,0.0,56.998789077887736
+,residential,,,,Rua Ganso,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,54.161678117820536
+,residential,,,,Rua Pato,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,54.54865638606635
+,residential,,,,Rua 16,,,,,,,,Rua Dezesseis,,,,,,,,,,,,,,,,,,0.0,55.04807683541414
+,residential,,,,Rua 11,,,,,,,,Rua Onze,,,,,,,,,,,,,,,,,,0.0,300.1013352127438
+,residential,,,,Rua Trinca Ferro,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,287.1416084113574
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,143.85534983156077
+,track,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,88.27946631570927
+,residential,,,,Rua Papagaio,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,387.25269094239695
+,residential,,,,Rua Juriti,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,396.38270485887875
+,residential,,,,Rua 4,,,,,,,,Rua Quatro,,,,,,,,,,,,,,,,,,0.0,406.6067043076536
+,residential,,,,Avenida 3,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,1045.5535729672956
+,residential,,,,Rua Cisne Branco,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,415.1268080969404
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,122.93459871538704
+,residential,,,,Rua 1,,,,,,,,Rua Um,,,,,,,,,,,,,,,,,,0.0,418.7055067646166
+,residential,,,,Rua Gavião Real,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,305.8486564292604
+,residential,,,,Rua Gavião Real,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,14.304149660762985
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,233.3772782694717
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,243.94043012906687
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,261.2956064631046
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,26.918728776627326
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,214.58667102856805
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,217.7634746589308
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,217.83071473772748
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,174.37806364153022
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,327.65104576995697
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,110.20438057720614
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,223.10891668353958
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,101.22088859955718
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,108.82241737737742
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,187.22543934620728
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,432.2132744043207
+,residential,,,,Rua 12,,,,,,,,Rua Doze,,,,,,,,,,,,,,,,,,0.0,55.192749939067994
+,tertiary,,2,,Rua José Calil Filho,,,,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,173.7483353271617
+,residential,,,,Avenida 1000,,,,,,,,Avenida Mil,,,,,,,,,,,,,,,,,,0.0,149.41492567198387
+,tertiary,,2,,Estrada Municipal do Incra,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,283.9194915692749
+,residential,,,,Rua J,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,126.37772852956834
+,residential,,,,Rua F,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,107.11022106956437
+,residential,,,,Rua E,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,92.99519331634137
+,residential,,,,Rua I,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,46.659512355086534
+,residential,,,,Rua I,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,147.8031010277868
+,residential,,,,Rua G,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,49.44253779344219
+,residential,,,,Rua B,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,94.21187439083778
+,residential,,,,Rua C,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,65.07667304216348
+,residential,,,,Rua 1,,,,,,,,Rua Um,,,,,,,,,,,,,,,,,,0.0,198.04637822102998
+,residential,,,,Rua 2,,,,,,,,Rua Dois,,,,,,,,,,,,,,,,,,0.0,237.22982101476762
+,residential,,,,Rua 4,,,,,,,,Rua Quatro,,,,,,,,,,,,,,,,,,0.0,165.04173513357367
+,residential,,,,Rua 3,,,,,,,,Rua Três,,,,,,,,,,,,,,,,,,0.0,175.8413159288577
+,residential,,,,Rua 5,,,,,,,,Rua Cinco,,,,,,,,,,,,,,,,,,0.0,154.5425138205282
+,residential,,,,Rua 7,,,,,,,,Rua Sete,,,,,,,,,,,,,,,,,,0.0,143.0749903991167
+,residential,,,,Rua 8,,,,,,,,Rua Oito,,,,,,,,,,,,,,,,,,0.0,129.5470594972123
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,244.21593453057156
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,207.25291190284963
+,residential,,,,Rua do Andaime,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,198.95343712570235
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,229.95346551645068
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,309.4998262392803
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,138.85302476139654
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,586.6275645710174
+,residential,,,,Avenida D,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,325.7290403908979
+,residential,,,,Avenida C,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,293.9030050124554
+,residential,,,,Rua B,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,227.45872334229446
+,residential,,,,Rua I,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,119.47140648067167
+,residential,,,,Rua K,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,165.9396231633175
+,residential,,,,Rua H,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,117.67378922532299
+,residential,,,,Rua E,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,379.5383600958097
+,residential,,,,Rua F,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,51.70181263316477
+,residential,,,,Rua J,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,51.19214599961746
+,residential,,,,Rua D,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,50.59254947295112
+,residential,,,,Rua C,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,49.657923921916165
+,residential,,,,Avenida A,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,284.2872796525539
+,residential,,,,Avenida B,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,91.36080499788972
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,156.87213984006613
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,141.2379424013823
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,67.02355036401998
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,199.40538914909243
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,171.40698142647915
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,72.78471570716263
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,847.3892207180163
+,residential,,,,Rua A,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,144.1630601693415
+,residential,,,,Rua Wilde Brandão Wileman,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,514.7239169318125
+,residential,,,,Rua 12,,,,,,,IBGE,Rua Doze,,,,,,,,,,,,,,,,,,0.0,160.3901142594674
+,residential,,,,Rua 2,,,,,,,,Rua Dois,,,,,,,,,,,,,,,,,,0.0,249.9815774605972
+,residential,,,,Rua 1,,,,,,,,Rua Um,,,,,,,,,,,,,,,,,,0.0,228.5116747623687
+,residential,,,,Rua 1 A,,,,,,,,Rua Um A,,,,,,,,,,,,,,,,,,0.0,129.14909075551114
+,living_street,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,421.3785188548701
+,living_street,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,110.233094402291
+,living_street,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,11.652822703500638
+,residential,,,,Travessa 1,,,,,,,,Travessa Um,,,,,,,,,,,,,,,,,,0.0,34.70811714723151
+,residential,,,,Travessa 1,,,,,,,,Travessa Um,,,,,,,,,,,,,,,,,,0.0,99.3850267769862
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,332.4289308120622
+,residential,,,,Travessa 1,,,,,,,,Travessa Um,,,,,,,,,,,,,,,,,,0.0,37.83270628357644
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,45.588521133675215
+,tertiary_link,,1,,,yes,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,72.37104028976199
+,tertiary,,1,,Rua Antônio Cesario,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,23.80055125907471
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,271.3021586926204
+,residential,,,,Avenida B,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,101.53635622534797
+,residential,,,,Rua São José,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,192.78014019348993
+,living_street,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,534.0360090830469
+,living_street,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,182.77801910865205
+,living_street,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,32.77621943164324
+,living_street,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,38.04170021239322
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,32.23888998958058
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,96.86598853533555
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,61.34675962114511
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,359.91130827990276
+,residential,,,,Avenida 2,,,,,,,,Avenida Dois,,,,,,,,,,,,,,,,,,0.0,253.41037133664463
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,304.45744521299076
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,242.63189807801484
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,68.40233492597004
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,203.54036310115356
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,68.23878474467226
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,68.62650421156478
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,69.62244982366506
+,residential,,,,Rua Wilma Dias,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,291.31044574873744
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,304.4746797255773
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,95.038824741814
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,237.21453741451666
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,64.2612418396611
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,108.29375097348816
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,36.98593732334317
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,64.05424121572062
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,156.31117907091183
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,556.5646871162371
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,117.94887856941962
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,175.23094963200543
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,23.8867664159543
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,29.195990780186897
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,69.45712917764058
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,62.7233806419996
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,85.66166232158812
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,115.7979031536859
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,94.51802922669677
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,163.93758058117032
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,39.7235871415033
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,83.8783229004263
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,96.57756040313227
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,115.71047615638017
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,243.7326854148372
+,residential,,,,Rua A,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,165.45996612664953
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,236.3157758236288
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,184.20203954803696
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,156.6064594311745
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,77.79839512291389
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,67.4053156281997
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,74.90039470554326
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,28.66991191281969
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,159.4530609615592
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,73.41625990635904
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,71.69493341119872
+,service,,,,,,,,,,,,,,alley,,,,,,,,,,,,,,,,0.0,30.939216554068175
+,service,,,,,,,,,,,,,,alley,,,,,,,,,,,,,,,,0.0,120.95727184050486
+,residential,,,,Rua 4,,,,,,,,Rua Quatro,,,,,,,,,,,,,,,,,,0.0,54.122864754646386
+,residential,,,,Rua 10 A,,,,,,,,Rua Dez A,,,,,,,,,,,,,,,,,,0.0,113.25988013902438
+,service,,,,,,,,,,,,,,alley,,,,,,,,,,,,,,,,0.0,49.97966200057431
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,168.46353171975395
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,261.3217264906901
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,87.49329849487624
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,67.29020985292486
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,1339.6711836938239
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,583.8425172564741
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,124.85667994893102
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,128.14682576952134
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,130.23476606102028
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,130.93659522007502
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,236.20212131208467
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,163.90625275367333
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,142.2447814072089
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,88.25424732744564
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,157.1177234338333
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,278.77828562954613
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,123.29476321762887
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,257.36939532588843
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,238.95758962276432
+,residential,,,,R Dr. Andrea Vasconcelos Meireles,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,640.5997709236653
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,328.9436034277264
+,residential,,,,R. Elias Cortez,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,403.60286306001
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,187.38067128737697
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,234.74686172016564
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,249.74783158950646
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,34.60808021459908
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,301.52619529979376
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,297.4986154668575
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,9.839572571340712
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,339.365438928667
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,395.8506864609169
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,397.2645090086889
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,128.59501092591617
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,188.4835805781576
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,177.30325119545552
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,190.70363764115896
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,203.14869223473931
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,50.050145680117616
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,39.18538294149059
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,26.692301132261875
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,128.46361843157658
+,primary,,2,,Rua Hildebrando Alves Barbosa,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,16.498487576592616
+,footway,,,,,,,,,,,,,,,,,,,,,crossing,,,,,,,,,0.0,13.665564714292435
+,cycleway,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,186.20178241607337
+,cycleway,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,181.9738924476083
+,cycleway,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,47.69400888513588
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,147.1716674022362
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,2462.704838827036
+,primary,,2,,Rua Hildebrando Alves Barbosa,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,15.728177511760725
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,824.6611960951693
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,2427.0401935461387
+,primary,,2,60,Rodovia Amaral Peixoto,,,paved,,,,GPS,,,,,,,,,,,,,,,,,,,0.0,1766.037802993922
+,unclassified,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,661.8444624982055
+,path,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,223.3976053862527
+,tertiary,,2,,Avenida do Canal,yes,MC-03,,,,,,,,,,,,,,,,,,,,,,,,0.0,193.71845789974435
+,residential,,,,Rua 3 A,,,,,,,,Rua Três A,,,,,,,,,,,,,,,,,,0.0,119.43715006554328
+,residential,,,,Rua 6,,,,,,,,Rua Seis,,,,,,,,,,,,,,,,,,0.0,74.1020382719928
+,unclassified,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,534.4954305858254
+,service,,,,,,,,,,,,,,alley,,,,,,,,,,,,,,,,0.0,81.64208173291705
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,76.46476901849884
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,41.26753558661579
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,52.27758812836318
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,32.560861173392574
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,65.93582708378239
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,417.6930446875989
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,78.95507973189142
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,188.17075257137842
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,75.29042801157104
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,74.35655526215892
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,496.61195528169173
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,51.07856094999192
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,32.69832740163582
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,342.8353878258767
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,86.33989833570983
+,residential,,,,Rua 107,,,paved,,,,,Rua Cento e Sete,,,,,,,,,,,,,,,,,,0.0,53.65589772617506
+,residential,,,,Rua G,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,174.22551664489956
+,residential,,,,Rua 61,,,paved,,,,,Rua Sessenta e Um,,,,,,,,,,,,,,,,,,0.0,211.65068651544362
+,residential,,,,Rua 45,,,paved,,,,,Rua Quarenta e Cinco,,,,,,,,,,,,,,,,,,0.0,52.23958515377359
+,residential,,,,Rua 14,,,,,,,,Rua Quatorze,,,,,,,,,,,,,,,,,,0.0,68.13830100734802
+,residential,,,,Travessa 3,,,,,,,,Travessa Três,,,,,,,,,,,,,,,,,,0.0,46.964411774148815
+,residential,,,,Rua W 6,,,,,,,,Rua W Seis,,,,,,,,,,,,,,,,,,0.0,54.541219633210495
+,residential,,,,Rua 13,,,,,,,,Rua Treze,,,,,,,,,,,,,,,,,,0.0,189.33854877097238
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,110.24281589335054
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,71.74498436008395
+,residential,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,189.2041834855235
+,residential,,,,Rua L,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,164.07563988304895
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,60.36886502604914
+,residential,,,,Rua 41,,,,,,,IBGE,Rua Quarenta e Um,,,,,,,,,,,,,,,,,,0.0,77.90981139851705
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,185.65251948571023
+,residential,,,,Rua 17,,,,,,,,Rua Dezessete,,,,,,,,,,,,,,,,,,0.0,79.69857158724635
+,residential,,,,Rua Oito,,,,,,,,Rua 8,,,,,,,,,,,,,,,,,,0.0,209.3126817347914
+,residential,,,,Rua D,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,57.64311912280414
+,residential,,,,Rua 6,,,,,,,,Rua Seis,,,,,,,,,,,,,,,,,,0.0,99.43868162636808
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,51.67350135098791
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,132.4785552339831
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,112.62814792281347
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,154.82249131892874
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,206.1009424571556
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,224.32205968187185
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,254.93680400029757
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,144.28727648706266
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,188.79958098883176
+,residential,,,,,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,534.9515826304839
+,service,,,,,no,,paved,,,,,,,driveway,,,,,,,,private,,,,,,,,0.0,63.03931634292002
+,service,,,,,no,,paved,,,,,,,driveway,,,,,,,,private,,,,,,,,0.0,77.30650424768838
+,service,,,,,no,,paved,,,,,,,driveway,,,,,,,,private,,,,,,,,0.0,80.20955173425295
+,service,,,,,no,,paved,,,,,,,driveway,,,,,,,,private,,,,,,,,0.0,258.44422458017976
+,service,,,,,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,192.08644957288982
+,service,,,,,yes,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,209.7584831328669
+,,,,,,,,,,,,,,,,,,,grass,,,,,,,,,,,,424.1275962977475,122.43137451447095
+,,,,,,,,,,,,,,,,,,,grass,,,,,,,,,,,,1560.619291471362,180.8246458260678
+,residential,,,,Rua Guiomar Schueller,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,136.15666997094507
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,845.4032194302831
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,89.65471550514633
+,tertiary,,2,,Rua Nelson Correia Brum,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,30.00596442839141
+,residential,,,,Rua Nelson Correia Brum,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,552.1654467570104
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,862.4487208941088
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,65.08939964603829
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,11.309314319586411
+,unclassified,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,1229.1211371576767
+,unclassified,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,791.0153450988743
+,unclassified,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,780.1132831519593
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,2.167645989664818
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,2.3406251849995523
+,residential,,,,Avenida José Alvares de Azevedo,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,30.734087714551812
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,186.33491803286572
+,tertiary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,79.70991088097283
+,residential,,,,Avenida Presidente Tancredo Neves,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,1259.0955496823794
+,primary_link,,1,50,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,295.2634137342905
+,primary_link,,1,50,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,368.0054208293218
+,service,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,39.946338957199124
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,200.76151475259132
+,service,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,41.94937750135359
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,11.916124456578586
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,14.39326523001496
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,11.158255360454943
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,15.122829942618438
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,12.873187383309737
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,92.4005779782149
+,tertiary,,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,4.457464899406668
+,tertiary,,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,5.72347570799841
+,tertiary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,25.699592118236
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,113.28139816994879
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,105.34588984611983
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,55.01808063160187
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,92.46423349681875
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,147.37882266495728
+,residential,,,,Rua Alvaro da Paixão Junior,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,313.8084480417449
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,47.52381629224742
+,unclassified,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,31.41796621764111
+,unclassified,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,58.85866214353603
+,unclassified,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,67.62464273251223
+,unclassified,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,489.91473626500033
+,unclassified,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,144.6169097747378
+,residential,,,,Avenida 3,,,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,252.73039818309687
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,99.11263161705055
+,residential,,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,7.00921854058557
+,residential,,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,8.75193683833017
+,tertiary,,2,,,,,paved,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,16.73889649862111
+,tertiary,,2,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,5.949093121880689
+,tertiary,,2,,,,,paved,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,16.40627851579076
+,tertiary,,2,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,7.503251913290693
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,26.258994430852987
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,84.07547813210532
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,82.6525240236038
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,38.317697298964504
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,37.176676582843676
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,114.3349623684346
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,112.43554478806612
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,78.34663696611958
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,67.72886109334846
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,69.10331173265313
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,51.734887989945456
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,173.00897829873458
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,534.2605650802028
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,602.5831233738062
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,226.20180662515511
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,157.9487787434795
+,primary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,19.325079494207284
+,primary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,29.171465756321638
+,primary_link,,1,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,32.66630638104344
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,41.91220384939484
+,service,,,,,,,paved,,,,,,,parking_aisle,,,,,,,,,,,,,,,,0.0,41.90461589930146
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,89.14681225532756
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,82.16114057258504
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,38.238240839669714
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,49.361408775732116
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,103.70886503871677
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,482.5291133019091
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,13.049096093216118
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,13.55816473661063
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,147.3464104256928
+,primary,,2,50,Rodovia Amaral Peixoto,,,paved,,,,GPS,,,,,,,,,,,,,,,,,,,0.0,292.8270786093715
+,primary,,2,50,Rodovia Amaral Peixoto,,,paved,,,,GPS,,,,,,,,,,,,,,,,,,,0.0,33.0695020312746
+,primary,,2,60,Rodovia Amaral Peixoto,,,paved,,,,GPS,,,,,,,,,,,,,,,,,,,0.0,231.96357486783234
+,primary,,2,50,Rodovia Amaral Peixoto,,,paved,,,,GPS,,,,,,,,,,,,,,,,,,,0.0,39.49090690766936
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,15.432381273294052
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,14.388029247020269
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,15.653306101435733
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,149.0615203531126
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,44.13813914823838
+,service,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,46.65550550714198
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,14.509105042645709
+,service,,,,,,,,,,,,,,,,,,,,,,private,,,,,,,,0.0,8.358668126307547
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,11.139725730529879
+,service,,,,,,,,,,,,,,,,,,,,,,private,,,,,,,,0.0,22.72839629619726
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,6.8764920297358465
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,306.6037158215475
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,143.93548648223006
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,6.449845571511917
+,service,,,,,,,,,,,,,,,,,,,,,,private,,,,,,,,0.0,26.43452271044926
+,footway,,,,,,,metal,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,37.50518716955435
+,footway,,,,,,,,,,,,,,,,,,,,,crossing,,,,,,,,,0.0,13.960869271525803
+,residential,,,,Estrada Engenheiro Antônio Carlos Junqueira de Moraes,,,earth,,,,,,,,,,,,,,,,,,,,,,,0.0,14.363535832512019
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,60.41913479978535
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,20.47142974431992
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,20.807241934767852
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,11.52225533344496
+,footway,,,,,,,,,,,,,,,,,,,,,crossing,,,,,,,,,0.0,7.355479370297206
+,footway,,,,,,,,,,,,,,,,,,,,,crossing,,,,,,,,,0.0,10.060044671867601
+,path,,,,,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,28.366694499687842
+,footway,,,,,,,metal,,yes,1,,,,,,,,,,,,,,,,,,,,0.0,32.4740613690878
+,footway,,,,,,,metal,,,,,,,,,,,,,,,,,,,,,,,0.0,2.3104886247578973
+,footway,,,,,,,,,,,,,,,,,,,,,crossing,,,,,,,,,0.0,11.006221782775375
+,tertiary,,2,,Rua São José,yes,MC-03,paved,,,,IBGE,,,,,,,,,,,,,,,,,,,0.0,13.627271186777465
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,838.7330010369499
+,primary,,2,60,Rua Hildebrando Alves Barbosa,yes,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,847.4568330294967
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,216.28278341265982
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,7.336658620724577
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,7.8375342817177245
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,10.838967044083791
+,residential,,2,10,Rua da Legalidade,no,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,180.1771010506488
+,residential,,2,10,Rua da Ética,no,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,78.74122056869598
+,residential,,2,10,Rua da Honestidade,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,63.822292064833675
+,residential,,2,10,Rua Síndica das Rosas,,,asphalt,,,,,,,,,,,,,,,,,,,,,,,0.0,112.50026758478415
+,,wood,,,,,,,,,,,,,,,,,,,,,,,,,,,,,23563.84995912432,664.1751088249778
+,,,,,,,,,,,,,,commercial,,,,,construction,,,,,,,,,,,,291.70573106913776,69.13906188643588
+,,,,,,,,,,,,,,retail,,,,,,,,,,,,,,,,,126.65783862668857,52.652293069498064
+,,,,,,,,,,,,,,commercial,,,,,residential,,,,,,,,,,,,79.93052254898555,37.88393833183511
+,,,,,Franco plaza Sanduba,,,paved,,,,,,commercial,,,,,grass,,,,,,,,,,,,52.66160867025289,29.467257199455062
+,,,,,,,,,,,,,,commercial,,,,,,,,,,,,,,,,,241.75028169496616,62.74752970557401
+,,,,,Supermercado J. Pavani,,,paved,,,,,,commercial,,,,,,1,,,,supermarket,,,,,,,4647.018116708392,274.9378357379123
+,,grassland,,,,,,ground,,,,,,,,,,,forest,,,,,,,,,,,,991373.3822903009,5886.684787868458
+,,wood,,,,,,,,,,,,,,,,,forest,,,,,,,,,,,,38326.10825464371,877.62175273812
+,cycleway,,,,,,,asphalt,,,,,,,,,,,,,,,,,intermediate,"2,4",,,,,0.0,3030.7265854943794
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,9232.205174957197,485.1829042289917
+,service,,,,,,,,,,,,,,alley,,,,,,,,,,,,,,,,0.0,28.92148256985565
+,service,,,,,,,,,,,,,,alley,,,,,,,,,,,,,,,,0.0,26.432205136356753
+,service,,,,Rua Dois,,,,,,,,,,alley,,,,,,,,,,,,,,,,0.0,26.911835056327124
+,residential,,,,Rua Dez,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,36.53576839479414
+,residential,,,,Rua Onze,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,26.642909345330548
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,234.09862305447814
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,16.6347914970811
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,107.28352406294246
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,55.20282702841642
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,77.80213877975922
+,residential,,,,Rua Galeão,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,96.1786186977611
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,444.4869132825043,111.24745995919902
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,477.35292149555323,107.73121596723871
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,166.8071307585623,49.95360873224869
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,clinic,clinic,Prefeitura de Macaé,public,592.1424987494432,129.44237550993043
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,491.76161273143606,102.96504774211469
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,396.93773943147096,94.86690477005865
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,381.88054152289055,86.588499891741
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,468.11168480614737,87.85737514941101
+,,,,,,,,,,,,,,school,,,,,,,,,,,,,,,,,1545.1681088884502,239.7875440758813
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,908.9948956327358,120.69011583727772
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,264.5743906582855,69.02108520844948
+,tertiary,,2,,Rua Doutor Benedito Carlos Ferreira,yes,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,333.1775731832836
+,tertiary,,2,,Rua Doutor Benedito Carlos Ferreira,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,391.3627334215502
+,residential,,,,Rua Raul Seixas,,,paved,,,,,,,,,,,,,,,,,,,,,,,0.0,320.0500185304723
+,residential,,,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,14.480867144279866
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,64.27985123766427
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,74.51695902816871
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,48.55935776247231
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,53.80282554353164
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,72.82304806691323
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,140.1900915773939
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,27.137964590241573
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,141.99865982079285
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,39.44054320474702
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,58.03476086438137
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,176.13450593688214
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,159.63862703106616
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,84.73108882793588
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,84.66070775304595
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,47.07616956712848
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,28.110512722754322
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,40.81817573275791
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,90.23155780283216
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,65.17402236188435
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,84.97756082115173
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,84.02600802018526
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,98.8551638168456
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,81.55275886286611
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,144.01095719234405
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,138.81744766982305
+,path,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,316.9823380182712
+,,,,,,,,,,,,,,yes,,,,,,,,,,,,,,,,,995.4228718413369,128.08759551143282
+,footway,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,39.52253830847769
+,footway,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,75.46771126650084
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,54.111977906161336
+,,wood,,,,,,,,,,,,,,,,,,,,,,,,,,,,,7411.49253191747,351.3808489638147
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,562.1765641119188
+,,wood,,,,,,,,,,,,,,,,,,,,,,,,,,,,,25466.793009074103,1014.4567940507046
+,residential,,,,,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,163.4644506726768
+,residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,39.192743008990234
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,158.75972791747236
+,service,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,36.0374078233563
+,residential,,,,Estrada Engenheiro Antônio Carlos Junqueira de Moraes,,,unpaved,,,,,,,,,,,,,,,,,,,,,,,0.0,1006.1239459279626
+,,,,,,,,,,,,,,,,,,,grass,,,,,,,,,,,,22964.593210506373,859.567516458292
