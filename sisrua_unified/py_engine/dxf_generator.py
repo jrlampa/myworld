@@ -257,14 +257,17 @@ class DXFGenerator:
             if 'height' in tags:
                 # Handle "10 m" or "10"
                 h = str(tags['height']).split(' ')[0]
-                return float(h)
+                val = float(h)
+                return self._safe_v(val, default=3.5)
             
             # Try levels
             if 'building:levels' in tags:
-                return float(tags['building:levels']) * 3.0 # Assume 3m per floor
+                val = float(tags['building:levels']) * 3.0
+                return self._safe_v(val, default=3.5)
             
             if 'levels' in tags:
-                 return float(tags['levels']) * 3.0
+                 val = float(tags['levels']) * 3.0
+                 return self._safe_v(val, default=3.5)
 
             # Default for buildings
             return 3.5
