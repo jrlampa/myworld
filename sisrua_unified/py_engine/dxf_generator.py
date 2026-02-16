@@ -173,18 +173,21 @@ class DXFGenerator:
                             pass
 
                     try:
+                        safe_val = self._safe_v(rotation)
                         safe_align = (self._safe_v(centroid.x - diff_x), self._safe_v(centroid.y - diff_y))
                         text = self.msp.add_text(
                             name, 
                             dxfattribs={
                                 'layer': 'TEXTO', 
                                 'height': 2.5,
-                                'rotation': self._safe_v(rotation),
+                                'rotation': safe_val,
                                 'style': 'PRO_STYLE'
                             }
                         )
-                        text.dxf.halign = 1
-                        text.dxf.valign = 2
+                        # AutoCAD REQUIRES both insert and align_point to be the same for centered text
+                        text.dxf.halign = 1 # Center
+                        text.dxf.valign = 2 # Middle
+                        text.dxf.insert = safe_align
                         text.dxf.align_point = safe_align
                     except Exception as te:
                         Logger.info(f"Label creation failed: {te}")
@@ -286,24 +289,38 @@ class DXFGenerator:
                 centroid = poly.centroid
                 if centroid and not (math.isnan(area) or math.isinf(area) or math.isnan(centroid.x) or math.isnan(centroid.y)):
                     safe_p = (self._safe_v(centroid.x - diff_x), self._safe_v(centroid.y - diff_y))
-                    self.msp.add_text(
+                    txt = self.msp.add_text(
                         f"{area:.1f} m2",
                         dxfattribs={
                             'layer': 'ANNOT_AREA',
                             'height': 1.5,
                             'color': 7
                         }
-                    ).set_placement(safe_p, align=TextEntityAlignment.CENTER)
+                    )
+                    txt.dxf.halign = 1
+                    txt.dxf.valign = 2
+                    txt.dxf.insert = safe_p
+                    txt.dxf.align_point = safe_p
             except Exception as e:
                 Logger.info(f"Area annotation failed: {e}")
 
             # High-Fidelity Hatching (ANSI31) - Use validated points
-            # Ensure we have at least 3 distinct points for a valid hatch
+            # AutoCAD's hatch engine hates micro-gaps (< 0.001 units)
+            # We deduplicate points with a small epsilon
             try:
-                if points and len(set(points)) >= 3:
+                def deduplicate_epsilon(pts, eps=0.001):
+                    if not pts: return []
+                    res = [pts[0]]
+                    for i in range(1, len(pts)):
+                        if math.dist(pts[i], res[-1]) > eps:
+                            res.append(pts[i])
+                    return res
+
+                clean_points = deduplicate_epsilon(points)
+                if clean_points and len(clean_points) >= 3:
                     hatch = self.msp.add_hatch(color=253, dxfattribs={'layer': 'EDIFICACAO_HATCH'})
-                    hatch.set_pattern_fill('ANSI31', scale=0.5, angle=45)
-                    hatch.paths.add_polyline_path(points, is_closed=True)
+                    hatch.set_pattern_fill('ANSI31', scale=0.5, angle=45.0)
+                    hatch.paths.add_polyline_path(clean_points, is_closed=True)
             except Exception as he:
                 Logger.info(f"Hatch failed for building: {he}")
 
@@ -329,7 +346,7 @@ class DXFGenerator:
                     mid = line.interpolate(0.5, normalized=True)
                     if mid and not (math.isnan(mid.x) or math.isnan(mid.y)):
                         safe_mid = (self._safe_v(mid.x - diff_x), self._safe_v(mid.y - diff_y))
-                        self.msp.add_text(
+                        ltxt = self.msp.add_text(
                             f"{length:.1f}m",
                             dxfattribs={
                                 'layer': 'ANNOT_LENGTH',
@@ -337,7 +354,11 @@ class DXFGenerator:
                                 'color': 7,
                                 'rotation': 0.0
                             }
-                        ).set_placement(safe_mid, align=TextEntityAlignment.CENTER)
+                        )
+                        ltxt.dxf.halign = 1
+                        ltxt.dxf.valign = 2
+                        ltxt.dxf.insert = safe_mid
+                        ltxt.dxf.align_point = safe_mid
             except Exception as e:
                 Logger.info(f"Length annotation failed: {e}")
 
@@ -359,11 +380,11 @@ class DXFGenerator:
             
         x, y = self._safe_v(point.x - diff_x), self._safe_v(point.y - diff_y)
         
-        # Prepare attributes
+        # Prepare attributes with non-empty defaults (AutoCAD stability)
         attribs = self._sanitize_attribs({
-            'ID': tags.get('osmid', 'N/A'),
-            'TYPE': tags.get('power', tags.get('amenity', 'N/A')),
-            'V_LEVEL': tags.get('voltage', 'N/A')
+            'ID': tags.get('osmid', '999'),
+            'TYPE': tags.get('power', tags.get('amenity', 'UNKNOWN')),
+            'V_LEVEL': tags.get('voltage', '0V')
         })
 
         if layer == 'VEGETACAO':
@@ -560,18 +581,24 @@ class DXFGenerator:
         import datetime
         date_str = datetime.date.today().strftime("%d/%m/%Y")
         
-        # Project Title
+        # Project Title with standardized alignment
         p_name = str(project).upper()
         c_name = str(client)
         d_name = str(designer)
         
-        layout.add_text(f"PROJETO: {p_name[:50]}", dxfattribs={'height': 4, 'style': 'PRO_STYLE'}).set_placement((cb_x + 5, cb_y + 35))
-        layout.add_text(f"CLIENTE: {c_name[:50]}", dxfattribs={'height': 3}).set_placement((cb_x + 5, cb_y + 15))
-        layout.add_text(f"DATA: {date_str}", dxfattribs={'height': 2.5}).set_placement((cb_x + 105, cb_y + 15))
-        layout.add_text(f"ENGINE: sisRUA Unified v1.5", dxfattribs={'height': 2}).set_placement((cb_x + 105, cb_y + 5))
-        
-        # Designer
-        layout.add_text(f"RESPONSÁVEL: {d_name[:50]}", dxfattribs={'height': 2.5}).set_placement((cb_x + 5, cb_y + 5))
+        def add_layout_text(text, pos, height, style='PRO_STYLE'):
+            t = layout.add_text(text, dxfattribs={'height': height, 'style': style})
+            t.dxf.halign = 0 # Left
+            t.dxf.valign = 0 # Baseline
+            t.dxf.insert = pos
+            t.dxf.align_point = pos
+            return t
+
+        add_layout_text(f"PROJETO: {p_name[:50]}", (cb_x + 5, cb_y + 35), 4)
+        add_layout_text(f"CLIENTE: {c_name[:50]}", (cb_x + 5, cb_y + 15), 3)
+        add_layout_text(f"DATA: {date_str}", (cb_x + 105, cb_y + 15), 2.5)
+        add_layout_text(f"ENGINE: sisRUA Unified v1.5", (cb_x + 105, cb_y + 5), 2)
+        add_layout_text(f"RESPONSÁVEL: {d_name[:50]}", (cb_x + 5, cb_y + 5), 2.5)
         
         # Logo
         try:

@@ -33,28 +33,46 @@ class DXFStyleManager:
         layers = [
             ('EDIFICACAO', 7, 0.30),    # White/Black
             ('VIAS', 8, 0.15),          # Gray
-            ('VIAS_MEIO_FIO', 251, 0.15),
-            ('VEGETACAO', 3, 0.11),      # Green (finer)
-            ('MOBILIARIO_URBANO', 40, 0.15), # Orange/Brown
-            ('EQUIPAMENTOS', 4, 0.15),   # Cyan
-            ('INFRA_POWER_HV', 1, 0.30), # Red
-            ('INFRA_POWER_LV', 30, 0.20),# Orange
-            ('INFRA_TELECOM', 94, 0.15), # Green-ish
-            ('TOPOGRAFIA_CURVAS', 252, 0.13),
+            ('VIAS_MEIO_FIO', 251, 0.09),
+            ('VEGETACAO', 3, 0.13),      # Green
+            ('MOBILIARIO_URBANO', 40, 0.15),
+            ('EQUIPAMENTOS', 4, 0.15),
+            ('INFRA_POWER_HV', 1, 0.35), # Red
+            ('INFRA_POWER_LV', 30, 0.20),
+            ('INFRA_TELECOM', 94, 0.15),
+            ('TOPOGRAFIA_CURVAS', 252, 0.09),
             ('MALHA_COORD', 253, 0.05),
-            ('ANNOT_AREA', 2, 0.13),     # Yellow
+            ('ANNOT_AREA', 2, 0.13),
             ('ANNOT_LENGTH', 2, 0.13),
             ('LEGENDA', 7, 0.15),
             ('TEXTO', 7, 0.15),
             ('CURVAS_NIVEL_MESTRA', 251, 0.25),
-            ('CURVAS_NIVEL_INTERM', 252, 0.13),
+            ('CURVAS_NIVEL_INTERM', 252, 0.09),
+            ('QUADRO', 7, 0.50), # Border
         ]
         
+        # Standard CAD lineweights mapped (mm to internal int)
+        # AutoCAD only accepts: 0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50...
+        def map_weight(w):
+            val = int(w * 100)
+            if val <= 5: return 5
+            if val <= 9: return 9
+            if val <= 13: return 13
+            if val <= 15: return 15
+            if val <= 18: return 18
+            if val <= 20: return 20
+            if val <= 25: return 25
+            if val <= 30: return 30
+            if val <= 35: return 35
+            if val <= 40: return 40
+            if val <= 50: return 50
+            return 53
+
         for name, color, lineweight in layers:
             if name not in doc.layers:
                 doc.layers.new(name, dxfattribs={
                     'color': color,
-                    'lineweight': int(lineweight * 100)
+                    'lineweight': map_weight(lineweight)
                 })
 
     @staticmethod
@@ -73,9 +91,10 @@ class DXFStyleManager:
             blk.add_circle((0, 0), radius=0.4, dxfattribs={'color': 7})
             blk.add_line((-0.3, -0.3), (0.3, 0.3))
             blk.add_line((-0.3, 0.3), (0.3, -0.3))
-            blk.add_attdef('ID', (0.5, 0.5), dxfattribs={'height': 0.3, 'color': 2})
-            blk.add_attdef('TYPE', (0.5, 0.1), dxfattribs={'height': 0.2, 'color': 8})
-            blk.add_attdef('V_LEVEL', (0.5, -0.3), dxfattribs={'height': 0.2, 'color': 1})
+            # Attributes must have a tag AND a default value for stability
+            blk.add_attdef('ID', (0.5, 0.5), dxfattribs={'height': 0.3, 'color': 2}).dxf.text = "000"
+            blk.add_attdef('TYPE', (0.5, 0.1), dxfattribs={'height': 0.2, 'color': 8}).dxf.text = "POLE"
+            blk.add_attdef('V_LEVEL', (0.5, -0.3), dxfattribs={'height': 0.2, 'color': 1}).dxf.text = "0V"
 
         # BANCO (Bench)
         if 'BANCO' not in doc.blocks:
