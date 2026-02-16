@@ -14,13 +14,14 @@ from contour_generator import generate_contours
 from utils.logger import Logger
 
 class OSMController:
-    def __init__(self, lat, lon, radius, output_file, layers_config, crs, export_format='dxf', selection_mode='circle', polygon=None):
+    def __init__(self, lat, lon, radius, output_file, layers_config, crs, projection='local', export_format='dxf', selection_mode='circle', polygon=None):
         self.lat = lat
         self.lon = lon
         self.radius = radius
         self.output_file = output_file
         self.layers_config = layers_config
         self.crs = crs
+        self.projection = projection
         self.export_format = export_format.lower()
         self.selection_mode = selection_mode
         self.polygon = polygon
@@ -36,6 +37,7 @@ class OSMController:
         
         # 1. Prepare Layers
         tags = self._build_tags()
+        Logger.info(f"DEBUG: Built tags for OSM query: {tags}")
         if not tags:
             Logger.error("No infrastructure layers selected!")
             return
@@ -45,7 +47,7 @@ class OSMController:
         gdf = self._fetch_features(tags)
         if gdf is None or gdf.empty:
             Logger.info("No architectural features found in radius.", "warning")
-            return
+            raise RuntimeError("Failed to fetch OSM data: No features found in the specified area")
 
         # 3. Spatial GIS Audit (Authoritative Logic)
         Logger.info("Step 2/5: Running spatial audit...", progress=30)
@@ -56,8 +58,8 @@ class OSMController:
 
         # 5. Coordinate Offset & CAD Export
         Logger.info("Step 3/5: Initializing DXF Generation...", progress=50)
-        dxf_gen = DXFGenerator(self.output_file)
-        dxf_gen.add_features(gdf) # Features set the AUTHORITATIVE OFFSET
+        dxf_gen = DXFGenerator(self.output_file, use_absolute_coords=(self.projection == 'utm'))
+        dxf_gen.add_features(gdf) # Features set the AUTHORITATIVE OFFSET (or use absolute if UTM)
 
         # 6. Terrain & Contours (Optional)
         if self.layers_config.get('terrain', False):
@@ -161,7 +163,9 @@ class OSMController:
             tags['landuse'] = ['forest', 'grass', 'park']
         if self.layers_config.get('furniture', False):
             tags['amenity'] = ['bench', 'waste_basket', 'bicycle_parking', 'fountain', 'bus_station']
-            tags['highway'] = ['street_lamp']
+            # Don't overwrite highway if roads is enabled, furniture only adds street_lamp as separate query
+            if not self.layers_config.get('roads', True):
+                tags['highway'] = ['street_lamp']
         return tags
 
     def _send_geojson_preview(self, gdf, analysis_gdf=None):

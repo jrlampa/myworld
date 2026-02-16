@@ -40,7 +40,7 @@ app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
 // DXF Generation Endpoint (POST for large polygons)
 app.post('/api/dxf', async (req: Request, res: Response) => {
     try {
-        const { lat, lon, radius, mode, polygon, layers } = req.body;
+        const { lat, lon, radius, mode, polygon, layers, projection } = req.body;
 
         if (!lat || !lon || !radius) {
             return res.status(400).json({ error: 'Missing lat, lon, or radius in body' });
@@ -49,7 +49,7 @@ app.post('/api/dxf', async (req: Request, res: Response) => {
         const filename = `dxf_${Date.now()}.dxf`;
         const outputFile = path.join(__dirname, '../public/dxf', filename);
 
-        console.log(`[API] Generating DXF (POST) for ${lat}, ${lon} radius=${radius} mode=${mode}`);
+        console.log(`[API] Generating DXF (POST) for ${lat}, ${lon} radius=${radius} mode=${mode} projection=${projection || 'local'}`);
 
         const generationPromise = generateDxf({
             lat: parseFloat(lat),
@@ -58,6 +58,7 @@ app.post('/api/dxf', async (req: Request, res: Response) => {
             mode: mode || 'circle',
             polygon: typeof polygon === 'string' ? polygon : JSON.stringify(polygon || []),
             layers: layers || {},
+            projection: projection || 'local',
             outputFile
         });
 
