@@ -234,18 +234,18 @@ class DXFGenerator:
                 if side_geom.is_empty: continue
                 
                 if isinstance(side_geom, LineString):
-                     pts = [(p[0] - diff_x, p[1] - diff_y) for p in side_geom.coords]
+                     pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in side_geom.coords]
                      pts = self._validate_points(pts, min_points=2)
                      if pts:
-                        self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
+                        self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO'})
                 elif isinstance(side_geom, MultiLineString):
                      for subline in side_geom.geoms:
                            pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in subline.coords]
                            pts = self._validate_points(pts, min_points=2)
                            if pts:
-                                self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO', 'color': 251})
+                                self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO'})
         except Exception as e:
-            Logger.info(f"Geometry offset skipped: {e}")
+            Logger.info(f"Street offset failed: {e}")
 
     def _get_thickness(self, tags, layer):
         """Calculates extrusion height based on OSM tags"""

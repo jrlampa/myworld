@@ -32,8 +32,8 @@ class DXFStyleManager:
         """Define standard engineering layers."""
         layers = [
             ('EDIFICACAO', 7, 0.30),    # White/Black
-            ('VIAS', 8, 0.15),          # Gray
-            ('VIAS_MEIO_FIO', 251, 0.09),
+            ('VIAS', 4, 0.35),          # Cyan (High visibility axis)
+            ('VIAS_MEIO_FIO', 8, 0.13), # Gray (Curbs)
             ('VEGETACAO', 3, 0.13),      # Green
             ('MOBILIARIO_URBANO', 40, 0.15),
             ('EQUIPAMENTOS', 4, 0.15),
