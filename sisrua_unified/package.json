@@ -19,6 +19,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.3.1",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.34.0",
     "groq-sdk": "^0.37.0",
     "leaflet": "^1.9.4",
