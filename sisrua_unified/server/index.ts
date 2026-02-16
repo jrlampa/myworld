@@ -82,14 +82,13 @@ app.post('/api/dxf', async (req: Request, res: Response) => {
     }
 });
 
-// AI Search Endpoint (Using GeocodingService)
+// Coordinate Search Endpoint (Using GeocodingService)
 app.post('/api/search', async (req: Request, res: Response) => {
     try {
         const { query } = req.body;
         if (!query) return res.status(400).json({ error: 'Query required' });
 
-        const apiKey = process.env.GROQ_API_KEY || '';
-        const location = await GeocodingService.resolveLocation(query, apiKey);
+        const location = await GeocodingService.resolveLocation(query);
 
         if (location) {
             res.json(location);
