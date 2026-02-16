@@ -5,32 +5,59 @@ import pandas as pd
 from shapely.geometry import Polygon, MultiPolygon, LineString, MultiLineString, Point
 import geopandas as gpd
 import math
+
 try:
     from .dxf_styles import DXFStyleManager
+    from .utils.logger import Logger
+    from .constants import (
+        MAX_COORDINATE_VALUE, DEFAULT_COORDINATE, DXF_VERSION,
+        DEFAULT_TEXT_HEIGHT, MIN_LINE_LENGTH_FOR_LABEL,
+        LABEL_ROTATION_SAMPLE_START, LABEL_ROTATION_SAMPLE_END,
+        MIN_ANGLE_DEGREES, MAX_ANGLE_DEGREES, ANGLE_FLIP_OFFSET,
+        LAYER_EDIFICACAO, LAYER_VIAS, LAYER_VIAS_MEIO_FIO, LAYER_VEGETACAO,
+        LAYER_EQUIPAMENTOS, LAYER_HIDROGRAFIA, LAYER_INFRA_POWER_HV,
+        LAYER_INFRA_POWER_LV, LAYER_INFRA_TELECOM, LAYER_MOBILIARIO_URBANO,
+        LAYER_TEXTO, LAYER_DEFAULT, MIN_POLYGON_POINTS, MIN_LINE_POINTS,
+        COORDINATE_EPSILON
+    )
 except (ImportError, ValueError):
     from dxf_styles import DXFStyleManager
-from ezdxf.enums import TextEntityAlignment
-try:
-    from .utils.logger import Logger
-except (ImportError, ValueError):
     from utils.logger import Logger
+    from constants import (
+        MAX_COORDINATE_VALUE, DEFAULT_COORDINATE, DXF_VERSION,
+        DEFAULT_TEXT_HEIGHT, MIN_LINE_LENGTH_FOR_LABEL,
+        LABEL_ROTATION_SAMPLE_START, LABEL_ROTATION_SAMPLE_END,
+        MIN_ANGLE_DEGREES, MAX_ANGLE_DEGREES, ANGLE_FLIP_OFFSET,
+        LAYER_EDIFICACAO, LAYER_VIAS, LAYER_VIAS_MEIO_FIO, LAYER_VEGETACAO,
+        LAYER_EQUIPAMENTOS, LAYER_HIDROGRAFIA, LAYER_INFRA_POWER_HV,
+        LAYER_INFRA_POWER_LV, LAYER_INFRA_TELECOM, LAYER_MOBILIARIO_URBANO,
+        LAYER_TEXTO, LAYER_DEFAULT, MIN_POLYGON_POINTS, MIN_LINE_POINTS,
+        COORDINATE_EPSILON
+    )
+
+from ezdxf.enums import TextEntityAlignment
 
 class DXFGenerator:
-    def __init__(self, filename):
+    def __init__(self, filename, use_absolute_coords=False):
+        """Initialize DXF generator
+        
+        Args:
+            filename: Output DXF file path
+            use_absolute_coords: If True, use absolute UTM coordinates without offset
+        """
         self.filename = filename
-        self.doc = ezdxf.new('R2013')
-        self.diff_x = 0.0
-        self.diff_y = 0.0
-        self.bounds = [0.0, 0.0, 0.0, 0.0]  # Standard bounding box
+        self.use_absolute_coords = use_absolute_coords
+        self.doc = ezdxf.new(DXF_VERSION)
+        self.diff_x = 0 if use_absolute_coords else DEFAULT_COORDINATE
+        self.diff_y = 0 if use_absolute_coords else DEFAULT_COORDINATE
+        self.bounds = [DEFAULT_COORDINATE] * 4  # Standard bounding box
         
         # Setup CAD standards via StyleManager (SRP Refactor)
         DXFStyleManager.setup_all(self.doc)
         
         self.msp = self.doc.modelspace()
-        self.project_info = {} # Store metadata for title block
+        self.project_info = {}  # Store metadata for title block
         self._offset_initialized = False
-
-    # Legacy setup methods removed (handled by StyleManager)
 
     def add_features(self, gdf):
         """
@@ -40,22 +67,27 @@ class DXFGenerator:
         if gdf.empty:
             return
 
-        # Center the drawing roughly around (0,0) based on the first feature
-        # AUTHORITATIVE OFFSET: Once set, it applies to everything (features, terrain, labels)
-        if not self._offset_initialized:
+        # Center the drawing around (0,0) based on the first feature
+        # AUTHORITATIVE OFFSET: Once set, it applies to everything (unless using absolute coords)
+        if not self._offset_initialized and not self.use_absolute_coords:
             centroids = gdf.geometry.centroid
-            cx = centroids.x.dropna().mean() if not centroids.x.dropna().empty else 0.0
-            cy = centroids.y.dropna().mean() if not centroids.y.dropna().empty else 0.0
+            cx = centroids.x.dropna().mean() if not centroids.x.dropna().empty else DEFAULT_COORDINATE
+            cy = centroids.y.dropna().mean() if not centroids.y.dropna().empty else DEFAULT_COORDINATE
             self.diff_x = self._safe_v(cx)
             self.diff_y = self._safe_v(cy)
+            self._offset_initialized = True
+            Logger.debug(f"Coordinate offset initialized: ({self.diff_x}, {self.diff_y})")
+        elif self.use_absolute_coords and not self._offset_initialized:
+            Logger.debug("Using absolute UTM coordinates (no offset)")
             self._offset_initialized = True
 
         # Validate and store bounds
         b = gdf.total_bounds
         if any(math.isnan(v) or math.isinf(v) for v in b):
-             self.bounds = [0.0, 0.0, 100.0, 100.0]
+            self.bounds = [DEFAULT_COORDINATE, DEFAULT_COORDINATE, 100.0, 100.0]
+            Logger.warn("Invalid bounds detected, using default")
         else:
-             self.bounds = [float(v) for v in b]
+            self.bounds = [float(v) for v in b]
 
         for _, row in gdf.iterrows():
             geom = row.geometry
@@ -66,56 +98,55 @@ class DXFGenerator:
             self._draw_geometry(geom, layer, self.diff_x, self.diff_y, tags)
 
     def determine_layer(self, tags, row):
-        """Maps OSM tags to DXF Layers"""
+        """Maps OSM tags to DXF Layers using constants"""
         # Power Infrastructure
         if 'power' in tags and not pd.isna(tags['power']):
-            if tags['power'] in ['line', 'tower', 'substation']: # High Voltage usually
-                return 'INFRA_POWER_HV'
-            return 'INFRA_POWER_LV' # poles, minor_lines
+            high_voltage_types = ['line', 'tower', 'substation']
+            return LAYER_INFRA_POWER_HV if tags['power'] in high_voltage_types else LAYER_INFRA_POWER_LV
 
         # Telecom Infrastructure
         if 'telecom' in tags and not pd.isna(tags['telecom']):
-            return 'INFRA_TELECOM'
+            return LAYER_INFRA_TELECOM
 
         # Street Furniture
         furniture_amenities = ['bench', 'waste_basket', 'bicycle_parking', 'fountain', 'drinking_water']
         if ('amenity' in tags and tags['amenity'] in furniture_amenities) or \
            ('highway' in tags and tags['highway'] == 'street_lamp'):
-            return 'MOBILIARIO_URBANO'
+            return LAYER_MOBILIARIO_URBANO
 
         if 'building' in tags and not pd.isna(tags['building']):
-            return 'EDIFICACAO'
+            return LAYER_EDIFICACAO
         if 'highway' in tags and not pd.isna(tags['highway']):
-            return 'VIAS'
+            return LAYER_VIAS
         if 'natural' in tags and tags['natural'] in ['tree', 'wood', 'scrub']:
-            return 'VEGETACAO'
+            return LAYER_VEGETACAO
         if 'amenity' in tags:
-            return 'EQUIPAMENTOS'
+            return LAYER_EQUIPAMENTOS
         if 'leisure' in tags:
-             return 'VEGETACAO' # Parks, etc
-        if 'waterway' in tags or 'natural' in tags and tags['natural'] == 'water':
-            return 'HIDROGRAFIA'
+            return LAYER_VEGETACAO  # Parks, etc
+        if 'waterway' in tags or ('natural' in tags and tags['natural'] == 'water'):
+            return LAYER_HIDROGRAFIA
             
-        return '0' # Default layer
+        return LAYER_DEFAULT
 
-    def _safe_v(self, v, default=0.0):
+    def _safe_v(self, v, default=DEFAULT_COORDINATE):
         """Absolute guard for float values"""
         try:
             val = float(v)
-            if math.isnan(val) or math.isinf(val) or abs(val) > 1e11:
+            if math.isnan(val) or math.isinf(val) or abs(val) > MAX_COORDINATE_VALUE:
                 return default
             return val
-        except:
+        except (TypeError, ValueError):
             return default
 
-    def _safe_p(self, p, default=(0.0, 0.0)):
+    def _safe_p(self, p, default=(DEFAULT_COORDINATE, DEFAULT_COORDINATE)):
         """Absolute guard for point tuples"""
         try:
             return tuple(self._safe_v(v) for v in p)
-        except:
+        except (TypeError, AttributeError):
             return default
 
-    def _validate_points(self, points, min_points=2, is_3d=False):
+    def _validate_points(self, points, min_points=MIN_LINE_POINTS, is_3d=False):
         """Validate points list for DXF entities to prevent read errors"""
         if not points or len(points) < min_points:
             return None
@@ -124,99 +155,109 @@ class DXFGenerator:
         last_p = None
         for p in points:
             try:
-                # Use our safe helper for each coordinate
                 vals = [self._safe_v(v, default=None) for v in p]
                 if None in vals:
                     continue
                 curr_p = tuple(vals)
-                if curr_p != last_p:
+                
+                # Epsilon-based deduplication
+                if last_p is None or any(abs(curr_p[i] - last_p[i]) > COORDINATE_EPSILON for i in range(len(curr_p))):
                     valid_points.append(curr_p)
                     last_p = curr_p
-            except:
+            except (TypeError, IndexError):
                 continue
         
-        if len(valid_points) < min_points:
-            return None
-            
-        return valid_points
+        return valid_points if len(valid_points) >= min_points else None
 
     def _draw_geometry(self, geom, layer, diff_x, diff_y, tags):
         """Recursive geometry drawing with text support"""
         if geom.is_empty:
             return
 
-        # Ensure layer exists in the document, or fallback to '0'
+        # Ensure layer exists in the document, or fallback to default
         if layer not in self.doc.layers:
-            layer = '0'
+            layer = LAYER_DEFAULT
 
         # Draw Labels for Streets
-        if (layer == 'VIAS' or layer == '0') and 'name' in tags:
+        if (layer == LAYER_VIAS or layer == LAYER_DEFAULT) and 'name' in tags:
             name = str(tags['name'])
             if name.lower() != 'nan' and name.strip():
-                # Use centroid of the line to place text
-                rotation = 0.0
-                centroid = geom.centroid
-                if not centroid.is_empty and not math.isnan(centroid.x) and not math.isnan(centroid.y):
-                    if isinstance(geom, LineString) and geom.length > 0.1:
-                        try:
-                            # Get point at 45% and 55% to determine vector
-                            p1 = geom.interpolate(0.45, normalized=True)
-                            p2 = geom.interpolate(0.55, normalized=True)
-                            if p1 and p2:
-                                dx = p2.x - p1.x
-                                dy = p2.y - p1.y
-                                if abs(dx) > 1e-5 or abs(dy) > 1e-5:
-                                    angle = np.degrees(np.arctan2(dy, dx))
-                                    # Ensure text is readable (not upside down)
-                                    rotation = angle if -90 <= angle <= 90 else angle + 180
-                        except Exception:
-                            pass
+                self._add_street_label(geom, name, diff_x, diff_y)
 
-                    try:
-                        safe_val = self._safe_v(rotation)
-                        safe_align = (self._safe_v(centroid.x - diff_x), self._safe_v(centroid.y - diff_y))
-                        text = self.msp.add_text(
-                            name, 
-                            dxfattribs={
-                                'layer': 'TEXTO', 
-                                'height': 2.5,
-                                'rotation': safe_val,
-                                'style': 'PRO_STYLE'
-                            }
-                        )
-                        # AutoCAD REQUIRES both insert and align_point to be the same for centered text
-                        text.dxf.halign = 1 # Center
-                        text.dxf.valign = 2 # Middle
-                        text.dxf.insert = safe_align
-                        text.dxf.align_point = safe_align
-                    except Exception as te:
-                        Logger.info(f"Label creation failed: {te}")
-
+        # Draw geometry based on type
         if isinstance(geom, Polygon):
             self._draw_polygon(geom, layer, diff_x, diff_y, tags)
         elif isinstance(geom, MultiPolygon):
             for poly in geom.geoms:
                 self._draw_polygon(poly, layer, diff_x, diff_y, tags)
-        if isinstance(geom, LineString):
+        elif isinstance(geom, LineString):
             self._draw_linestring(geom, layer, diff_x, diff_y)
             # Draw offsets for streets
-            if layer == 'VIAS' and 'highway' in tags:
-                 self._draw_street_offsets(geom, tags, diff_x, diff_y) # Call offset method
-
+            if layer == LAYER_VIAS and 'highway' in tags:
+                self._draw_street_offsets(geom, tags, diff_x, diff_y)
         elif isinstance(geom, MultiLineString):
             for line in geom.geoms:
                 self._draw_linestring(line, layer, diff_x, diff_y)
-                if layer == 'VIAS' and 'highway' in tags:
-                     self._draw_street_offsets(line, tags, diff_x, diff_y)
-
+                if layer == LAYER_VIAS and 'highway' in tags:
+                    self._draw_street_offsets(line, tags, diff_x, diff_y)
         elif isinstance(geom, Point):
             self._draw_point(geom, layer, diff_x, diff_y, tags)
+
+    def _add_street_label(self, geom, name, diff_x, diff_y):
+        """Add a label for a street with appropriate rotation"""
+        rotation = DEFAULT_COORDINATE
+        centroid = geom.centroid
+        
+        if not centroid.is_empty and not math.isnan(centroid.x) and not math.isnan(centroid.y):
+            if isinstance(geom, LineString) and geom.length > MIN_LINE_LENGTH_FOR_LABEL:
+                try:
+                    # Get point at sample positions to determine vector
+                    p1 = geom.interpolate(LABEL_ROTATION_SAMPLE_START, normalized=True)
+                    p2 = geom.interpolate(LABEL_ROTATION_SAMPLE_END, normalized=True)
+                    
+                    if p1 and p2:
+                        dx = p2.x - p1.x
+                        dy = p2.y - p1.y
+                        
+                        if abs(dx) > COORDINATE_EPSILON or abs(dy) > COORDINATE_EPSILON:
+                            angle = np.degrees(np.arctan2(dy, dx))
+                            # Ensure text is readable (not upside down)
+                            rotation = angle if MIN_ANGLE_DEGREES <= angle <= MAX_ANGLE_DEGREES else angle + ANGLE_FLIP_OFFSET
+                except Exception as e:
+                    Logger.debug(f"Label rotation calculation failed: {e}")
+
+            try:
+                safe_rotation = self._safe_v(rotation)
+                safe_align = (
+                    self._safe_v(centroid.x - diff_x),
+                    self._safe_v(centroid.y - diff_y)
+                )
+                
+                text = self.msp.add_text(
+                    name,
+                    dxfattribs={
+                        'layer': LAYER_TEXTO,
+                        'height': DEFAULT_TEXT_HEIGHT,
+                        'rotation': safe_rotation,
+                        'style': 'PRO_STYLE'
+                    }
+                )
+                # AutoCAD requires both insert and align_point for centered text
+                text.dxf.halign = 1  # Center
+                text.dxf.valign = 2  # Middle
+                text.dxf.insert = safe_align
+                text.dxf.align_point = safe_align
+            except Exception as te:
+                Logger.debug(f"Label creation failed: {te}")
 
     def _draw_street_offsets(self, line, tags, diff_x, diff_y):
         """Draws parallel lines (curbs) for streets using authoritative widths."""
         highway = tags.get('highway', 'residential')
-        if highway in ['footway', 'path', 'cycleway', 'steps']:
-            return # Skip thin paths
+        
+        # Skip thin paths
+        skip_types = ['footway', 'path', 'cycleway', 'steps']
+        if highway in skip_types:
+            return
             
         # Get width from centralized StyleManager
         width = DXFStyleManager.get_street_width(highway)
@@ -224,28 +265,30 @@ class DXFGenerator:
         try:
             # Shapely 2.0+ uses offset_curve
             if hasattr(line, 'offset_curve'):
-                 left = line.offset_curve(width, join_style=2)
-                 right = line.offset_curve(-width, join_style=2)
+                left = line.offset_curve(width, join_style=2)
+                right = line.offset_curve(-width, join_style=2)
             else:
-                 left = line.parallel_offset(width, 'left', join_style=2)
-                 right = line.parallel_offset(width, 'right', join_style=2)
+                # Fallback for older Shapely versions
+                left = line.parallel_offset(width, 'left', join_style=2)
+                right = line.parallel_offset(width, 'right', join_style=2)
             
             for side_geom in [left, right]:
-                if side_geom.is_empty: continue
+                if side_geom.is_empty:
+                    continue
                 
                 if isinstance(side_geom, LineString):
-                     pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in side_geom.coords]
-                     pts = self._validate_points(pts, min_points=2)
-                     if pts:
-                        self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO'})
+                    pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in side_geom.coords]
+                    pts = self._validate_points(pts, min_points=MIN_LINE_POINTS)
+                    if pts:
+                        self.msp.add_lwpolyline(pts, dxfattribs={'layer': LAYER_VIAS_MEIO_FIO})
                 elif isinstance(side_geom, MultiLineString):
-                     for subline in side_geom.geoms:
-                           pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in subline.coords]
-                           pts = self._validate_points(pts, min_points=2)
-                           if pts:
-                                self.msp.add_lwpolyline(pts, dxfattribs={'layer': 'VIAS_MEIO_FIO'})
+                    for subline in side_geom.geoms:
+                        pts = [self._safe_p((p[0] - diff_x, p[1] - diff_y)) for p in subline.coords]
+                        pts = self._validate_points(pts, min_points=MIN_LINE_POINTS)
+                        if pts:
+                            self.msp.add_lwpolyline(pts, dxfattribs={'layer': LAYER_VIAS_MEIO_FIO})
         except Exception as e:
-            Logger.info(f"Street offset failed: {e}")
+            Logger.debug(f"Street offset failed for {highway}: {e}")
 
     def _get_thickness(self, tags, layer):
         """Calculates extrusion height based on OSM tags"""

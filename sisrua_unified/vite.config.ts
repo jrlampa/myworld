@@ -22,8 +22,20 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: ['./legacy_src/tests/setup.ts'],
-      include: ['**/*.test.{ts,tsx}'],
+      setupFiles: ['./tests/setup.ts'],
+      include: ['tests/**/*.test.{ts,tsx}'],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html'],
+        exclude: [
+          'node_modules/',
+          'tests/',
+          'legacy_src/',
+          '*.config.ts',
+          'dist/',
+          'build/'
+        ]
+      }
     },
   };
 });

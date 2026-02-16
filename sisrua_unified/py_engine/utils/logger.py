@@ -3,6 +3,13 @@ import sys
 
 class Logger:
     SKIP_GEOJSON = False
+    
+    @staticmethod
+    def debug(message):
+        # Debug messages are less critical, just print to stdout without JSON formatting
+        print(json.dumps({"status": "debug", "message": message}))
+        sys.stdout.flush()
+    
     @staticmethod
     def info(message, status="progress", progress=None):
         payload = {"status": status, "message": message}

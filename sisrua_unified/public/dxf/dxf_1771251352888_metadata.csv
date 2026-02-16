@@ -1,0 +1,25 @@
+highway,maxspeed,name,ref,source,surface,natural,bridge,layer,area_m2,length_m
+primary,80,RJ-162,RJ-162,IBGE,unpaved,,,,0.0,900.9962389850281
+residential,,Rua Armando Vaz Couto,,IBGE,unpaved,,,,0.0,136.9007953813905
+track,,Rua Augusto Stuts,,IBGE,unpaved,,,,0.0,382.0918775953861
+residential,,Rua Pastor Sebastião Xavier,,IBGE,unpaved,,,,0.0,1617.535179132568
+residential,,Avenida Doutor Feliciano Sodré,,IBGE,paved,,,,0.0,764.3378734683062
+residential,,Rua Sebastião Xavier Filho,,IBGE,,,,,0.0,272.64061642496017
+residential,,Rua Antônio Ricardo Fazolli,,IBGE,,,,,0.0,183.81600492860255
+residential,,Rua Jorge José da Silva,,IBGE,,,,,0.0,209.27897843234018
+residential,,Rua Jorge dos Santos,,IBGE,paved,,,,0.0,357.2834169435568
+residential,,Rua Paulo Esperança Longo,,IBGE,,,,,0.0,251.52951542406151
+residential,,Rua Eugênio Rufino,,IBGE,,,,,0.0,206.04934132934633
+track,,,,IBGE,unpaved,,,,0.0,32.94355504813366
+residential,,,,IBGE,unpaved,,,,0.0,51.356804076446
+track,,,,IBGE,unpaved,,,,0.0,27.19668724422114
+track,,,,IBGE,unpaved,,,,0.0,172.28835780908443
+residential,,Rua Bráulio Silveira Dias,,IBGE,,,,,0.0,104.13666837474754
+residential,,,,IBGE,unpaved,,,,0.0,53.9032782929746
+,,,,,,wood,,,1080048.8725795038,7470.269306858198
+path,,Trilha de ligação,,,ground,,,,0.0,4155.858130544152
+residential,,Rua Augusto Stuts,,IBGE,unpaved,,,,0.0,312.03086735731625
+residential,,Rua Armando Vaz Couto,,IBGE,unpaved,,,,0.0,70.05673173269835
+residential,,Rua Eugênio Rufino,,IBGE,,,,,0.0,92.86345006090532
+residential,,Avenida Doutor Feliciano Sodré,,IBGE,paved,,,,0.0,270.37726248425713
+residential,,Avenida Doutor Feliciano Sodré,,IBGE,paved,,yes,1,0.0,8.14551264116487

@@ -13,6 +13,7 @@ interface DxfOptions {
     layers?: Record<string, boolean>;
     mode?: string;
     polygon?: string;
+    projection?: 'local' | 'utm';
 }
 
 export const generateDxf = (options: DxfOptions): Promise<string> => {
@@ -29,6 +30,7 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
             '--output', options.outputFile,
             '--selection_mode', options.mode || 'circle',
             '--polygon', options.polygon || '[]',
+            '--projection', options.projection || 'local',
             '--no-preview' // For now, we don't need the preview JSON in the response
         ];
 
