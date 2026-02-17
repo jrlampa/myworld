@@ -160,16 +160,79 @@ const specs = swaggerJsdoc({
                 },
                 AnalyzeRequest: {
                     type: 'object',
-                    required: ['stats', 'locationName'],
                     properties: {
                         stats: { type: 'object', additionalProperties: true },
-                        locationName: { type: 'string' }
+                        locationName: { type: 'string' },
+                        coordinates: {
+                            type: 'array',
+                            items: { $ref: '#/components/schemas/ElevationCoordinate' }
+                        },
+                        coords: {
+                            type: 'array',
+                            items: { $ref: '#/components/schemas/ElevationCoordinate' }
+                        }
+                    },
+                    examples: {
+                        analysis: {
+                            summary: 'Analise urbana (Groq)',
+                            value: {
+                                stats: { buildings: 120, roads_km: 8.4 },
+                                locationName: 'Centro SP'
+                            }
+                        },
+                        elevation: {
+                            summary: 'Elevacoes (Open-Meteo em lote)',
+                            value: {
+                                coordinates: [
+                                    { lat: -23.55052, lon: -46.63331 },
+                                    { lat: -23.551, lon: -46.632 }
+                                ]
+                            }
+                        }
                     }
+                },
+                ElevationCoordinate: {
+                    type: 'object',
+                    properties: {
+                        lat: { type: 'number' },
+                        lon: { type: 'number' },
+                        latitude: { type: 'number' },
+                        longitude: { type: 'number' },
+                        lng: { type: 'number' }
+                    },
+                    description: 'Use lat/lon (recommended). latitude/longitude or lng are accepted.'
                 },
                 AnalyzeResponse: {
                     type: 'object',
                     properties: {
                         analysis: { type: 'string' }
+                    },
+                    example: {
+                        analysis: 'Resumo urbanistico em 2 frases para a area analisada.'
+                    }
+                },
+                ElevationBatchResponse: {
+                    type: 'object',
+                    properties: {
+                        success: { type: 'boolean' },
+                        elevations: { type: 'array', items: { type: 'number' } },
+                        error: { type: 'string' }
+                    },
+                    examples: {
+                        success: {
+                            summary: 'Sucesso',
+                            value: {
+                                success: true,
+                                elevations: [742.2, 743.1]
+                            }
+                        },
+                        failure: {
+                            summary: 'Falha',
+                            value: {
+                                success: false,
+                                error: 'Falha ao obter elevacoes do Open-Meteo: timeout'
+                            }
+                        }
                     }
                 }
             }
@@ -391,7 +454,12 @@ const specs = swaggerJsdoc({
                             description: 'Analysis result',
                             content: {
                                 'application/json': {
-                                    schema: { $ref: '#/components/schemas/AnalyzeResponse' }
+                                    schema: {
+                                        oneOf: [
+                                            { $ref: '#/components/schemas/AnalyzeResponse' },
+                                            { $ref: '#/components/schemas/ElevationBatchResponse' }
+                                        ]
+                                    }
                                 }
                             }
                         },

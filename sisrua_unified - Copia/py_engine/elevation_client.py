@@ -1,8 +1,67 @@
 import requests
 import numpy as np
+from typing import Any, Dict, List, Tuple
 from utils.logger import Logger
 
 BATCH_SIZE = 100 # Open-Elevation limit is often around 100-150 locations per request
+OPEN_METEO_URL = "https://api.open-meteo.com/v1/elevation"
+
+
+def _chunk_list(items: List[Any], size: int) -> List[List[Any]]:
+    return [items[i:i + size] for i in range(0, len(items), size)]
+
+
+def fetch_open_meteo_elevations_batched(
+    coords: List[Tuple[float, float]],
+    batch_size: int = 100,
+    timeout_seconds: int = 15
+) -> Dict[str, Any]:
+    """
+    Fetch elevations from Open-Meteo with batching to avoid URL length limits.
+
+    Args:
+        coords: list of (lat, lon) tuples in the original order.
+        batch_size: max points per request.
+        timeout_seconds: request timeout.
+
+    Returns:
+        dict with keys:
+            - success: bool
+            - elevations: list[float] (when success)
+            - error: str (when failure)
+    """
+    elevations: List[float] = []
+
+    try:
+        for batch in _chunk_list(coords, batch_size):
+            lats = ",".join(f"{lat:.6f}" for lat, _ in batch)
+            lons = ",".join(f"{lon:.6f}" for _, lon in batch)
+
+            params = {
+                "latitude": lats,
+                "longitude": lons
+            }
+
+            response = requests.get(OPEN_METEO_URL, params=params, timeout=timeout_seconds)
+            response.raise_for_status()
+            data = response.json()
+
+            if "elevation" not in data:
+                return {
+                    "success": False,
+                    "error": "Falha ao obter elevacoes do Open-Meteo (resposta invalida)."
+                }
+
+            elevations.extend(data["elevation"])
+
+        return {"success": True, "elevations": elevations}
+
+    except requests.RequestException as exc:
+        Logger.error(f"Open-Meteo request failed: {exc}")
+        return {
+            "success": False,
+            "error": f"Falha ao obter elevacoes do Open-Meteo: {str(exc)}"
+        }
 
 def fetch_elevation_grid(north, south, east, west, resolution=50):
     """

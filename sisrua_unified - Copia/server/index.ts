@@ -12,6 +12,7 @@ import { randomUUID } from 'crypto';
 import { GeocodingService } from './services/geocodingService.js';
 import { ElevationService } from './services/elevationService.js';
 import { GroqService } from './services/groqService.js';
+import { fetchOpenMeteoElevations } from './services/openMeteoService.js';
 import {
     createCacheKey,
     deleteCachedFilename,
@@ -468,7 +469,26 @@ app.post('/api/elevation/profile', async (req: Request, res: Response) => {
 // AI Analyze Endpoint (Groq)
 app.post('/api/analyze', async (req: Request, res: Response) => {
     try {
-        const { stats, locationName } = req.body;
+        const { stats, locationName, coordinates, coords } = req.body;
+        const points = coordinates || coords;
+
+        if (Array.isArray(points) && points.length > 0) {
+            const normalized = points.map((point: any) => ({
+                lat: Number(point.lat ?? point.latitude),
+                lon: Number(point.lon ?? point.lng ?? point.longitude)
+            }));
+
+            if (normalized.some((point: any) => Number.isNaN(point.lat) || Number.isNaN(point.lon))) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Coordenadas invalidas: use lat/lon ou latitude/longitude.'
+                });
+            }
+
+            const elevationResult = await fetchOpenMeteoElevations(normalized, 100, 15000);
+            return res.json(elevationResult);
+        }
+
         const result = await GroqService.analyzeUrbanStats(stats, locationName || 'selected area');
         res.json(result);
     } catch (error: any) {
