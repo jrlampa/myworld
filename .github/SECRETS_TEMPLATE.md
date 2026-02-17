@@ -5,8 +5,11 @@
 ### Authentication Secrets (Required for GCP)
 
 ```
+# NOTA: PROJECT_NUMBER é o número do projeto (numérico), diferente do PROJECT_ID (string)
+# Para obter: gcloud projects describe sisrua-producao --format="value(projectNumber)"
 GCP_WIF_PROVIDER=projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/providers/github-provider
 
+# NOTA: PROJECT_ID é o ID do projeto (string), ex: sisrua-producao
 GCP_SERVICE_ACCOUNT=github-actions-deployer@YOUR_PROJECT_ID.iam.gserviceaccount.com
 
 GCP_PROJECT_ID=sisrua-producao
