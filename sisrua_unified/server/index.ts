@@ -69,6 +69,11 @@ app.get('/', (_req: Request, res: Response) => {
 // Serve generated files
 app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
 
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../dist')));
+}
+
 // Batch DXF Generation Endpoint
 app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Response) => {
     try {
@@ -323,6 +328,13 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// Serve index.html for all other routes in production (SPA support)
+if (process.env.NODE_ENV === 'production') {
+    app.get('*', (_req: Request, res: Response) => {
+        res.sendFile(path.join(__dirname, '../dist/index.html'));
+    });
+}
 
 app.listen(port, () => {
     logger.info('Backend online', {
