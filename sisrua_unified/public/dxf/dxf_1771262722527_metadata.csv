@@ -1,0 +1,140 @@
+highway,lanes,name,oneway,surface,alt_name,maxspeed,source,IBGE:CD_ADMINIS,ref,addr:city,addr:housenumber,addr:postcode,addr:street,addr:suburb,building,shop,bicycle,lit,service,covered,layer,landuse,amenity,brand,brand:wikidata,brand:wikipedia,religion,area_m2,length_m
+crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+bus_stop,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+bus_stop,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+crossing,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,0.0
+secondary,2,Avenida Joaquim Nogueira,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,1503.3200912708796
+tertiary,2,Avenida Vitor Rocha,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,1389.630198282946
+tertiary,2,Avenida Vitor Rocha,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,1413.192899888705
+residential,,Rua Otacilio Massa de Azevedo,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,327.792603340553
+residential,,Rua Budapeste,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,611.8544686888059
+residential,,Rua Vinte e Quatro,,,Rua 24,,,,,,,,,,,,,,,,,,,,,,,0.0,116.07519061031218
+residential,,Rua Vinte e Três,,,Rua 23,,,,,,,,,,,,,,,,,,,,,,,0.0,147.95849687594642
+residential,,Rua Seis,,,Rua 6;Rua 26;Rua Vinte e Seis,,,,,,,,,,,,,,,,,,,,,,,0.0,81.7822609693491
+residential,,Rua G,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,196.4431959845805
+residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,194.31775705710302
+residential,,Rua Vinte,,,Rua 20,,,,,,,,,,,,,,,,,,,,,,,0.0,131.36582183070158
+residential,,Rua Vinte e Dois,,,Rua 22,,,,,,,,,,,,,,,,,,,,,,,0.0,165.02576612472222
+residential,,Rua Estocolmo,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,125.75111515677276
+residential,,Rua Canaveral,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,173.56366774482532
+residential,,Rua Nove,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,214.72105047027273
+residential,,Rua Vinte e Um,,,Rua 21,,,,,,,,,,,,,,,,,,,,,,,0.0,153.12326715694405
+residential,,Rua Copenhague,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,247.05256448708525
+residential,,Rua Vinte e Cinco,,,Rua 25,,,,,,,,,,,,,,,,,,,,,,,0.0,204.01237378096317
+residential,,Rua Belgrado,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,439.99762958981455
+residential,,Rua M,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,298.4880733501478
+residential,,Rua I,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,351.4564806809688
+residential,,Rua H,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,221.29928017804164
+residential,,Rua Quintino Andre Senos,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,149.64169505797494
+residential,,Rua N,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,184.6473409416442
+residential,,Rua José Vieira Resende,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,203.06886880894567
+residential,,Rua Mônica da Silva Godinho,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,191.446780412148
+residential,,Rua França,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,167.30849794694737
+residential,,Rua Cecilia,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,204.11494933191744
+residential,,Rua Altamir Chaves,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,178.1326291291535
+residential,,Rua Marques de Olinda,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,543.792192589075
+residential,,Avenida Bispo Almir dos Santos,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,589.4508096883034
+residential,,Rua Expedicionário da Pátria,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,50.16408264866101
+residential,,Rua Almirante Tamandare,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,279.40579896503914
+residential,,,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,221.8391659737972
+residential,,Rua Evaristo da Veiga,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,284.9171647709242
+residential,,Rua da Independencia,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,398.0042375957967
+residential,,Rua General Ozório,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,312.03224158834985
+residential,,Avenida Luis Lindenberg,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,50.61219864568397
+residential,,Rua Marques de Olinda,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,163.50085130425916
+residential,,Rua da Califórnia,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,97.59498512131165
+residential,,Rua Almirante Tamandare,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,312.89900899196687
+residential,,Rua da Conspiração,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,257.99896746675165
+residential,,Rua Visconde de Ouro Preto,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,286.84181832186374
+residential,,Rua Duarte da Costa,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,521.5393357241
+residential,,Rua Henrique Dias,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,230.30664575638667
+residential,,Rua da Independencia,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,280.8776289470643
+residential,,Rua Tomé de Sousa,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,469.2692850152464
+residential,,Rua Djalma de Azevedo,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,326.733162102034
+residential,,Rua Visconde de Cairu,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,504.42218015763217
+residential,,Rua Djalma de Azevedo,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,474.83172259244617
+tertiary,1,Rua Salinas Ponta Costa,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,14.116096054146977
+residential,,Rua Los Angeles,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,800.2916356759346
+secondary,2,Avenida Joaquim Nogueira,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,1531.1786838987389
+residential,,Avenida Lecy Gomes da Costa,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,579.0186157713171
+secondary,1,Avenida Lecy Gomes da Costa,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,8.544492323464365
+secondary_link,2,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,12.065740400786549
+footway,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,1414.9931701050934
+residential,,Rua Vinte e Cinco,,asphalt,Rua 25,20,,,,,,,,,,,,,,,,,,,,,,0.0,196.76166067616896
+residential,,Avenida Luis Lindenberg,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,27.330386707303273
+residential,,Avenida Luis Lindenberg,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,1282.4048782820564
+residential,,Rua Expedicionário da Pátria,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,654.8694627937523
+residential,,Rua Expedicionário da Pátria,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,25.217247862784028
+residential,,Rua da Independencia,,paved,,,Bing;GPS;survey,,,,,,,,,,,,,,,,,,,,,0.0,18.697073746879152
+trunk,2,Avenida América Central,yes,paved,,80,IBGE;GPS,estadual,RJ-140,,,,,,,,,,,,,,,,,,,0.0,528.1191329304565
+trunk,2,Avenida América Central,yes,paved,,80,,,RJ-140,,,,,,,,,,,,,,,,,,,0.0,72.77425572622305
+trunk_link,1,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,41.43426276245389
+tertiary,2,Rua Salinas Ponta Costa,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,377.8892280563477
+trunk_link,1,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,26.594455446178173
+trunk,2,Avenida América Central,yes,paved,,80,IBGE;GPS,estadual,RJ-140,,,,,,,,,,,,,,,,,,,0.0,516.7728722559391
+secondary,2,Avenida Joaquim Nogueira,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,9.54075565339568
+secondary,2,Avenida Joaquim Nogueira,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,11.368486116044341
+,,Pão Pão Padaria,,,,,,,,Cabo Frio,310,28909-600,Rua Gonçalves Ledo,Guarani,yes,bakery,,,,,,,,,,,,37.57092969422305,25.136266687322525
+residential,,Rua Gonçalves Ledo,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,219.07205294353835
+pedestrian,,,,concrete,,,,,,,,,,,,,yes,yes,,,,,,,,,,0.0,182.66405469038912
+trunk,2,Avenida América Central,yes,paved,,80,,,RJ-140,,,,,,,,,,,,,,,,,,,0.0,523.3806022525675
+trunk,2,Avenida América Central,yes,paved,,80,IBGE;GPS,estadual,RJ-140,,,,,,,,,,,,,,,,,,,0.0,10.908574669702537
+secondary_link,2,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,10.459394512811958
+residential,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,13.695087013523835
+residential,,,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,147.19710020919774
+tertiary,1,Rua Salinas Ponta Costa,yes,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,9.234913400439027
+tertiary,2,Rua Salinas Ponta Costa,,paved,,,,,,,,,,,,,,,,,,,,,,,,0.0,29.754327759851858
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,100.25141081171456
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,50.080578749756846
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,37.38686583770131
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,42.35824050728227
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,38.37484274061039
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,37.39513249208327
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,36.607101130023
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,34.19224497813861
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,11.670681821866005
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,94.18566032894373
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,112.62255154643084
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,118.92498585065482
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,122.72293192415954
+service,,,,,,,,,,,,,,,,,,,parking_aisle,yes,-1,,,,,,,0.0,58.601787459176904
+service,,,,,,,,,,,,,,,,,,,parking_aisle,yes,,,,,,,,0.0,70.16256386435273
+service,,,,,,,,,,,,,,,,,,,parking_aisle,yes,,,,,,,,0.0,75.9703778977844
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,81.34731025373847
+service,,,,,,,,,,,,,,,,,,,parking_aisle,yes,,,,,,,,0.0,76.73576304191937
+service,,,,,,,,,,,,,,,,,,,parking_aisle,,,,,,,,,0.0,62.49015464013088
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,226.21272815275483
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,245.69171137106323
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,54.89617090953333
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,58.337474916905634
+trunk,2,Avenida América Central,yes,paved,,80,,,RJ-140,,,,,,,,,,,,,,,,,,,0.0,8.036856154626088
+,,,,,,,,,,,,,,,,,,,,,,grass,,,,,,7630.687306979752,889.924743692852
+,,Caixa Econômica Federal,,,,,,,,Cabo Frio,1305,,Avenida Joaquim Nogueira,,yes,,,,,,,,bank,Caixa Econômica Federal,Q835283,pt:Caixa Econômica Federal,,522.1662997371307,99.06125104688051
+service,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,111.17520749757774
+,,,,,,,,,,,,,,,roof,,,,,,1,,,,,,,376.98318396862646,79.62589755194048
+,,,,,,,,,,,,,,,yes,,,,,,,,,,,,,478.6059631625101,90.83203605730554
+,,,,,,,,,,,,,,,roof,,,,,,1,,,,,,,326.7095128424732,72.3480887522244
+,,,,,,,,,,,,,,,roof,,,,,,,,,,,,,156.57860942018837,51.368859221147446
+,,,,,,,,,,,,,,,yes,,,,,,,,,,,,,2167.9803863534485,187.84400037433932
+,,Assaí Atacadista,,,,,,,,Cabo Frio,900,,Avenida América Central,,yes,supermarket,,,,,1,,,Assaí Atacadista,Q28679415,pt:Assaí Atacadista,,13520.752745422946,511.81037087729726
+footway,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,9.659364723068215
+trunk,2,Avenida América Central,yes,paved,,80,IBGE;GPS,estadual,RJ-140,,,,,,,,,,,,,,,,,,,0.0,399.72642859678797
+trunk,2,Avenida América Central,yes,paved,,80,,,RJ-140,,,,,,,,,,,,,,,,,,,0.0,13.535463262494503
+trunk,2,Avenida América Central,yes,paved,,80,,,RJ-140,,,,,,,,,,,,,,,,,,,0.0,341.01410266915195
+,,Proide,,,,,,,,,,,,,yes,,,,,,,,place_of_worship,,,,christian,760.9029871527401,111.20070990102477
+footway,,ciclovia,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,1491.6468477058538
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,15.67775972122584
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,15.714544197580738
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,23.755728039314846
+service,,,,,,,,,,,,,,,,,,,,yes,,,,,,,,0.0,89.58160036626019
+,,,,,,,,,,,,,,,,,,,,,,grass,,,,,,7049.052792724033,461.23091028418804
+trunk,2,Avenida América Central,yes,paved,,80,,,RJ-140,,,,,,,,,,,,,,,,,,,0.0,568.9078283427662
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,60.889491632270996
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,527.0105005934079
+service,,,,,,,,,,,,,,,,,,,,,,,,,,,,0.0,83.53930235816668
+tertiary_link,,,yes,,,,,,,,,,,,,,,,,,,,,,,,,0.0,39.06150984728522

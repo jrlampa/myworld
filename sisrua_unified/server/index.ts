@@ -1,27 +1,59 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import multer from 'multer';
+import { z } from 'zod';
+import swaggerUi from 'swagger-ui-express';
 
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 import { GeocodingService } from './services/geocodingService.js';
 import { ElevationService } from './services/elevationService.js';
 import { AnalysisService } from './services/analysisService.js';
-import { generateDxf } from './pythonBridge.js';
+import {
+    createCacheKey,
+    deleteCachedFilename,
+    getCachedFilename
+} from './services/cacheService.js';
+import { dxfQueue } from './queue/dxfQueue.js';
+import { logger } from './utils/logger.js';
+import { generalRateLimiter, dxfRateLimiter } from './middleware/rateLimiter.js';
+import { dxfRequestSchema } from './schemas/dxfRequest.js';
+import { parseBatchCsv, RawBatchRow } from './services/batchService.js';
+import { specs } from './swagger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app: Express = express();
 const port = process.env.PORT || 3001;
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+const batchRowSchema = z.object({
+    name: z.string().min(1),
+    lat: z.coerce.number().min(-90).max(90),
+    lon: z.coerce.number().min(-180).max(180),
+    radius: z.coerce.number().min(10).max(5000),
+    mode: z.enum(['circle', 'polygon', 'bbox'])
+});
 
 // Configuração
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+app.use(generalRateLimiter);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Logging Middleware
 app.use((req, _res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    logger.info('Incoming request', {
+        method: req.method,
+        url: req.url,
+        ip: req.ip
+    });
     next();
 });
 
@@ -37,48 +69,210 @@ app.get('/', (_req: Request, res: Response) => {
 // Serve generated files
 app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
 
-// DXF Generation Endpoint (POST for large polygons)
-app.post('/api/dxf', async (req: Request, res: Response) => {
+// Batch DXF Generation Endpoint
+app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Response) => {
     try {
-        const { lat, lon, radius, mode, polygon, layers, projection } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ error: 'CSV file is required' });
+        }
 
-        if (!lat || !lon || !radius) {
-            return res.status(400).json({ error: 'Missing lat, lon, or radius in body' });
+        const rows = await parseBatchCsv(req.file.buffer);
+        if (rows.length === 0) {
+            return res.status(400).json({ error: 'CSV is empty or invalid' });
+        }
+
+        const results: Array<{ name: string; status: string; jobId?: string | number; url?: string }> = [];
+        const errors: Array<{ line: number; message: string; row: RawBatchRow }> = [];
+
+        for (const entry of rows) {
+            const validation = batchRowSchema.safeParse(entry.row);
+            if (!validation.success) {
+                errors.push({
+                    line: entry.line,
+                    message: validation.error.issues.map((issue) => issue.message).join(', '),
+                    row: entry.row
+                });
+                continue;
+            }
+
+            const { name, lat, lon, radius, mode } = validation.data;
+            const cacheKey = createCacheKey({
+                lat,
+                lon,
+                radius,
+                mode,
+                polygon: [],
+                layers: {}
+            });
+
+            const cachedFilename = getCachedFilename(cacheKey);
+            if (cachedFilename) {
+                const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
+                if (fs.existsSync(cachedFilePath)) {
+                    const cachedUrl = `http://localhost:${port}/downloads/${cachedFilename}`;
+                    results.push({
+                        name,
+                        status: 'cached',
+                        url: cachedUrl
+                    });
+                    continue;
+                }
+
+                deleteCachedFilename(cacheKey);
+            }
+
+            const safeName = name.toLowerCase().replace(/[^a-z0-9-_]+/g, '_').slice(0, 40) || 'batch';
+            const filename = `dxf_${safeName}_${Date.now()}_${entry.line}.dxf`;
+            const outputFile = path.join(__dirname, '../public/dxf', filename);
+            const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
+
+            const job = await dxfQueue.add({
+                lat,
+                lon,
+                radius,
+                mode,
+                polygon: '[]',
+                layers: {},
+                projection: 'local',
+                outputFile,
+                filename,
+                cacheKey,
+                downloadUrl
+            });
+
+            results.push({
+                name,
+                status: 'queued',
+                jobId: job.id
+            });
+        }
+
+        if (results.length === 0) {
+            return res.status(400).json({ error: 'No valid rows found', errors });
+        }
+
+        return res.status(200).json({ results, errors });
+    } catch (err: any) {
+        logger.error('Batch DXF upload failed', { error: err });
+        return res.status(500).json({ error: 'Batch processing failed', details: err.message });
+    }
+});
+
+// DXF Generation Endpoint (POST for large polygons)
+app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
+    try {
+        const validation = dxfRequestSchema.safeParse(req.body);
+        if (!validation.success) {
+            logger.warn('DXF validation failed', {
+                issues: validation.error.issues,
+                ip: req.ip
+            });
+            return res.status(400).json({ error: 'Invalid request body', details: validation.error.issues });
+        }
+
+        const { lat, lon, radius, mode } = validation.data;
+        const { polygon, layers, projection } = req.body;
+        const resolvedMode = mode || 'circle';
+        const cacheKey = createCacheKey({
+            lat,
+            lon,
+            radius,
+            mode: resolvedMode,
+            polygon: typeof polygon === 'string' ? polygon : polygon ?? null,
+            layers: layers ?? {}
+        });
+
+        const cachedFilename = getCachedFilename(cacheKey);
+        if (cachedFilename) {
+            const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
+            if (fs.existsSync(cachedFilePath)) {
+                const cachedUrl = `http://localhost:${port}/downloads/${cachedFilename}`;
+                logger.info('DXF cache hit', {
+                    cacheKey,
+                    filename: cachedFilename,
+                    ip: req.ip
+                });
+                return res.json({
+                    status: 'success',
+                    message: 'DXF Generated',
+                    url: cachedUrl
+                });
+            }
+
+            deleteCachedFilename(cacheKey);
+            logger.warn('DXF cache entry missing file', {
+                cacheKey,
+                filename: cachedFilename,
+                ip: req.ip
+            });
+        } else {
+            logger.info('DXF cache miss', {
+                cacheKey,
+                ip: req.ip
+            });
         }
 
         const filename = `dxf_${Date.now()}.dxf`;
         const outputFile = path.join(__dirname, '../public/dxf', filename);
+        const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
 
-        console.log(`[API] Generating DXF (POST) for ${lat}, ${lon} radius=${radius} mode=${mode} projection=${projection || 'local'}`);
+        logger.info('Queueing DXF generation', {
+            lat,
+            lon,
+            radius,
+            mode: resolvedMode,
+            projection: projection || 'local',
+            cacheKey
+        });
 
-        const generationPromise = generateDxf({
-            lat: parseFloat(lat),
-            lon: parseFloat(lon),
-            radius: parseFloat(radius),
-            mode: mode || 'circle',
+        const job = await dxfQueue.add({
+            lat,
+            lon,
+            radius,
+            mode: resolvedMode,
             polygon: typeof polygon === 'string' ? polygon : JSON.stringify(polygon || []),
             layers: layers || {},
             projection: projection || 'local',
-            outputFile
+            outputFile,
+            filename,
+            cacheKey,
+            downloadUrl
         });
 
-        // 60s Timeout
-        const timeout = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('DXF Generation Timeout (60s)')), 60000)
-        );
-
-        await Promise.race([generationPromise, timeout]);
-
-        const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
-        res.json({
-            status: 'success',
-            message: 'DXF Generated',
-            url: downloadUrl
+        res.status(202).json({
+            status: 'queued',
+            jobId: job.id
         });
 
     } catch (err: any) {
-        console.error("DXF Generation Error:", err);
+        logger.error('DXF generation error', { error: err });
         res.status(500).json({ error: 'Generation failed', details: err.message });
+    }
+});
+
+// Job Status Endpoint
+app.get('/api/jobs/:id', async (req: Request, res: Response) => {
+    try {
+        const job = await dxfQueue.getJob(req.params.id);
+        if (!job) {
+            return res.status(404).json({ error: 'Job not found' });
+        }
+
+        const status = await job.getState();
+        const progress = job.progress();
+        const result = status === 'completed' ? job.returnvalue : null;
+        const error = status === 'failed' ? job.failedReason : null;
+
+        res.json({
+            id: job.id,
+            status,
+            progress,
+            result,
+            error
+        });
+    } catch (err: any) {
+        logger.error('Job status lookup failed', { error: err });
+        res.status(500).json({ error: 'Failed to retrieve job status', details: err.message });
     }
 });
 
@@ -96,7 +290,7 @@ app.post('/api/search', async (req: Request, res: Response) => {
             res.status(404).json({ error: 'Location not found' });
         }
     } catch (error: any) {
-        console.error("Search Error:", error);
+        logger.error('Search error', { error });
         res.status(500).json({ error: error.message });
     }
 });
@@ -110,7 +304,7 @@ app.post('/api/elevation/profile', async (req: Request, res: Response) => {
         const profile = await ElevationService.getElevationProfile(start, end, steps);
         res.json({ profile });
     } catch (error: any) {
-        console.error("Elevation Profile Error:", error);
+        logger.error('Elevation profile error', { error });
         res.status(500).json({ error: error.message });
     }
 });
@@ -125,11 +319,15 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
         res.json(result);
     } catch (error: any) {
-        console.error("Analysis Error:", error);
+        logger.error('Analysis error', { error });
         res.status(500).json({ error: error.message });
     }
 });
 
 app.listen(port, () => {
-    console.log(`🚀 sisRUA Backend v1.2.0 operational on http://localhost:${port}`);
+    logger.info('Backend online', {
+        service: 'sisRUA Unified Backend',
+        version: '1.2.0',
+        url: `http://localhost:${port}`
+    });
 });
