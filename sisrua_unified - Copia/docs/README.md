@@ -4,6 +4,10 @@
 
 # Run and deploy your AI Studio app
 
+## Documentação de release
+
+- [Versionamento e Release](versionamento.md)
+
 This contains everything you need to run your app locally.
 
 View your app in AI Studio: https://ai.studio/apps/drive/1dzkMNkxNkgWzhayGlpMsHYWre3mM_esH

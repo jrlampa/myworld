@@ -1,0 +1,46 @@
+name: Deploy Cloud Run
+
+on:
+  push:
+    branches:
+      - release/alpha-release
+    tags:
+      - alpha-release*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cloud-run-alpha
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: alpha
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Deploy to Cloud Run (source build)
+        run: |
+          gcloud run deploy "${{ vars.CLOUD_RUN_SERVICE }}" \
+            --project="${{ vars.GCP_PROJECT_ID }}" \
+            --region="${{ vars.CLOUD_RUN_REGION }}" \
+            --source=. \
+            --allow-unauthenticated \
+            --set-env-vars="GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}"
