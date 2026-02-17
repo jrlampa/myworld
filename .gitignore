@@ -1,1 +1,66 @@
+# Video files
 sisRUA.mp4
+
+# Build directories
+build/
+dist/
+dist-electron/
+*.spec
+*.pkg
+
+# Test reports and results
+playwright-report/
+test-results/
+coverage/
+.nyc_output/
+htmlcov/
+
+# Test artifacts and metadata files
+*metadata.csv
+test_*.csv
+test_output.txt
+pytest_*.txt
+bandit_report.txt
+
+# Coverage files
+.coverage
+.coverage.*
+*.cover
+
+# Python cache and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Node modules and dependencies
+node_modules/
+jspm_packages/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Cache directories
+cache/
+.cache/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
