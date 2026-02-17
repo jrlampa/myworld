@@ -14,9 +14,12 @@ import { AnalysisService } from './services/analysisService.js';
 import {
     createCacheKey,
     deleteCachedFilename,
-    getCachedFilename
+    getCachedFilename,
+    setCachedFilename
 } from './services/cacheService.js';
-import { dxfQueue } from './queue/dxfQueue.js';
+import { createDxfTask } from './services/cloudTasksService.js';
+import { createJob, getJob, updateJobStatus, completeJob, failJob } from './services/jobStatusService.js';
+import { generateDxf } from './pythonBridge.js';
 import { logger } from './utils/logger.js';
 import { generalRateLimiter, dxfRateLimiter } from './middleware/rateLimiter.js';
 import { dxfRequestSchema } from './schemas/dxfRequest.js';
@@ -28,6 +31,27 @@ const __dirname = path.dirname(__filename);
 
 const app: Express = express();
 const port = process.env.PORT || 3001;
+
+/**
+ * Get the base URL for the application
+ * Uses environment variable if available, otherwise derives from request
+ */
+function getBaseUrl(req?: Request): string {
+    // 1. Check for Cloud Run base URL (production)
+    if (process.env.CLOUD_RUN_BASE_URL) {
+        return process.env.CLOUD_RUN_BASE_URL;
+    }
+    
+    // 2. Derive from request if available
+    if (req) {
+        const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+        const host = req.get('x-forwarded-host') || req.get('host') || `localhost:${port}`;
+        return `${protocol}://${host}`;
+    }
+    
+    // 3. Fallback to localhost (development)
+    return `http://localhost:${port}`;
+}
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }
@@ -70,6 +94,110 @@ app.get('/', (_req: Request, res: Response) => {
 // Serve generated files
 app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
 
+// Cloud Tasks Webhook - Process DXF Generation
+app.post('/api/tasks/process-dxf', async (req: Request, res: Response) => {
+    try {
+        // In production, verify OIDC token here
+        // For now, we'll accept requests but log them
+        const authHeader = req.headers.authorization;
+        logger.info('DXF task webhook called', {
+            hasAuth: !!authHeader,
+            taskId: req.body.taskId
+        });
+
+        const {
+            taskId,
+            lat,
+            lon,
+            radius,
+            mode,
+            polygon,
+            layers,
+            projection,
+            outputFile,
+            filename,
+            cacheKey,
+            downloadUrl
+        } = req.body;
+
+        if (!taskId) {
+            return res.status(400).json({ error: 'Task ID is required' });
+        }
+
+        // Update job status to processing
+        updateJobStatus(taskId, 'processing', 10);
+
+        logger.info('Processing DXF generation task', {
+            taskId,
+            lat,
+            lon,
+            radius,
+            mode,
+            cacheKey
+        });
+
+        try {
+            // Generate DXF using Python bridge
+            await generateDxf({
+                lat,
+                lon,
+                radius,
+                mode,
+                polygon,
+                layers,
+                outputFile
+            });
+
+            // Cache the filename
+            setCachedFilename(cacheKey, filename);
+
+            // Mark job as completed
+            completeJob(taskId, {
+                url: downloadUrl,
+                filename
+            });
+
+            logger.info('DXF generation completed', {
+                taskId,
+                filename,
+                cacheKey
+            });
+
+            return res.status(200).json({
+                status: 'success',
+                taskId,
+                url: downloadUrl,
+                filename
+            });
+
+        } catch (error: any) {
+            logger.error('DXF generation failed', {
+                taskId,
+                error: error.message,
+                stack: error.stack
+            });
+
+            failJob(taskId, error.message);
+
+            return res.status(500).json({
+                status: 'failed',
+                taskId,
+                error: error.message
+            });
+        }
+
+    } catch (error: any) {
+        logger.error('Task webhook error', {
+            error: error.message,
+            stack: error.stack
+        });
+        return res.status(500).json({
+            error: 'Task processing failed',
+            details: error.message
+        });
+    }
+});
+
 // Batch DXF Generation Endpoint
 app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Response) => {
     try {
@@ -110,7 +238,8 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
             if (cachedFilename) {
                 const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
                 if (fs.existsSync(cachedFilePath)) {
-                    const cachedUrl = `http://localhost:${port}/downloads/${cachedFilename}`;
+                    const baseUrl = getBaseUrl(req);
+                    const cachedUrl = `${baseUrl}/downloads/${cachedFilename}`;
                     results.push({
                         name,
                         status: 'cached',
@@ -125,9 +254,10 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
             const safeName = name.toLowerCase().replace(/[^a-z0-9-_]+/g, '_').slice(0, 40) || 'batch';
             const filename = `dxf_${safeName}_${Date.now()}_${entry.line}.dxf`;
             const outputFile = path.join(__dirname, '../public/dxf', filename);
-            const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
+            const baseUrl = getBaseUrl(req);
+            const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
-            const job = await dxfQueue.add({
+            const { taskId } = await createDxfTask({
                 lat,
                 lon,
                 radius,
@@ -141,10 +271,13 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
                 downloadUrl
             });
 
+            // Create job for status tracking
+            createJob(taskId);
+
             results.push({
                 name,
                 status: 'queued',
-                jobId: job.id
+                jobId: taskId
             });
         }
 
@@ -187,7 +320,8 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
         if (cachedFilename) {
             const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
             if (fs.existsSync(cachedFilePath)) {
-                const cachedUrl = `http://localhost:${port}/downloads/${cachedFilename}`;
+                const baseUrl = getBaseUrl(req);
+                const cachedUrl = `${baseUrl}/downloads/${cachedFilename}`;
                 logger.info('DXF cache hit', {
                     cacheKey,
                     filename: cachedFilename,
@@ -215,7 +349,8 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
 
         const filename = `dxf_${Date.now()}.dxf`;
         const outputFile = path.join(__dirname, '../public/dxf', filename);
-        const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
+        const baseUrl = getBaseUrl(req);
+        const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
         logger.info('Queueing DXF generation', {
             lat,
@@ -226,7 +361,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
             cacheKey
         });
 
-        const job = await dxfQueue.add({
+        const { taskId } = await createDxfTask({
             lat,
             lon,
             radius,
@@ -240,9 +375,12 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
             downloadUrl
         });
 
+        // Create job for status tracking
+        createJob(taskId);
+
         res.status(202).json({
             status: 'queued',
-            jobId: job.id
+            jobId: taskId
         });
 
     } catch (err: any) {
@@ -254,22 +392,17 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
 // Job Status Endpoint
 app.get('/api/jobs/:id', async (req: Request, res: Response) => {
     try {
-        const job = await dxfQueue.getJob(req.params.id);
+        const job = getJob(req.params.id);
         if (!job) {
             return res.status(404).json({ error: 'Job not found' });
         }
 
-        const status = await job.getState();
-        const progress = job.progress();
-        const result = status === 'completed' ? job.returnvalue : null;
-        const error = status === 'failed' ? job.failedReason : null;
-
         res.json({
             id: job.id,
-            status,
-            progress,
-            result,
-            error
+            status: job.status,
+            progress: job.progress,
+            result: job.result,
+            error: job.error
         });
     } catch (err: any) {
         logger.error('Job status lookup failed', { error: err });
@@ -326,9 +459,11 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
 });
 
 app.listen(port, () => {
+    const baseUrl = getBaseUrl();
     logger.info('Backend online', {
         service: 'sisRUA Unified Backend',
         version: '1.2.0',
-        url: `http://localhost:${port}`
+        url: baseUrl,
+        port: port
     });
 });

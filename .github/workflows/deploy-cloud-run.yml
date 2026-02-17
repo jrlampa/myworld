@@ -42,9 +42,14 @@ jobs:
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
           CLOUD_RUN_BASE_URL: ${{ secrets.CLOUD_RUN_BASE_URL }}
         run: |
+          cd sisrua_unified
           gcloud run deploy sisrua-app \
             --source=. \
             --region=southamerica-east1 \
             --allow-unauthenticated \
             --memory=1024Mi \
-            --update-env-vars="GROQ_API_KEY=${GROQ_API_KEY},GCP_PROJECT=${GCP_PROJECT},CLOUD_TASKS_LOCATION=southamerica-east1,CLOUD_TASKS_QUEUE=sisrua-queue,CLOUD_RUN_BASE_URL=${CLOUD_RUN_BASE_URL}"
+            --cpu=2 \
+            --timeout=300 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --update-env-vars="GROQ_API_KEY=${GROQ_API_KEY},GCP_PROJECT=${GCP_PROJECT},CLOUD_TASKS_LOCATION=southamerica-east1,CLOUD_TASKS_QUEUE=sisrua-queue,CLOUD_RUN_BASE_URL=${CLOUD_RUN_BASE_URL},NODE_ENV=production"
