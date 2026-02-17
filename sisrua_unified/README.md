@@ -83,17 +83,90 @@ pip install -r py_engine/requirements.txt
 
 ### Desenvolvimento
 ```bash
+# Start all services (frontend + backend)
 npm run dev
+
+# Or use the PowerShell launcher (Windows)
+.\start-dev.ps1
 ```
-Isso inicia:
-- Frontend em http://localhost:3000
-- Backend em http://localhost:3001
+
+O launcher [start-dev.ps1](start-dev.ps1) inicia automaticamente:
+- **Frontend** (Vite): http://localhost:3000
+- **Backend** (Express): http://localhost:3001
+- **Swagger API Docs**: http://localhost:3001/api-docs
+
+**Pré-requisitos para funcionalidade completa:**
+- **Redis** (para job queue assíncrono):
+  ```bash
+  docker run -d --name sisrua-redis -p 6379:6379 redis:7-alpine
+  ```
+- **Python** com dependências instaladas:
+  ```bash
+  pip install -r py_engine/requirements.txt
+  ```
 
 ### Testes
+
+#### Testes Backend (Jest)
+Testa serviços Node.js, cache, parsing CSV, e endpoints da API:
 ```bash
-npm run test              # Todos os testes
-npm run test:frontend     # Apenas frontend
+npm run test:backend
 ```
+
+**Cobertura inclui:**
+- `server/tests/api.test.ts` - Endpoints HTTP (health check, search)
+- `server/tests/cacheService.test.ts` - Cache com TTL e hashing SHA-256
+- `server/tests/batchService.test.ts` - Parsing e validação de CSV
+- `server/tests/elevationService.test.ts` - Cálculos de distância
+- `server/tests/geocodingService.test.ts` - Parsing de coordenadas
+
+📊 **Relatório de cobertura**: `coverage/backend/index.html`
+
+#### Testes Frontend (Vitest)
+Testa hooks React, utilitários, e componentes:
+```bash
+npm run test:frontend
+```
+
+**Cobertura inclui:**
+- `tests/hooks/` - Custom hooks (useDxfExport, useSearch, useElevationProfile, etc.)
+- `tests/utils/` - Funções utilitárias
+- `tests/constants.test.ts` - Validação de constantes
+
+📊 **Relatório de cobertura**: `coverage/index.html`
+
+#### Testes End-to-End (Playwright)
+Testa fluxos completos de usuário no navegador:
+```bash
+# Inicie o dev server primeiro
+npm run dev
+
+# Em outro terminal, execute os testes E2E
+npm run test:e2e            # Modo headless
+npm run test:e2e:ui         # Modo interativo (UI)
+npm run test:e2e:headed     # Modo com navegador visível
+```
+
+**Cenários testados:**
+- Geração de DXF com cache e polling assíncrono
+- Upload de CSV em lote com tracking de múltiplos jobs
+- Busca de coordenadas e validação de UI
+- Transições de status de jobs (queued → active → completed)
+
+📊 **Relatório de testes**: `npx playwright show-report`
+
+**Pré-requisitos para E2E:**
+- ✅ Dev server rodando (`npm run dev`)
+- ✅ Redis container ativo (para testar job queue)
+- ✅ Python configurado (para geração de DXF)
+
+#### Executar Todos os Testes
+```bash
+npm run test:all
+```
+Executa backend → frontend → E2E em sequência.
+
+**Observação**: Testes E2E requerem que o dev server esteja rodando. Os outros testes (backend/frontend) podem ser executados independentemente.
 
 ### Build
 ```bash

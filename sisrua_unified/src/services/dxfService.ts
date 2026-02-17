@@ -2,6 +2,30 @@ import { OsmElement, GeoLocation, TerrainGrid } from '../types';
 
 const API_URL = 'http://localhost:3001/api';
 
+type DxfQueueResponse = {
+  status: 'queued';
+  jobId: string | number;
+};
+
+type DxfCachedResponse = {
+  status: 'success';
+  url: string;
+  message?: string;
+};
+
+type DxfJobResult = {
+  url: string;
+  filename?: string;
+};
+
+type DxfJobStatus = {
+  id: string | number;
+  status: string;
+  progress: number;
+  result: DxfJobResult | null;
+  error: string | null;
+};
+
 export const generateDXF = async (
   lat: number,
   lon: number,
@@ -10,7 +34,7 @@ export const generateDXF = async (
   polygon: any[],
   layers: Record<string, boolean>,
   projection: 'local' | 'utm' = 'local'
-): Promise<{ url: string }> => {
+): Promise<DxfQueueResponse | DxfCachedResponse> => {
 
   const response = await fetch(`${API_URL}/dxf`, {
     method: 'POST',
@@ -21,6 +45,17 @@ export const generateDXF = async (
   if (!response.ok) {
     const errorData = await response.json();
     throw new Error(errorData.details || 'Backend generation failed');
+  }
+
+  return await response.json();
+};
+
+export const getDxfJobStatus = async (jobId: string): Promise<DxfJobStatus> => {
+  const response = await fetch(`${API_URL}/jobs/${jobId}`);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.details || errorData.error || 'Failed to load job status');
   }
 
   return await response.json();

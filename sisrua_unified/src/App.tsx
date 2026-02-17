@@ -9,6 +9,7 @@ import HistoryControls from './components/HistoryControls';
 import DxfLegend from './components/DxfLegend';
 import FloatingLayerPanel from './components/FloatingLayerPanel';
 import ElevationProfile from './components/ElevationProfile';
+import BatchUpload from './components/BatchUpload';
 import Toast, { ToastType } from './components/Toast';
 import ProgressIndicator from './components/ProgressIndicator';
 import { useUndoRedo } from './hooks/useUndoRedo';
@@ -105,7 +106,7 @@ function App() {
     onError: (message) => showToast(message, 'error')
   });
 
-  const { downloadDxf, isDownloading } = useDxfExport({
+  const { downloadDxf, isDownloading, jobId, jobStatus, jobProgress } = useDxfExport({
     onSuccess: (message) => showToast(message, 'success'),
     onError: (message) => showToast(message, 'error')
   });
@@ -217,6 +218,12 @@ function App() {
     measurePath.map(p => [p.lat, p.lng] as [number, number]),
     [measurePath]);
 
+  const showDxfProgress = isDownloading || !!jobId;
+  const dxfProgressValue = Math.max(0, Math.min(100, Math.round(jobProgress)));
+  const dxfProgressLabel = jobStatus === 'queued' || jobStatus === 'waiting'
+    ? 'A gerar DXF: na fila...'
+    : `A gerar DXF: ${dxfProgressValue}%...`;
+
   return (
     <div className={`flex flex-col h-screen w-full font-sans transition-colors duration-500 overflow-hidden ${isDark ? 'bg-[#020617] text-slate-200' : 'bg-slate-50 text-slate-900'}`}>
 
@@ -237,6 +244,12 @@ function App() {
         progress={progressValue}
         message={statusMessage}
       />
+
+      {showDxfProgress && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900/90 px-4 py-2 text-sm text-slate-100 shadow-lg">
+          {dxfProgressLabel}
+        </div>
+      )}
 
       <AnimatePresence>
         {showSettings && (
@@ -476,6 +489,11 @@ function App() {
                 <Dashboard stats={stats} analysisText={analysisText} />
 
                 <DxfLegend />
+
+                <BatchUpload
+                  onError={(message) => showToast(message, 'error')}
+                  onInfo={(message) => showToast(message, 'info')}
+                />
 
                 <div className="flex items-center gap-3 p-4 glass rounded-2xl">
                   <div className={`p-2 rounded-lg ${terrainData ? 'bg-blue-500/10 text-blue-400' : 'bg-slate-800 text-slate-600'}`}>
