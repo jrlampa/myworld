@@ -1,1 +1,2 @@
 draft_ruas/dist/win-unpacked/resources/app.asar filter=lfs diff=lfs merge=lfs -text
+sisrua_unified/build/engine/sisrua_engine.pkg filter=lfs diff=lfs merge=lfs -text
