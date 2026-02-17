@@ -73,13 +73,13 @@ gcloud projects add-iam-policy-binding sisrua-producao \
   --role="roles/iam.serviceAccountUser"
 
 # 5. Permitir que o GitHub Actions use a Service Account
-# NOTA: Substitua PROJECT_NUMBER pelo número do seu projeto (não o ID)
+# NOTA: Substitua <YOUR_PROJECT_NUMBER> pelo número do seu projeto (não o ID)
 # Para obter o número do projeto: gcloud projects describe sisrua-producao --format="value(projectNumber)"
 gcloud iam service-accounts add-iam-policy-binding \
   github-actions-deployer@sisrua-producao.iam.gserviceaccount.com \
   --project="sisrua-producao" \
   --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/github-pool/attribute.repository/jrlampa/myworld"
+  --member="principalSet://iam.googleapis.com/projects/<YOUR_PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-pool/attribute.repository/jrlampa/myworld"
 ```
 
 ### 3. Obter os Valores dos Secrets
