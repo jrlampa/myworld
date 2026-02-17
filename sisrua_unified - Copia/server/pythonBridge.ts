@@ -1,4 +1,5 @@
 import { spawn } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -23,16 +24,16 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
         // Path logic for standalone EXE vs source
         const exeName = 'sisrua_engine.exe';
         const prodExePath = path.join(__dirname, '../../engine', exeName);
-        const devExePath = path.join(__dirname, '../py_engine/dist', exeName);
-        const scriptPath = path.join(__dirname, '../py_engine/main.py');
+        const devExePath = path.resolve(__dirname, '../../py_engine/dist', exeName);
+        const scriptPath = path.resolve(__dirname, '../../py_engine/main.py');
 
         let command: string;
         let args: string[];
 
         // Check if EXE exists in expected production or dev dist location
-        if (isProduction || require('fs').existsSync(devExePath)) {
+        if (isProduction || fs.existsSync(devExePath)) {
             const finalExePath = isProduction ? prodExePath : devExePath;
-            if (require('fs').existsSync(finalExePath)) {
+            if (fs.existsSync(finalExePath)) {
                 command = finalExePath;
                 args = [];
             } else {
