@@ -142,95 +142,87 @@ class DXFGenerator:
         """
         if streets_gdf.empty:
             return
-        
-        # Group streets by type for different widths and colors
-        street_groups = {}
-        for _, row in streets_gdf.iterrows():
-            highway_type = row.get('highway', 'unclassified')
-            if highway_type not in street_groups:
-                street_groups[highway_type] = []
-            street_groups[highway_type].append(row)
-        
+        buffered_streets = []
+        centerlines = []
         labeled_street_names = set()
 
-        # Process each group
-        for highway_type, street_rows in street_groups.items():
+        for _, row in streets_gdf.iterrows():
+            highway_type = row.get('highway', 'unclassified')
             width = DXFStyleManager.get_street_width(highway_type)
             street_layer = self.get_street_layer(highway_type)
-            
-            # Collect all geometries for this type
-            geometries = []
-            street_data = []  # Store for labels
-            for row in street_rows:
-                geom = row.geometry
-                if isinstance(geom, LineString):
-                    geometries.append(geom)
-                    street_data.append(row)
-                elif isinstance(geom, MultiLineString):
-                    for line in geom.geoms:
-                        geometries.append(line)
-                        street_data.append(row)
-            
-            if not geometries:
-                continue
-            
-            # Create buffers for all streets
-            buffered = []
-            for geom in geometries:
+            geom = row.geometry
+
+            def handle_line(line):
                 try:
-                    # Buffer with rounded caps and mitered joins for clean intersections
-                    buf = geom.buffer(width, cap_style=2, join_style=2)  # cap_style=2 (flat), join_style=2 (mitered)
-                    if not buf.is_empty:
-                        buffered.append(buf)
+                    # Buffer with flat caps and rounded joins for smooth intersections
+                    poly = line.buffer(width / 2.0, cap_style=2, join_style=1)
+                    if not poly.is_empty:
+                        buffered_streets.append(poly)
                 except Exception as e:
                     Logger.debug(f"Buffer failed for {highway_type}: {e}")
-                    continue
-            
-            if not buffered:
-                continue
-            
-            # Merge all buffers to create clean joins at intersections
-            try:
-                unified = unary_union(buffered)
-                Logger.debug(f"Unified {len(buffered)} {highway_type} streets into continuous geometry")
-            except Exception as e:
-                Logger.debug(f"Union failed for {highway_type}: {e}")
-                unified = buffered[0] if buffered else None
-            
-            if unified is None or unified.is_empty:
-                continue
-            
-            # Draw the unified geometry as solid areas (polygons) on highway-specific layer
-            if isinstance(unified, Polygon):
-                self._draw_polygon(unified, street_layer, self.diff_x, self.diff_y, {})
-            elif isinstance(unified, MultiPolygon):
-                for poly in unified.geoms:
-                    self._draw_polygon(poly, street_layer, self.diff_x, self.diff_y, {})
-            
-            # Draw centerlines for reference and pick one best label placement per street name
-            label_candidates = {}
-            for i, geom in enumerate(geometries):
-                # Draw centerline as thin reference
-                points = [self._safe_p((p[0] - self.diff_x, p[1] - self.diff_y)) for p in geom.coords]
-                points = self._validate_points(points, min_points=2)
-                if points:
-                    self.msp.add_lwpolyline(points, close=False, dxfattribs={'layer': street_layer})
-                
-                # Choose one label candidate per name (longest geometry wins)
-                if i < len(street_data):
-                    row = street_data[i]
-                    if 'name' in row and not pd.isna(row['name']):
-                        name = str(row['name']).strip()
-                        if name and name.lower() != 'nan' and geom.length >= 30.0:
-                            candidate = label_candidates.get(name)
-                            if candidate is None or geom.length > candidate.length:
-                                label_candidates[name] = geom
+                centerlines.append((line, street_layer, row))
 
-            for name, label_geom in label_candidates.items():
-                if name in labeled_street_names:
-                    continue
-                self._add_street_label(label_geom, name, self.diff_x, self.diff_y)
-                labeled_street_names.add(name)
+            if isinstance(geom, LineString):
+                handle_line(geom)
+            elif isinstance(geom, MultiLineString):
+                for line in geom.geoms:
+                    handle_line(line)
+
+        if not buffered_streets:
+            return
+
+        try:
+            merged_network = unary_union(buffered_streets)
+            Logger.debug(f"Unified {len(buffered_streets)} street buffers into continuous geometry")
+        except Exception as e:
+            Logger.debug(f"Union failed for street buffers: {e}")
+            merged_network = None
+
+        if merged_network is None or merged_network.is_empty:
+            return
+
+        polygons = []
+        if isinstance(merged_network, Polygon):
+            polygons = [merged_network]
+        elif isinstance(merged_network, MultiPolygon):
+            polygons = list(merged_network.geoms)
+        else:
+            try:
+                polygons = [g for g in merged_network.geoms if isinstance(g, Polygon)]
+            except AttributeError:
+                polygons = []
+
+        def draw_ring(coords):
+            points = [self._safe_p((p[0] - self.diff_x, p[1] - self.diff_y)) for p in coords]
+            points = self._validate_points(points, min_points=3)
+            if points:
+                self.msp.add_lwpolyline(points, close=True, dxfattribs={'layer': LAYER_VIAS_MEIO_FIO})
+
+        for poly in polygons:
+            draw_ring(poly.exterior.coords)
+            for interior in poly.interiors:
+                draw_ring(interior.coords)
+
+        # Draw centerlines for reference and pick one best label placement per street name
+        label_candidates = {}
+        for geom, street_layer, row in centerlines:
+            points = [self._safe_p((p[0] - self.diff_x, p[1] - self.diff_y)) for p in geom.coords]
+            points = self._validate_points(points, min_points=2)
+            if points:
+                self.msp.add_lwpolyline(points, close=False, dxfattribs={'layer': street_layer})
+
+            if 'name' in row and not pd.isna(row['name']):
+                name = str(row['name']).strip()
+                if name and name.lower() != 'nan' and geom.length >= 30.0:
+                    candidate = label_candidates.get(name)
+                    if candidate is None or geom.length > candidate.length:
+                        label_candidates[name] = geom
+
+        for name, label_geom in label_candidates.items():
+            if name in labeled_street_names:
+                continue
+            self._add_street_label(label_geom, name, self.diff_x, self.diff_y)
+            labeled_street_names.add(name)
 
     def determine_layer(self, tags, row):
         """Maps OSM tags to DXF Layers using constants"""
