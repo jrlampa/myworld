@@ -1,0 +1,195 @@
+/* ======================================
+   Glassmorphism Light Theme Override
+   Force all dark classes to light
+   ====================================== */
+
+/* Override dark backgrounds globally */
+[class*="bg-slate-9"],
+[class*="bg-slate-8"],
+[class*="bg-[#020617]"] {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Sidebar and panels */
+.bg-slate-900 {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.bg-slate-900\/50 {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.bg-slate-900\/80 {
+    background-color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.bg-slate-900\/95 {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.bg-slate-800 {
+    background-color: rgba(6, 182, 212, 0.1) !important;
+}
+
+.bg-slate-950 {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.bg-\[#020617\] {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Borders */
+.border-white\/5,
+.border-white\/10 {
+    border-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+.border-slate-700,
+.border-slate-800 {
+    border-color: rgba(6, 182, 212, 0.3) !important;
+}
+
+.border-slate-200 {
+    border-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+/* Text colors */
+.text-slate-100,
+.text-white {
+    color: #1e293b !important;
+}
+
+.text-slate-400 {
+    color: #64748b !important;
+}
+
+.text-slate-500 {
+    color: #475569 !important;
+}
+
+.text-slate-600 {
+    color: #64748b !important;
+}
+
+/* Placeholders */
+.placeholder-slate-600::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1;
+}
+
+/* Primary colors - Convert blue to cyan */
+.bg-blue-600,
+.bg-blue-500 {
+    background-color: #06b6d4 !important;
+}
+
+.hover\:bg-blue-500:hover {
+    background-color: #0891b2 !important;
+}
+
+.text-blue-400,
+.text-blue-500 {
+    color: #06b6d4 !important;
+}
+
+.border-blue-500,
+.border-blue-500\/50,
+.border-blue-500\/10 {
+    border-color: #06b6d4 !important;
+}
+
+.focus\:ring-blue-500:focus,
+.focus\:ring-blue-500\/50:focus {
+    --tw-ring-color: #06b6d4 !important;
+}
+
+/* Emerald stays */
+.bg-emerald-600 {
+    background-color: #10b981 !important;
+}
+
+/* Special patterns */
+.bg-blue-500\/5 {
+    background-color: rgba(6, 182, 212, 0.05) !important;
+}
+
+.bg-blue-500\/10 {
+    background-color: rgba(6, 182, 212, 0.1) !important;
+}
+
+/* Shadow overrides */
+.shadow-blue-500\/20 {
+    --tw-shadow-color: rgba(6, 182, 212, 0.2) !important;
+}
+
+/* Dividers */
+.bg-white\/5 {
+    background-color: rgba(6, 182, 212, 0.1) !important;
+}
+
+/* Leaflet map - Force visible */
+.leaflet-container {
+    background: #f1f5f9 !important;
+    z-index: 0 !important;
+    font-size: 12px !important;
+}
+
+.leaflet-tile-pane {
+    opacity: 1 !important;
+    z-index: 2 !important;
+}
+
+.leaflet-tile-container {
+    opacity: 1 !important;
+}
+
+.leaflet-tile {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+img.leaflet-tile {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure tiles load properly */
+.leaflet-layer,
+.leaflet-tile,
+.leaflet-tile-loaded {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+/* Make sure the panes have correct z-index */
+.leaflet-pane {
+    z-index: auto !important;
+}
+
+.leaflet-map-pane {
+    z-index: 1 !important;
+}
+
+.leaflet-overlay-pane {
+    z-index: 4 !important;
+}
+
+.leaflet-shadow-pane {
+    z-index: 5 !important;
+}
+
+.leaflet-marker-pane {
+    z-index: 6 !important;
+}
+
+.leaflet-tooltip-pane {
+    z-index: 6 !important;
+}
+
+.leaflet-popup-pane {
+    z-index: 7 !important;
+}

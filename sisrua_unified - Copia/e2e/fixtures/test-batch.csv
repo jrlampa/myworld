@@ -1,0 +1,5 @@
+name,lat,lon,radius,mode
+São Paulo Centro,-23.5505,-46.6333,500,circle
+Avenida Paulista,-23.5618,-46.6565,300,circle
+Ibirapuera Park,-23.5873,-46.6573,1000,circle
+Invalid Location,999,-999,500,circle
