@@ -1,6 +1,0 @@
-[submodule "ruas/ruas"]
-	path = ruas/ruas
-	url = https://github.com/jrlampa/ruas
-[submodule "ruas2/ruas2"]
-	path = ruas2/ruas2
-	url = https://github.com/jrlampa/ruas
