@@ -15,7 +15,7 @@ from utils.logger import Logger
 from utils.geo import sirgas2000_utm_epsg
 
 class OSMController:
-    def __init__(self, lat, lon, radius, output_file, layers_config, crs, export_format='dxf', selection_mode='circle', polygon=None):
+    def __init__(self, lat, lon, radius, output_file, layers_config, crs, export_format='dxf', selection_mode='circle', polygon=None, projection='local'):
         self.lat = lat
         self.lon = lon
         self.radius = radius
@@ -25,6 +25,7 @@ class OSMController:
         self.export_format = export_format.lower()
         self.selection_mode = selection_mode
         self.polygon = polygon
+        self.projection = projection
         self.project_metadata = {
             'client': 'CLIENTE PADRÃO',
             'project': 'EXTRACAO ESPACIAL'
