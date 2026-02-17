@@ -194,6 +194,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
                 center={[center.lat, center.lng]}
                 zoom={15}
                 scrollWheelZoom={true}
+                maxZoom={24}
                 style={{ height: '100%', width: '100%', minHeight: '400px' }}
                 whenReady={() => {
                     console.log('Map ready!');
@@ -202,7 +203,8 @@ const MapSelector: React.FC<MapSelectorProps> = ({
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-                    maxZoom={19}
+                    maxZoom={24}
+                    maxNativeZoom={19}
                     eventHandlers={{
                         tileerror: (error: any) => {
                             console.error('Tile load error:', error);
