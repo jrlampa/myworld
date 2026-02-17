@@ -10,6 +10,8 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+draft_ruas/dist/
+draft_ruas/**/app.asar
 *.local
 .env
 .env.*
@@ -32,6 +34,14 @@ test_api*.dxf
 test_utm*.dxf
 test_utm_validation.py
 test_api_v*.dxf
+
+# Coverage reports
+coverage/
+*.coverage
+.coverage
+htmlcov/
+.pytest_cache/
+coverage-final.json
 
 # Editor directories and files
 .vscode/*

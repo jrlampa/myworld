@@ -19,11 +19,49 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, '.'),
       }
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: (id) => {
+            // Split vendor libraries into separate chunks
+            if (id.includes('node_modules')) {
+              if (id.includes('react') || id.includes('react-dom')) {
+                return 'react-vendor';
+              }
+              if (id.includes('leaflet') || id.includes('react-leaflet')) {
+                return 'map-vendor';
+              }
+              if (id.includes('recharts') || id.includes('framer-motion') || id.includes('lucide-react')) {
+                return 'ui-vendor';
+              }
+              // Other vendor code
+              return 'vendor';
+            }
+          }
+        }
+      },
+      chunkSizeWarningLimit: 300,
+      // Use esbuild minification (faster and already included)
+      minify: 'esbuild',
+      target: 'esnext'
+    },
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: ['./legacy_src/tests/setup.ts'],
-      include: ['**/*.test.{ts,tsx}'],
+      setupFiles: ['./tests/setup.ts'],
+      include: ['tests/**/*.test.{ts,tsx}'],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html'],
+        exclude: [
+          'node_modules/',
+          'tests/',
+          'legacy_src/',
+          '*.config.ts',
+          'dist/',
+          'build/'
+        ]
+      }
     },
   };
 });

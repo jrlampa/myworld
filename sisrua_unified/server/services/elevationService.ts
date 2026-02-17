@@ -1,4 +1,4 @@
-import { GeoLocation } from '../../types.js';
+import { GeoLocation } from '../../src/types.js';
 
 export class ElevationService {
     /**

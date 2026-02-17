@@ -1,5 +1,5 @@
-import { OsmElement, GeoLocation, TerrainGrid } from '../../types.js';
-import { LAYERS, SLOPE_COLORS, SLOPE_THRESHOLDS } from '../../constants.js';
+import { OsmElement, GeoLocation, TerrainGrid } from '../../src/types.js';
+import { LAYERS, SLOPE_COLORS, SLOPE_THRESHOLDS } from '../../src/constants.js';
 
 // --- Re-implementing helper functions locally for the backend context ---
 

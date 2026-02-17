@@ -16,6 +16,7 @@ def main():
     parser.add_argument('--output', type=str, required=True, help='Output DXF filename')
     parser.add_argument('--layers', type=str, required=False, default='{}', help='JSON string of layers to fetch')
     parser.add_argument('--crs', type=str, required=False, default='auto', help='EPSG code or "auto"')
+    parser.add_argument('--projection', type=str, required=False, default='local', help='Projection type: local or utm')
     parser.add_argument('--format', type=str, required=False, default='dxf', help='Output format (dxf, kml, geojson)')
     parser.add_argument('--selection_mode', type=str, required=False, default='circle', help='Selection mode (circle, polygon)')
     parser.add_argument('--polygon', type=str, required=False, default='[]', help='JSON string of polygon points [[lat, lon], ...]')
@@ -41,6 +42,7 @@ def main():
             output_file=args.output,
             layers_config=layers_config,
             crs=args.crs,
+            projection=args.projection,
             export_format=args.format,
             selection_mode=args.selection_mode,
             polygon=json.loads(args.polygon)

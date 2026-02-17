@@ -128,11 +128,68 @@
     background-color: rgba(6, 182, 212, 0.1) !important;
 }
 
-/* Leaflet map */
+/* Leaflet map - Force visible */
 .leaflet-container {
-    background: #e0f2fe !important;
+    background: #f1f5f9 !important;
+    z-index: 0 !important;
+    font-size: 12px !important;
 }
 
 .leaflet-tile-pane {
     opacity: 1 !important;
+    z-index: 2 !important;
+}
+
+.leaflet-tile-container {
+    opacity: 1 !important;
+}
+
+.leaflet-tile {
+    opacity: 1 !important;
+    filter: none !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+img.leaflet-tile {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure tiles load properly */
+.leaflet-layer,
+.leaflet-tile,
+.leaflet-tile-loaded {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+}
+
+/* Make sure the panes have correct z-index */
+.leaflet-pane {
+    z-index: auto !important;
+}
+
+.leaflet-map-pane {
+    z-index: 1 !important;
+}
+
+.leaflet-overlay-pane {
+    z-index: 4 !important;
+}
+
+.leaflet-shadow-pane {
+    z-index: 5 !important;
+}
+
+.leaflet-marker-pane {
+    z-index: 6 !important;
+}
+
+.leaflet-tooltip-pane {
+    z-index: 6 !important;
+}
+
+.leaflet-popup-pane {
+    z-index: 7 !important;
 }
