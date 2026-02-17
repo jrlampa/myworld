@@ -42,7 +42,6 @@ def main():
             output_file=args.output,
             layers_config=layers_config,
             crs=args.crs,
-            projection=args.projection,
             export_format=args.format,
             selection_mode=args.selection_mode,
             polygon=json.loads(args.polygon)
