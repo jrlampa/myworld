@@ -104,7 +104,8 @@ class DXFGenerator:
             if math.isnan(val) or math.isinf(val) or abs(val) > 1e11:
                 return fallback_val if fallback_val is not None else 0.0
             return val
-        except:
+        except (ValueError, TypeError) as e:
+            Logger.error(f"Invalid float value '{v}': {e}")
             return fallback_val if fallback_val is not None else 0.0
 
     def _safe_p(self, p):
@@ -114,7 +115,8 @@ class DXFGenerator:
             cx = self.bounds[0] + (self.bounds[2] - self.bounds[0])/2
             cy = self.bounds[1] + (self.bounds[3] - self.bounds[1])/2
             return (self._safe_v(p[0], fallback_val=cx), self._safe_v(p[1], fallback_val=cy))
-        except:
+        except (IndexError, TypeError) as e:
+            Logger.error(f"Invalid point data '{p}': {e}")
             return (0.0, 0.0)
 
     def _validate_points(self, points, min_points=2, is_3d=False):
@@ -134,7 +136,8 @@ class DXFGenerator:
                 if curr_p != last_p:
                     valid_points.append(curr_p)
                     last_p = curr_p
-            except:
+            except (ValueError, TypeError, IndexError) as e:
+                Logger.error(f"Skipping invalid point in validation: {e}")
                 continue
         
         if len(valid_points) < min_points:
@@ -332,7 +335,8 @@ class DXFGenerator:
 
             # Default for buildings
             return 3.5
-        except:
+        except (ValueError, TypeError, KeyError) as e:
+            Logger.error(f"Error calculating height from tags: {e}")
             return 3.5
 
     def _draw_polygon(self, poly, layer, diff_x, diff_y, tags):
@@ -503,7 +507,8 @@ class DXFGenerator:
                     y = self._safe_v(float(p[1]) - self.diff_y)
                     z = self._safe_v(float(p[2]))
                     mesh.set_mesh_vertex((r, c), (x, y, z))
-                except:
+                except (ValueError, TypeError, IndexError) as e:
+                    Logger.error(f"Error setting mesh vertex at ({r}, {c}): {e}")
                     mesh.set_mesh_vertex((r, c), (0.0, 0.0, 0.0))
 
     def add_contour_lines(self, contour_lines):
@@ -570,7 +575,8 @@ class DXFGenerator:
                     self.msp.add_text(f"E: {x:.0f}", dxfattribs={'height': 2, 'layer': 'QUADRO'}).set_placement(
                         (dx, min_y - diff_y - 8), align=TextEntityAlignment.CENTER
                     )
-                except: pass
+                except Exception as e:
+                    Logger.error(f"Error adding x-axis label at {x}: {e}")
         # vertical ticks (y)
         y_range = np.arange(np.floor(min_y/step)*step, max_y + 1, step)
         for y in y_range[:50]:
@@ -581,7 +587,8 @@ class DXFGenerator:
                     self.msp.add_text(f"N: {y:.0f}", dxfattribs={'height': 2, 'layer': 'QUADRO', 'rotation': 90.0}).set_placement(
                         (min_x - diff_x - 8, dy), align=TextEntityAlignment.CENTER
                     )
-                except: pass
+                except Exception as e:
+                    Logger.error(f"Error adding y-axis label at {y}: {e}")
 
     def add_legend(self):
         """Adds a professional legend to the Model Space"""
@@ -680,7 +687,8 @@ class DXFGenerator:
         # Logo
         try:
             layout.add_blockref('LOGO', (cb_x + cb_w - 20, cb_y + cb_h - 10))
-        except: pass
+        except Exception as e:
+            Logger.error(f"Error adding logo block reference: {e}")
 
 
     def save(self):
