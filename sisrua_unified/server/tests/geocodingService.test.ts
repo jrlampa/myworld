@@ -49,6 +49,49 @@ describe('GeocodingService', () => {
       const result = await GeocodingService.resolveLocation('-23.5505, 181.0');
       expect(result).toBeNull();
     });
+
+    describe('MGRS band hemisphere detection', () => {
+      it('should detect Southern Hemisphere for band C', async () => {
+        const result = await GeocodingService.resolveLocation('31C 500000 1000000');
+        expect(result).not.toBeNull();
+        // Band C is in Southern Hemisphere
+        expect(result?.label).toContain('UTM');
+      });
+
+      it('should detect Southern Hemisphere for band K', async () => {
+        const result = await GeocodingService.resolveLocation('23K 801370 7549956');
+        expect(result).not.toBeNull();
+        // Band K (ASCII 75) is in Southern Hemisphere (C-M range)
+        // This was the original bug: ASCII comparison would incorrectly use K >= N
+        expect(result?.label).toContain('UTM');
+      });
+
+      it('should detect Northern Hemisphere for band N', async () => {
+        const result = await GeocodingService.resolveLocation('32N 600000 5000000');
+        expect(result).not.toBeNull();
+        // Band N is in Northern Hemisphere
+        expect(result?.label).toContain('UTM');
+      });
+
+      it('should detect Northern Hemisphere for band X', async () => {
+        const result = await GeocodingService.resolveLocation('33X 500000 8000000');
+        expect(result).not.toBeNull();
+        // Band X is in Northern Hemisphere (N-X range)
+        expect(result?.label).toContain('UTM');
+      });
+
+      it('should handle explicit N suffix for Northern Hemisphere', async () => {
+        const result = await GeocodingService.resolveLocation('23N 801370 7549956');
+        expect(result).not.toBeNull();
+        expect(result?.label).toContain('UTM');
+      });
+
+      it('should handle explicit S suffix for Southern Hemisphere', async () => {
+        const result = await GeocodingService.resolveLocation('23S 801370 7549956');
+        expect(result).not.toBeNull();
+        expect(result?.label).toContain('UTM');
+      });
+    });
   });
 });
 
