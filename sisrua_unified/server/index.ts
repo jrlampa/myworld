@@ -14,9 +14,12 @@ import { AnalysisService } from './services/analysisService.js';
 import {
     createCacheKey,
     deleteCachedFilename,
-    getCachedFilename
+    getCachedFilename,
+    setCachedFilename
 } from './services/cacheService.js';
-import { dxfQueue } from './queue/dxfQueue.js';
+import { createDxfTask } from './services/cloudTasksService.js';
+import { createJob, getJob, updateJobStatus, completeJob, failJob } from './services/jobStatusService.js';
+import { generateDxf } from './pythonBridge.js';
 import { logger } from './utils/logger.js';
 import { generalRateLimiter, dxfRateLimiter } from './middleware/rateLimiter.js';
 import { dxfRequestSchema } from './schemas/dxfRequest.js';
@@ -91,6 +94,110 @@ app.get('/', (_req: Request, res: Response) => {
 // Serve generated files
 app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
 
+// Cloud Tasks Webhook - Process DXF Generation
+app.post('/api/tasks/process-dxf', async (req: Request, res: Response) => {
+    try {
+        // In production, verify OIDC token here
+        // For now, we'll accept requests but log them
+        const authHeader = req.headers.authorization;
+        logger.info('DXF task webhook called', {
+            hasAuth: !!authHeader,
+            taskId: req.body.taskId
+        });
+
+        const {
+            taskId,
+            lat,
+            lon,
+            radius,
+            mode,
+            polygon,
+            layers,
+            projection,
+            outputFile,
+            filename,
+            cacheKey,
+            downloadUrl
+        } = req.body;
+
+        if (!taskId) {
+            return res.status(400).json({ error: 'Task ID is required' });
+        }
+
+        // Update job status to processing
+        updateJobStatus(taskId, 'processing', 10);
+
+        logger.info('Processing DXF generation task', {
+            taskId,
+            lat,
+            lon,
+            radius,
+            mode,
+            cacheKey
+        });
+
+        try {
+            // Generate DXF using Python bridge
+            await generateDxf({
+                lat,
+                lon,
+                radius,
+                mode,
+                polygon,
+                layers,
+                outputFile
+            });
+
+            // Cache the filename
+            setCachedFilename(cacheKey, filename);
+
+            // Mark job as completed
+            completeJob(taskId, {
+                url: downloadUrl,
+                filename
+            });
+
+            logger.info('DXF generation completed', {
+                taskId,
+                filename,
+                cacheKey
+            });
+
+            return res.status(200).json({
+                status: 'success',
+                taskId,
+                url: downloadUrl,
+                filename
+            });
+
+        } catch (error: any) {
+            logger.error('DXF generation failed', {
+                taskId,
+                error: error.message,
+                stack: error.stack
+            });
+
+            failJob(taskId, error.message);
+
+            return res.status(500).json({
+                status: 'failed',
+                taskId,
+                error: error.message
+            });
+        }
+
+    } catch (error: any) {
+        logger.error('Task webhook error', {
+            error: error.message,
+            stack: error.stack
+        });
+        return res.status(500).json({
+            error: 'Task processing failed',
+            details: error.message
+        });
+    }
+});
+
 // Batch DXF Generation Endpoint
 app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Response) => {
     try {
@@ -150,7 +257,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
             const baseUrl = getBaseUrl(req);
             const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
-            const job = await dxfQueue.add({
+            const { taskId } = await createDxfTask({
                 lat,
                 lon,
                 radius,
@@ -164,10 +271,13 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
                 downloadUrl
             });
 
+            // Create job for status tracking
+            createJob(taskId);
+
             results.push({
                 name,
                 status: 'queued',
-                jobId: job.id
+                jobId: taskId
             });
         }
 
@@ -251,7 +361,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
             cacheKey
         });
 
-        const job = await dxfQueue.add({
+        const { taskId } = await createDxfTask({
             lat,
             lon,
             radius,
@@ -265,9 +375,12 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
             downloadUrl
         });
 
+        // Create job for status tracking
+        createJob(taskId);
+
         res.status(202).json({
             status: 'queued',
-            jobId: job.id
+            jobId: taskId
         });
 
     } catch (err: any) {
@@ -279,22 +392,17 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
 // Job Status Endpoint
 app.get('/api/jobs/:id', async (req: Request, res: Response) => {
     try {
-        const job = await dxfQueue.getJob(req.params.id);
+        const job = getJob(req.params.id);
         if (!job) {
             return res.status(404).json({ error: 'Job not found' });
         }
 
-        const status = await job.getState();
-        const progress = job.progress();
-        const result = status === 'completed' ? job.returnvalue : null;
-        const error = status === 'failed' ? job.failedReason : null;
-
         res.json({
             id: job.id,
-            status,
-            progress,
-            result,
-            error
+            status: job.status,
+            progress: job.progress,
+            result: job.result,
+            error: job.error
         });
     } catch (err: any) {
         logger.error('Job status lookup failed', { error: err });

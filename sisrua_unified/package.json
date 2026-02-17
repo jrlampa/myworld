@@ -21,11 +21,12 @@
     "postinstall": "echo 'Setup complete. Please ensure Python dependencies are installed using pip install -r py_engine/requirements.txt'"
   },
   "dependencies": {
+    "@google-cloud/tasks": "^6.2.1",
     "@types/multer": "^2.0.0",
     "@types/proj4": "^2.5.6",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "bull": "^4.16.5",
+    "@types/uuid": "^10.0.0",
     "cors": "^2.8.5",
     "csv-parser": "^3.2.0",
     "dotenv": "^17.3.1",
@@ -33,7 +34,6 @@
     "express-rate-limit": "^8.2.1",
     "framer-motion": "^12.34.0",
     "groq-sdk": "^0.37.0",
-    "ioredis": "^5.9.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.564.0",
     "multer": "^2.0.2",
@@ -45,6 +45,7 @@
     "recharts": "^3.7.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0",
     "winston": "^3.17.0",
     "zod": "^3.25.76"
   },
@@ -53,7 +54,6 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/bull": "^4.10.4",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/geojson": "^7946.0.16",
