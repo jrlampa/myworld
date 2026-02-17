@@ -64,6 +64,24 @@ const frontendDistPath = frontendDistCandidates.find((candidate) =>
     fs.existsSync(path.join(candidate, 'index.html'))
 ) || path.join(process.cwd(), 'dist');
 
+// Resolve public directory path (production: /app/public, dev: <projectRoot>/public)
+const publicDirCandidates = [
+    path.join(__dirname, '../public'),           // Dev: server/public
+    path.join(__dirname, '../../../public'),     // Production Docker: /app/public
+    path.join(process.cwd(), 'public')
+];
+
+const publicDir = publicDirCandidates.find((candidate) =>
+    fs.existsSync(candidate)
+) || path.join(process.cwd(), 'public');
+
+const dxfOutputDir = path.join(publicDir, 'dxf');
+
+// Ensure dxf output directory exists
+if (!fs.existsSync(dxfOutputDir)) {
+    fs.mkdirSync(dxfOutputDir, { recursive: true });
+}
+
 const batchRowSchema = z.object({
     name: z.string().min(1),
     lat: z.coerce.number().min(-90).max(90),
@@ -71,6 +89,21 @@ const batchRowSchema = z.object({
     radius: z.coerce.number().min(10).max(5000),
     mode: z.enum(['circle', 'polygon', 'bbox'])
 });
+
+// Schema for coordinate points in analyze endpoint
+const coordinatePointSchema = z.object({
+    lat: z.number().optional(),
+    latitude: z.number().optional(),
+    lon: z.number().optional(),
+    lng: z.number().optional(),
+    longitude: z.number().optional()
+}).refine(
+    (point) => (point.lat !== undefined || point.latitude !== undefined) &&
+               (point.lon !== undefined || point.lng !== undefined || point.longitude !== undefined),
+    { message: 'Point must have lat/latitude and lon/lng/longitude' }
+);
+
+type CoordinatePoint = z.infer<typeof coordinatePointSchema>;
 
 const runWithTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
     const timeout = new Promise<never>((_, reject) =>
@@ -194,7 +227,7 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 // Serve generated files
-app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
+app.use('/downloads', express.static(dxfOutputDir));
 
 // Batch DXF Generation Endpoint
 app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Response) => {
@@ -234,7 +267,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
 
             const cachedFilename = getCachedFilename(cacheKey);
             if (cachedFilename) {
-                const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
+                const cachedFilePath = path.join(dxfOutputDir, cachedFilename);
                 if (fs.existsSync(cachedFilePath)) {
                     const cachedUrl = createDownloadUrl(req, cachedFilename);
                     results.push({
@@ -250,7 +283,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
 
             const safeName = name.toLowerCase().replace(/[^a-z0-9-_]+/g, '_').slice(0, 40) || 'batch';
             const filename = `dxf_${safeName}_${Date.now()}_${entry.line}.dxf`;
-            const outputFile = path.join(__dirname, '../public/dxf', filename);
+            const outputFile = path.join(dxfOutputDir, filename);
             const downloadUrl = createDownloadUrl(req, filename);
             const jobId = randomUUID();
 
@@ -320,7 +353,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
 
         const cachedFilename = getCachedFilename(cacheKey);
         if (cachedFilename) {
-            const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
+            const cachedFilePath = path.join(dxfOutputDir, cachedFilename);
             if (fs.existsSync(cachedFilePath)) {
                 const cachedUrl = createDownloadUrl(req, cachedFilename);
                 logger.info('DXF cache hit', {
@@ -349,7 +382,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
         }
 
         const filename = `dxf_${Date.now()}.dxf`;
-        const outputFile = path.join(__dirname, '../public/dxf', filename);
+        const outputFile = path.join(dxfOutputDir, filename);
         const downloadUrl = createDownloadUrl(req, filename);
         const jobId = randomUUID();
 
@@ -472,25 +505,45 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         const { stats, locationName, coordinates, coords } = req.body;
         const points = coordinates || coords;
 
+        // If coordinates are provided, fetch elevations first
         if (Array.isArray(points) && points.length > 0) {
-            const normalized = points.map((point: any) => ({
+            const normalized = points.map((point: CoordinatePoint) => ({
                 lat: Number(point.lat ?? point.latitude),
                 lon: Number(point.lon ?? point.lng ?? point.longitude)
             }));
 
-            if (normalized.some((point: any) => Number.isNaN(point.lat) || Number.isNaN(point.lon))) {
+            if (normalized.some((point) => Number.isNaN(point.lat) || Number.isNaN(point.lon))) {
                 return res.status(400).json({
                     success: false,
                     error: 'Coordenadas invalidas: use lat/lon ou latitude/longitude.'
                 });
             }
 
-            const elevationResult = await fetchOpenMeteoElevations(normalized, 100, 15000);
+            const elevationResult = await fetchOpenMeteoElevations(normalized, 30, 15000);
+            
+            // If stats are also provided, perform AI analysis
+            if (stats) {
+                const analysisResult = await GroqService.analyzeUrbanStats(stats, locationName || 'selected area');
+                return res.json({
+                    ...elevationResult,
+                    ...analysisResult
+                });
+            }
+            
+            // Otherwise just return elevation data
             return res.json(elevationResult);
         }
 
-        const result = await GroqService.analyzeUrbanStats(stats, locationName || 'selected area');
-        res.json(result);
+        // If only stats are provided, perform AI analysis
+        if (stats) {
+            const result = await GroqService.analyzeUrbanStats(stats, locationName || 'selected area');
+            return res.json(result);
+        }
+
+        // If neither stats nor coordinates are provided, return error
+        return res.status(400).json({
+            error: 'Either stats or coordinates must be provided'
+        });
     } catch (error: any) {
         logger.error('Analysis error', { error });
         res.status(500).json({ error: error.message });

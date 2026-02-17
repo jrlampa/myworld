@@ -25,7 +25,11 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
         const exeName = 'sisrua_engine.exe';
         const prodExePath = path.join(__dirname, '../../engine', exeName);
         const devExePath = path.resolve(__dirname, '../../py_engine/dist', exeName);
-        const scriptPath = path.resolve(__dirname, '../../py_engine/main.py');
+        // In production (Docker): __dirname = /app/server/dist/server, py_engine is at /app/py_engine
+        // In development: __dirname = /path/to/server, py_engine is at ../py_engine
+        const scriptPath = isProduction 
+            ? '/app/py_engine/main.py'
+            : path.resolve(__dirname, '../../py_engine/main.py');
 
         let command: string;
         let args: string[];
@@ -37,7 +41,8 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
                 command = finalExePath;
                 args = [];
             } else {
-                command = 'python';
+                // In production (Ubuntu), use python3; in dev, use python
+                command = isProduction ? 'python3' : 'python';
                 args = [scriptPath];
             }
         } else {
