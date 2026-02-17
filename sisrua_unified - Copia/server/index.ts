@@ -472,6 +472,7 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         const { stats, locationName, coordinates, coords } = req.body;
         const points = coordinates || coords;
 
+        // If coordinates are provided, fetch elevations first
         if (Array.isArray(points) && points.length > 0) {
             const normalized = points.map((point: any) => ({
                 lat: Number(point.lat ?? point.latitude),
@@ -485,12 +486,31 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
                 });
             }
 
-            const elevationResult = await fetchOpenMeteoElevations(normalized, 100, 15000);
+            const elevationResult = await fetchOpenMeteoElevations(normalized, 30, 15000);
+            
+            // If stats are also provided, perform AI analysis
+            if (stats) {
+                const analysisResult = await GroqService.analyzeUrbanStats(stats, locationName || 'selected area');
+                return res.json({
+                    ...elevationResult,
+                    ...analysisResult
+                });
+            }
+            
+            // Otherwise just return elevation data
             return res.json(elevationResult);
         }
 
-        const result = await GroqService.analyzeUrbanStats(stats, locationName || 'selected area');
-        res.json(result);
+        // If only stats are provided, perform AI analysis
+        if (stats) {
+            const result = await GroqService.analyzeUrbanStats(stats, locationName || 'selected area');
+            return res.json(result);
+        }
+
+        // If neither stats nor coordinates are provided, return error
+        return res.status(400).json({
+            error: 'Either stats or coordinates must be provided'
+        });
     } catch (error: any) {
         logger.error('Analysis error', { error });
         res.status(500).json({ error: error.message });

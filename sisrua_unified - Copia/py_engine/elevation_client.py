@@ -3,7 +3,7 @@ import numpy as np
 from typing import Any, Dict, List, Tuple
 from utils.logger import Logger
 
-BATCH_SIZE = 100 # Open-Elevation limit is often around 100-150 locations per request
+BATCH_SIZE = 30 # Open-Meteo: Reduced from 100 to avoid URL length issues
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/elevation"
 
 
@@ -13,7 +13,7 @@ def _chunk_list(items: List[Any], size: int) -> List[List[Any]]:
 
 def fetch_open_meteo_elevations_batched(
     coords: List[Tuple[float, float]],
-    batch_size: int = 100,
+    batch_size: int = 30,
     timeout_seconds: int = 15
 ) -> Dict[str, Any]:
     """

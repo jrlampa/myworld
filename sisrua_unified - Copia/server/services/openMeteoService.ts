@@ -27,7 +27,7 @@ const fetchWithTimeout = async (url: string, timeoutMs: number): Promise<Respons
 
 export const fetchOpenMeteoElevations = async (
   coords: Coord[],
-  batchSize: number = 100,
+  batchSize: number = 30,
   timeoutMs: number = 15000
 ): Promise<ElevationResult> => {
   const elevations: number[] = [];
@@ -37,13 +37,14 @@ export const fetchOpenMeteoElevations = async (
       const lats = batch.map((point) => point.lat.toFixed(6)).join(',');
       const lons = batch.map((point) => point.lon.toFixed(6)).join(',');
 
-      const url = `${OPEN_METEO_URL}?latitude=${lats}&longitude=${lons}`;
+      const url = `${OPEN_METEO_URL}?latitude=${encodeURIComponent(lats)}&longitude=${encodeURIComponent(lons)}`;
       const response = await fetchWithTimeout(url, timeoutMs);
 
       if (!response.ok) {
+        const errorText = await response.text().catch(() => 'No error details');
         return {
           success: false,
-          error: `Falha ao obter elevacoes do Open-Meteo (status ${response.status}).`
+          error: `Falha ao obter elevacoes do Open-Meteo (status ${response.status}): ${errorText.substring(0, 100)}`
         };
       }
 
