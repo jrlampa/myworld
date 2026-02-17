@@ -10,6 +10,7 @@ import DxfLegend from './components/DxfLegend';
 import FloatingLayerPanel from './components/FloatingLayerPanel';
 import ElevationProfile from './components/ElevationProfile';
 import BatchUpload from './components/BatchUpload';
+import LandingPage from './components/LandingPage';
 import Toast, { ToastType } from './components/Toast';
 import ProgressIndicator from './components/ProgressIndicator';
 import { useUndoRedo } from './hooks/useUndoRedo';
@@ -91,9 +92,20 @@ function App() {
   // Toast notifications
   const [toast, setToast] = useState<{ message: string, type: ToastType } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLanding, setShowLanding] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('sisrua_landing_seen') !== 'true';
+  });
 
   const showToast = (message: string, type: ToastType) => {
     setToast({ message, type });
+  };
+
+  const handleEnterApp = () => {
+    setShowLanding(false);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sisrua_landing_seen', 'true');
+    }
   };
 
   // Custom hooks for feature modules
@@ -223,6 +235,10 @@ function App() {
   const dxfProgressLabel = jobStatus === 'queued' || jobStatus === 'waiting'
     ? 'A gerar DXF: na fila...'
     : `A gerar DXF: ${dxfProgressValue}%...`;
+
+  if (showLanding) {
+    return <LandingPage onEnterApp={handleEnterApp} />;
+  }
 
   return (
     <div className={`flex flex-col h-screen w-full font-sans transition-colors duration-500 overflow-hidden ${isDark ? 'bg-[#020617] text-slate-200' : 'bg-slate-50 text-slate-900'}`}>
