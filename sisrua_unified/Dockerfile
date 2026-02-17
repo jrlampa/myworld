@@ -14,8 +14,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install Node dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy Python requirements
 COPY py_engine/requirements.txt ./py_engine/
@@ -49,8 +49,8 @@ COPY --from=builder /app/py_engine ./py_engine
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/index.html ./
 
-# Copy Python packages from builder
-COPY --from=builder /usr/local/lib/python3.*/dist-packages /usr/local/lib/python3.11/dist-packages
+# Install Python dependencies in production stage
+RUN pip3 install --no-cache-dir -r py_engine/requirements.txt --break-system-packages
 
 # Create necessary directories
 RUN mkdir -p /app/public/dxf /app/cache

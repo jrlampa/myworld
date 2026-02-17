@@ -28,6 +28,7 @@ const __dirname = path.dirname(__filename);
 
 const app: Express = express();
 const port = process.env.PORT || 3001;
+const baseUrl = process.env.CLOUD_RUN_BASE_URL || `http://localhost:${port}`;
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }
@@ -114,7 +115,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
             if (cachedFilename) {
                 const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
                 if (fs.existsSync(cachedFilePath)) {
-                    const cachedUrl = `http://localhost:${port}/downloads/${cachedFilename}`;
+                    const cachedUrl = `${baseUrl}/downloads/${cachedFilename}`;
                     results.push({
                         name,
                         status: 'cached',
@@ -129,7 +130,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
             const safeName = name.toLowerCase().replace(/[^a-z0-9-_]+/g, '_').slice(0, 40) || 'batch';
             const filename = `dxf_${safeName}_${Date.now()}_${entry.line}.dxf`;
             const outputFile = path.join(__dirname, '../public/dxf', filename);
-            const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
+            const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
             const job = await dxfQueue.add({
                 lat,
@@ -191,7 +192,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
         if (cachedFilename) {
             const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
             if (fs.existsSync(cachedFilePath)) {
-                const cachedUrl = `http://localhost:${port}/downloads/${cachedFilename}`;
+                const cachedUrl = `${baseUrl}/downloads/${cachedFilename}`;
                 logger.info('DXF cache hit', {
                     cacheKey,
                     filename: cachedFilename,
@@ -219,7 +220,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
 
         const filename = `dxf_${Date.now()}.dxf`;
         const outputFile = path.join(__dirname, '../public/dxf', filename);
-        const downloadUrl = `http://localhost:${port}/downloads/${filename}`;
+        const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
         logger.info('Queueing DXF generation', {
             lat,
@@ -340,6 +341,6 @@ app.listen(port, () => {
     logger.info('Backend online', {
         service: 'sisRUA Unified Backend',
         version: '1.2.0',
-        url: `http://localhost:${port}`
+        url: baseUrl
     });
 });
