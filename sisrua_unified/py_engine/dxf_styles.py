@@ -32,19 +32,19 @@ class DXFStyleManager:
         """Define standard engineering layers."""
         layers = [
             ('sisRUA_EDIFICACAO', 5, 0.30),
-            ('sisRUA_VIAS_MOTORWAY', 1, 0.35),
-            ('sisRUA_VIAS_TRUNK', 1, 0.35),
-            ('sisRUA_VIAS_PRIMARY', 1, 0.35),
-            ('sisRUA_VIAS_SECONDARY', 30, 0.35),
-            ('sisRUA_VIAS_TERTIARY', 4, 0.30),
-            ('sisRUA_VIAS_RESIDENTIAL', 4, 0.25),
-            ('sisRUA_VIAS_SERVICE', 8, 0.20),
-            ('sisRUA_VIAS_UNCLASSIFIED', 8, 0.20),
-            ('sisRUA_VIAS_PEDESTRIAN', 3, 0.18),
-            ('sisRUA_VIAS_FOOTWAY', 3, 0.15),
-            ('sisRUA_VIAS_CYCLEWAY', 6, 0.15),
-            ('sisRUA_VIAS_PATH', 7, 0.13),
-            ('sisRUA_VIAS_DEFAULT', 4, 0.25),
+            ('sisRUA_VIAS_MOTORWAY', 8, 0.05),
+            ('sisRUA_VIAS_TRUNK', 8, 0.05),
+            ('sisRUA_VIAS_PRIMARY', 8, 0.05),
+            ('sisRUA_VIAS_SECONDARY', 8, 0.05),
+            ('sisRUA_VIAS_TERTIARY', 8, 0.05),
+            ('sisRUA_VIAS_RESIDENTIAL', 8, 0.05),
+            ('sisRUA_VIAS_SERVICE', 8, 0.05),
+            ('sisRUA_VIAS_UNCLASSIFIED', 8, 0.05),
+            ('sisRUA_VIAS_PEDESTRIAN', 8, 0.05),
+            ('sisRUA_VIAS_FOOTWAY', 8, 0.05),
+            ('sisRUA_VIAS_CYCLEWAY', 8, 0.05),
+            ('sisRUA_VIAS_PATH', 8, 0.05),
+            ('sisRUA_VIAS_DEFAULT', 8, 0.05),
             ('sisRUA_VIAS_MEIO_FIO', 8, 0.13),
             ('sisRUA_VEGETACAO', 3, 0.13),
             ('sisRUA_EDIFICACAO_HATCH', 253, 0.09),
@@ -82,12 +82,33 @@ class DXFStyleManager:
             if val <= 50: return 50
             return 53
 
+        layers_off = [
+            'sisRUA_VIAS_MOTORWAY',
+            'sisRUA_VIAS_TRUNK',
+            'sisRUA_VIAS_PRIMARY',
+            'sisRUA_VIAS_SECONDARY',
+            'sisRUA_VIAS_TERTIARY',
+            'sisRUA_VIAS_RESIDENTIAL',
+            'sisRUA_VIAS_SERVICE',
+            'sisRUA_VIAS_UNCLASSIFIED',
+            'sisRUA_VIAS_PEDESTRIAN',
+            'sisRUA_VIAS_FOOTWAY',
+            'sisRUA_VIAS_CYCLEWAY',
+            'sisRUA_VIAS_PATH',
+            'sisRUA_VIAS_DEFAULT',
+        ]
+
         for name, color, lineweight in layers:
             if name not in doc.layers:
-                doc.layers.new(name, dxfattribs={
+                layer = doc.layers.new(name, dxfattribs={
                     'color': color,
                     'lineweight': map_weight(lineweight)
                 })
+            else:
+                layer = doc.layers.get(name)
+
+            if name in layers_off:
+                layer.off()
 
     @staticmethod
     def setup_blocks(doc):
