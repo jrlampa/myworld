@@ -31,18 +31,28 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
   }
 
   // Open-Meteo Elevation API
-  // Note: Open-Meteo takes comma-separated lists. URL length limits apply, but 144 points is fine.
-  const url = `https://api.open-meteo.com/v1/elevation?latitude=${lats.map(l => l.toFixed(6)).join(',')}&longitude=${lngs.map(l => l.toFixed(6)).join(',')}`;
+  // Note: Open-Meteo takes comma-separated lists. Use batching to avoid URL limits.
+  const batchSize = 100;
 
   try {
     Logger.debug(`Fetching elevation grid for ${gridSize}x${gridSize} points`);
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Failed to fetch terrain data');
-    const data = await response.json();
-    const elevations = data.elevation as number[];
+    const elevations: number[] = [];
 
-    if (!elevations || elevations.length !== lats.length) {
-      throw new Error("Invalid elevation data received");
+    for (let offset = 0; offset < lats.length; offset += batchSize) {
+      const latChunk = lats.slice(offset, offset + batchSize);
+      const lngChunk = lngs.slice(offset, offset + batchSize);
+
+      const url = `https://api.open-meteo.com/v1/elevation?latitude=${latChunk.map(l => l.toFixed(6)).join(',')}&longitude=${lngChunk.map(l => l.toFixed(6)).join(',')}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch terrain data');
+      const data = await response.json();
+      const chunkElevations = data.elevation as number[];
+
+      if (!chunkElevations || chunkElevations.length !== latChunk.length) {
+        throw new Error("Invalid elevation data received");
+      }
+
+      elevations.push(...chunkElevations);
     }
 
     // Reconstruct into 2D grid
