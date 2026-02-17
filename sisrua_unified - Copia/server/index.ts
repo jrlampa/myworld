@@ -64,6 +64,24 @@ const frontendDistPath = frontendDistCandidates.find((candidate) =>
     fs.existsSync(path.join(candidate, 'index.html'))
 ) || path.join(process.cwd(), 'dist');
 
+// Resolve public directory path (production: /app/public, dev: <projectRoot>/public)
+const publicDirCandidates = [
+    path.join(__dirname, '../public'),           // Dev: server/public
+    path.join(__dirname, '../../../public'),     // Production Docker: /app/public
+    path.join(process.cwd(), 'public')
+];
+
+const publicDir = publicDirCandidates.find((candidate) =>
+    fs.existsSync(candidate)
+) || path.join(process.cwd(), 'public');
+
+const dxfOutputDir = path.join(publicDir, 'dxf');
+
+// Ensure dxf output directory exists
+if (!fs.existsSync(dxfOutputDir)) {
+    fs.mkdirSync(dxfOutputDir, { recursive: true });
+}
+
 const batchRowSchema = z.object({
     name: z.string().min(1),
     lat: z.coerce.number().min(-90).max(90),
@@ -194,7 +212,7 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 // Serve generated files
-app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
+app.use('/downloads', express.static(dxfOutputDir));
 
 // Batch DXF Generation Endpoint
 app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Response) => {
@@ -234,7 +252,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
 
             const cachedFilename = getCachedFilename(cacheKey);
             if (cachedFilename) {
-                const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
+                const cachedFilePath = path.join(dxfOutputDir, cachedFilename);
                 if (fs.existsSync(cachedFilePath)) {
                     const cachedUrl = createDownloadUrl(req, cachedFilename);
                     results.push({
@@ -250,7 +268,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
 
             const safeName = name.toLowerCase().replace(/[^a-z0-9-_]+/g, '_').slice(0, 40) || 'batch';
             const filename = `dxf_${safeName}_${Date.now()}_${entry.line}.dxf`;
-            const outputFile = path.join(__dirname, '../public/dxf', filename);
+            const outputFile = path.join(dxfOutputDir, filename);
             const downloadUrl = createDownloadUrl(req, filename);
             const jobId = randomUUID();
 
@@ -320,7 +338,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
 
         const cachedFilename = getCachedFilename(cacheKey);
         if (cachedFilename) {
-            const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
+            const cachedFilePath = path.join(dxfOutputDir, cachedFilename);
             if (fs.existsSync(cachedFilePath)) {
                 const cachedUrl = createDownloadUrl(req, cachedFilename);
                 logger.info('DXF cache hit', {
@@ -349,7 +367,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
         }
 
         const filename = `dxf_${Date.now()}.dxf`;
-        const outputFile = path.join(__dirname, '../public/dxf', filename);
+        const outputFile = path.join(dxfOutputDir, filename);
         const downloadUrl = createDownloadUrl(req, filename);
         const jobId = randomUUID();
 
