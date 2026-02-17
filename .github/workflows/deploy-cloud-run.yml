@@ -44,6 +44,7 @@ jobs:
         run: |
           cd sisrua_unified
           gcloud run deploy sisrua-app \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
             --source=. \
             --region=southamerica-east1 \
             --allow-unauthenticated \
