@@ -29,8 +29,8 @@ export default defineConfig(({ mode }) => {
               if (id.includes('react')) {
                 return 'react-vendor';
               }
-              // Leaflet core (non-React)
-              if (id.includes('leaflet')) {
+              // Leaflet core (non-React) - exclude react-leaflet which is already in react-vendor
+              if (id.includes('leaflet') && !id.includes('react-leaflet')) {
                 return 'map-vendor';
               }
               // Other UI libraries
@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => {
           }
         }
       },
+      // Increased from 300KB to 500KB because bundling all React packages together
+      // creates a larger react-vendor chunk (~214KB) which is expected and acceptable
       chunkSizeWarningLimit: 500,
       // Use esbuild minification (faster and already included)
       minify: 'esbuild',
