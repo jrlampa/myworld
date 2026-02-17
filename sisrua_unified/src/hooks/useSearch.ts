@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { GeoLocation } from '../types';
+import { parseUtmQuery } from '../utils/geo';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -42,6 +43,12 @@ export function useSearch({ onLocationFound, onError }: UseSearchProps) {
     const directLocation = parseLatLng(query.trim());
     if (directLocation) {
       onLocationFound(directLocation);
+      return;
+    }
+
+    const utmLocation = parseUtmQuery(query.trim());
+    if (utmLocation) {
+      onLocationFound(utmLocation);
       return;
     }
 

@@ -42,20 +42,17 @@ export class GeocodingService {
         const northing = parseFloat(utmMatch[4]);
 
         if (!Number.isFinite(zone) || !Number.isFinite(easting) || !Number.isFinite(northing)) return null;
+        if (zone < 1 || zone > 60) return null;
+
+        const isSouthBand = zoneLetter === 'S' || !!zoneLetter?.match(/^[C-M]$/);
+        const isNorthBand = zoneLetter === 'N' || !!zoneLetter?.match(/^[N-X]$/);
+
+        if (zoneLetter && !isSouthBand && !isNorthBand) return null;
 
         let hemisphere: 'N' | 'S' = 'S';
         if (zoneLetter) {
-            if (zoneLetter === 'N' || zoneLetter === 'S') {
-                // Explicit N/S prefix
-                hemisphere = zoneLetter as 'N' | 'S';
-            } else {
-                // MGRS latitude band letters: C-M = South, N-X = North
-                // Standard MGRS uses latitude bands A-H (South), N-X (North)
-                // Zone letters in bands C-M represent Southern Hemisphere
-                // Zone letters in bands N-X represent Northern Hemisphere
-                // (I and O omitted per MGRS standard)
-                hemisphere = /^[C-M]$/.test(zoneLetter) ? 'S' : 'N';
-            }
+            // MGRS latitude bands: C-M = South, N-X = North (I and O omitted)
+            hemisphere = isSouthBand ? 'S' : 'N';
         }
 
         return { zone, hemisphere, easting, northing };
