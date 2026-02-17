@@ -46,9 +46,15 @@ export class GeocodingService {
         let hemisphere: 'N' | 'S' = 'S';
         if (zoneLetter) {
             if (zoneLetter === 'N' || zoneLetter === 'S') {
+                // Explicit N/S prefix
                 hemisphere = zoneLetter as 'N' | 'S';
             } else {
-                hemisphere = zoneLetter >= 'N' ? 'N' : 'S';
+                // MGRS latitude band letters: C-M = South, N-X = North
+                // Standard MGRS uses latitude bands A-H (South), N-X (North)
+                // Zone letters in bands C-M represent Southern Hemisphere
+                // Zone letters in bands N-X represent Northern Hemisphere
+                // (I and O omitted per MGRS standard)
+                hemisphere = /^[C-M]$/.test(zoneLetter) ? 'S' : 'N';
             }
         }
 
