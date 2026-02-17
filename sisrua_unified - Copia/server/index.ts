@@ -90,6 +90,21 @@ const batchRowSchema = z.object({
     mode: z.enum(['circle', 'polygon', 'bbox'])
 });
 
+// Schema for coordinate points in analyze endpoint
+const coordinatePointSchema = z.object({
+    lat: z.number().optional(),
+    latitude: z.number().optional(),
+    lon: z.number().optional(),
+    lng: z.number().optional(),
+    longitude: z.number().optional()
+}).refine(
+    (point) => (point.lat !== undefined || point.latitude !== undefined) &&
+               (point.lon !== undefined || point.lng !== undefined || point.longitude !== undefined),
+    { message: 'Point must have lat/latitude and lon/lng/longitude' }
+);
+
+type CoordinatePoint = z.infer<typeof coordinatePointSchema>;
+
 const runWithTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T> => {
     const timeout = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`DXF Generation Timeout (${timeoutMs}ms)`)), timeoutMs)
@@ -492,12 +507,12 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
 
         // If coordinates are provided, fetch elevations first
         if (Array.isArray(points) && points.length > 0) {
-            const normalized = points.map((point: any) => ({
+            const normalized = points.map((point: CoordinatePoint) => ({
                 lat: Number(point.lat ?? point.latitude),
                 lon: Number(point.lon ?? point.lng ?? point.longitude)
             }));
 
-            if (normalized.some((point: any) => Number.isNaN(point.lat) || Number.isNaN(point.lon))) {
+            if (normalized.some((point) => Number.isNaN(point.lat) || Number.isNaN(point.lon))) {
                 return res.status(400).json({
                     success: false,
                     error: 'Coordenadas invalidas: use lat/lon ou latitude/longitude.'
