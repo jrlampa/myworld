@@ -57,6 +57,11 @@ gcloud run deploy sisrua-app \
   --set-env-vars="GROQ_API_KEY=<your-key>,GCP_PROJECT=sisrua-producao,CLOUD_TASKS_LOCATION=southamerica-east1,CLOUD_TASKS_QUEUE=sisrua-queue,CLOUD_RUN_BASE_URL=https://sisrua-app-244319582382.southamerica-east1.run.app"
 ```
 
+**Note**: The `CLOUD_RUN_BASE_URL` should match your actual service URL. To get it, run:
+```bash
+gcloud run services describe sisrua-app --region southamerica-east1 --format 'value(status.url)'
+```
+
 ## Monitoring Deployments
 
 You can monitor deployments in:

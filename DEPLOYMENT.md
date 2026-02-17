@@ -115,6 +115,11 @@ The following environment variables are automatically set during deployment:
 - `NODE_ENV`: production
 - `PORT`: 8080 (managed by Cloud Run)
 
+**Note on CLOUD_RUN_BASE_URL**: This URL comes from your current deployment. If you recreate the service or the URL changes, you need to update it in the workflow file (`.github/workflows/deploy-cloud-run.yml`). To get the current URL, run:
+```bash
+gcloud run services describe sisrua-app --region southamerica-east1 --format 'value(status.url)'
+```
+
 ## Manual Deployment
 
 If you need to deploy manually (without GitHub Actions):

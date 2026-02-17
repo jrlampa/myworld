@@ -35,6 +35,9 @@ jobs:
         run: |
           gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
+      # Deploy to Cloud Run
+      # Note: CLOUD_RUN_BASE_URL should match your actual service URL
+      # Get it with: gcloud run services describe sisrua-app --region southamerica-east1 --format 'value(status.url)'
       - name: Deploy to Cloud Run
         working-directory: ./sisrua_unified
         run: |
