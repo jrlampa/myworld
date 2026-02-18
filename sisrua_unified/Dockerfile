@@ -13,8 +13,8 @@ RUN npm ci --prefer-offline --no-audit
 COPY . .
 RUN npm run build
 
-# Stage 2: Backend build
-FROM node:22-bookworm-slim AS backend-build
+# Stage 2: Python environment and backend build
+FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package*.json ./
@@ -24,6 +24,15 @@ COPY tsconfig*.json ./
 COPY server ./server
 COPY src ./src
 RUN npx tsc -p tsconfig.server.json
+
+# Setup Python venv in builder to reuse in production
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 python3-pip python3-venv && \
+    rm -rf /var/lib/apt/lists/*
+COPY py_engine/requirements.txt ./py_engine/
+RUN python3 -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
+    /opt/venv/bin/pip install --no-cache-dir -r py_engine/requirements.txt
 
 # Stage 3: Production runner (Python + Node.js)
 FROM ubuntu:24.04
@@ -63,18 +72,15 @@ COPY package*.json ./
 RUN npm ci --only=production --prefer-offline --no-audit && \
     npm cache clean --force
 
-# Setup Python virtual environment and install dependencies
-COPY py_engine/requirements.txt ./py_engine/
-RUN python3 -m venv /opt/venv
+# Copy pre-built Python venv from builder (avoids duplicate pip install)
+COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r py_engine/requirements.txt
 
 # Copy application files
 COPY py_engine ./py_engine
 COPY public ./public
 COPY --from=frontend-build /app/dist ./dist
-COPY --from=backend-build /app/dist/server ./server/dist
+COPY --from=builder /app/dist/server ./server/dist
 
 # Create directories for runtime data
 RUN mkdir -p /app/public/dxf /app/cache && \

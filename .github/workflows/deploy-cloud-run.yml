@@ -45,7 +45,6 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
-          CLOUD_RUN_BASE_URL: ${{ secrets.CLOUD_RUN_BASE_URL }}
         run: |
           cd sisrua_unified
           gcloud run deploy sisrua-app \
@@ -58,4 +57,20 @@ jobs:
             --timeout=300 \
             --min-instances=0 \
             --max-instances=10 \
-            --update-env-vars="GROQ_API_KEY=${GROQ_API_KEY},GCP_PROJECT=${GCP_PROJECT},CLOUD_TASKS_LOCATION=southamerica-east1,CLOUD_TASKS_QUEUE=sisrua-queue,CLOUD_RUN_BASE_URL=${CLOUD_RUN_BASE_URL},NODE_ENV=production"
+            --update-env-vars="GROQ_API_KEY=${GROQ_API_KEY},GCP_PROJECT=${GCP_PROJECT},CLOUD_TASKS_LOCATION=southamerica-east1,CLOUD_TASKS_QUEUE=sisrua-queue,NODE_ENV=production"
+
+      - name: Capture Cloud Run Service URL
+        run: |
+          CLOUD_RUN_URL=$(gcloud run services describe sisrua-app \
+            --region=southamerica-east1 \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --format='value(status.url)')
+          echo "CLOUD_RUN_URL=${CLOUD_RUN_URL}" >> $GITHUB_ENV
+          echo "Deployed service URL: ${CLOUD_RUN_URL}"
+
+      - name: Update environment variable with service URL
+        run: |
+          gcloud run services update sisrua-app \
+            --region=southamerica-east1 \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --update-env-vars="CLOUD_RUN_BASE_URL=${CLOUD_RUN_URL}"
