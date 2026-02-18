@@ -2,6 +2,22 @@
 
 Sistema completo de extração de dados do OpenStreetMap e geração de arquivos DXF 2.5D para AutoCAD, com suporte a análise espacial e coordenadas UTM absolutas.
 
+## 🔒 Segurança
+
+**IMPORTANTE**: Se seu antivírus bloquear arquivos deste projeto, isso é provavelmente um **falso positivo**. 
+
+📖 **Leia**: [SECURITY_ANTIVIRUS_GUIDE.md](./SECURITY_ANTIVIRUS_GUIDE.md) - Guia completo de mitigação de problemas com antivírus
+
+📋 **Desenvolvedores**: [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md) - Checklist de segurança obrigatório
+
+O projeto implementa várias medidas de segurança:
+- ✅ Validação rigorosa de entrada em todos os endpoints
+- ✅ Sanitização de argumentos de linha de comando
+- ✅ Logging completo de todas as operações
+- ✅ Usuário não-root em containers Docker
+- ✅ Rate limiting e CORS configurados
+- ✅ Sem executáveis commitados no repositório
+
 ## 📁 Estrutura do Projeto
 
 ```
