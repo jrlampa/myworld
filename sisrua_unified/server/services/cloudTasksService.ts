@@ -162,8 +162,8 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
             queue: CLOUD_TASKS_QUEUE
         });
         
-        // Check for permission denied errors
-        if (error.message?.includes('PERMISSION_DENIED') || error.code === GRPC_PERMISSION_DENIED_CODE) {
+        // Check for permission denied errors (check code first for efficiency)
+        if (error.code === GRPC_PERMISSION_DENIED_CODE || error.message?.includes('PERMISSION_DENIED')) {
             const serviceAccount = `${GCP_PROJECT}@appspot.gserviceaccount.com`;
             const errorMsg = `Permission denied to access Cloud Tasks queue '${CLOUD_TASKS_QUEUE}'. ` +
                            `The service account '${serviceAccount}' needs the following roles:\n` +

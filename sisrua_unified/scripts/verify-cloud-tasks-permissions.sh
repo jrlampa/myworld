@@ -9,6 +9,9 @@
 # 3. The environment is properly configured for DXF generation
 #
 # Usage: ./scripts/verify-cloud-tasks-permissions.sh [project-id]
+#
+# Note: This script must be executable. If needed, run:
+#       chmod +x scripts/verify-cloud-tasks-permissions.sh
 ##############################################################################
 
 set -e
@@ -172,15 +175,22 @@ echo ""
 # Step 6: Check environment variables (if service is deployed)
 ##############################################################################
 echo -e "${BLUE}Step 6: Checking environment variables...${NC}"
+
+# Function to get environment variable from Cloud Run service
+get_env_var() {
+    local var_name=$1
+    gcloud run services describe "${SERVICE_NAME}" \
+        --region="${LOCATION}" \
+        --project="${PROJECT_ID}" \
+        --format="value(spec.template.spec.containers[0].env.filter.extract(${var_name}))" 2>/dev/null || echo ""
+}
+
 if gcloud run services describe "${SERVICE_NAME}" \
     --region="${LOCATION}" \
     --project="${PROJECT_ID}" &> /dev/null; then
     
     # Check GCP_PROJECT
-    GCP_PROJECT_VAR=$(gcloud run services describe "${SERVICE_NAME}" \
-        --region="${LOCATION}" \
-        --project="${PROJECT_ID}" \
-        --format="value(spec.template.spec.containers[0].env.filter.extract(GCP_PROJECT))" 2>/dev/null || echo "")
+    GCP_PROJECT_VAR=$(get_env_var "GCP_PROJECT")
     
     if [ -n "$GCP_PROJECT_VAR" ]; then
         if [ "$GCP_PROJECT_VAR" = "$PROJECT_ID" ]; then
@@ -193,10 +203,7 @@ if gcloud run services describe "${SERVICE_NAME}" \
     fi
     
     # Check CLOUD_TASKS_QUEUE
-    CLOUD_TASKS_QUEUE_VAR=$(gcloud run services describe "${SERVICE_NAME}" \
-        --region="${LOCATION}" \
-        --project="${PROJECT_ID}" \
-        --format="value(spec.template.spec.containers[0].env.filter.extract(CLOUD_TASKS_QUEUE))" 2>/dev/null || echo "")
+    CLOUD_TASKS_QUEUE_VAR=$(get_env_var "CLOUD_TASKS_QUEUE")
     
     if [ -n "$CLOUD_TASKS_QUEUE_VAR" ]; then
         if [ "$CLOUD_TASKS_QUEUE_VAR" = "$QUEUE_NAME" ]; then
@@ -209,10 +216,7 @@ if gcloud run services describe "${SERVICE_NAME}" \
     fi
     
     # Check CLOUD_TASKS_LOCATION
-    CLOUD_TASKS_LOCATION_VAR=$(gcloud run services describe "${SERVICE_NAME}" \
-        --region="${LOCATION}" \
-        --project="${PROJECT_ID}" \
-        --format="value(spec.template.spec.containers[0].env.filter.extract(CLOUD_TASKS_LOCATION))" 2>/dev/null || echo "")
+    CLOUD_TASKS_LOCATION_VAR=$(get_env_var "CLOUD_TASKS_LOCATION")
     
     if [ -n "$CLOUD_TASKS_LOCATION_VAR" ]; then
         if [ "$CLOUD_TASKS_LOCATION_VAR" = "$LOCATION" ]; then

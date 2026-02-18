@@ -301,7 +301,7 @@ gcloud run services update sisrua-app \
 | `.github/workflows/deploy-cloud-run.yml` | Adicionados 2 steps de permissões IAM | +18 |
 | `sisrua_unified/server/services/cloudTasksService.ts` | Melhor error handling e logging | +33 |
 | `sisrua_unified/scripts/verify-cloud-tasks-permissions.sh` | Novo script de verificação | +242 (novo) |
-| `DXF_CLOUD_TASKS_PERMISSIONS_FIX.md` | Esta documentação | +XXX (novo) |
+| `DXF_CLOUD_TASKS_PERMISSIONS_FIX.md` | Esta documentação | +329 (novo) |
 
 **Total**: 4 arquivos modificados/criados
 
