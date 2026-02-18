@@ -123,9 +123,14 @@ const corsOptions = {
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            // Log rejected origin for debugging
-            logger.warn('CORS request rejected', { origin });
-            callback(null, true); // Allow anyway in development, change to false in strict production
+            // In development mode, allow with warning; in production, reject
+            if (process.env.NODE_ENV === 'production') {
+                logger.warn('CORS request rejected in production', { origin });
+                callback(new Error('Not allowed by CORS'), false);
+            } else {
+                logger.info('CORS request from unlisted origin allowed in development', { origin });
+                callback(null, true);
+            }
         }
     },
     credentials: true
