@@ -19,6 +19,7 @@ import {
 import { dxfQueue } from './queue/dxfQueue.js';
 import { logger } from './utils/logger.js';
 import { generalRateLimiter, dxfRateLimiter } from './middleware/rateLimiter.js';
+import { monitoringMiddleware, metricsMiddleware } from './middleware/monitoring.js';
 import { dxfRequestSchema } from './schemas/dxfRequest.js';
 import { parseBatchCsv, RawBatchRow } from './services/batchService.js';
 import { specs } from './swagger.js';
@@ -45,18 +46,10 @@ const batchRowSchema = z.object({
 // Configuração
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+app.use(monitoringMiddleware);
+app.use(metricsMiddleware);
 app.use(generalRateLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-
-// Logging Middleware
-app.use((req, _res, next) => {
-    logger.info('Incoming request', {
-        method: req.method,
-        url: req.url,
-        ip: req.ip
-    });
-    next();
-});
 
 // Health Check
 app.get('/', (_req: Request, res: Response) => {
