@@ -160,6 +160,18 @@ app.use(express.json({ limit: '50mb' }));
 app.use(generalRateLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+// DEBUG: Log environment variables on startup
+logger.info('Server starting with environment configuration', {
+    nodeEnv: process.env.NODE_ENV,
+    port: process.env.PORT,
+    dockerEnv: process.env.DOCKER_ENV,
+    hasGroqApiKey: !!process.env.GROQ_API_KEY,
+    groqKeyLength: process.env.GROQ_API_KEY?.length || 0,
+    groqKeyPrefix: process.env.GROQ_API_KEY?.substring(0, 7) || 'NOT_SET',
+    gcpProject: process.env.GCP_PROJECT || 'not-set',
+    cloudRunBaseUrl: process.env.CLOUD_RUN_BASE_URL || 'not-set'
+});
+
 // Logging Middleware
 app.use((req, _res, next) => {
     logger.info('Incoming request', {
@@ -212,7 +224,13 @@ app.get('/health', async (_req: Request, res: Response) => {
             version: '1.2.0',
             python: pythonAvailable ? 'available' : 'unavailable',
             environment: process.env.NODE_ENV || 'development',
-            dockerized: process.env.DOCKER_ENV === 'true'
+            dockerized: process.env.DOCKER_ENV === 'true',
+            // Include GROQ API key status for debugging
+            groqApiKey: {
+                configured: !!process.env.GROQ_API_KEY,
+                length: process.env.GROQ_API_KEY?.length || 0,
+                prefix: process.env.GROQ_API_KEY?.substring(0, 7) || 'NOT_SET'
+            }
         });
     } catch (error) {
         // If health check fails, still return 200 but with degraded status
@@ -616,6 +634,15 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         const { stats, locationName } = req.body;
         const apiKey = process.env.GROQ_API_KEY || '';
         
+        // DEBUG: Log GROQ_API_KEY status at request time
+        logger.info('GROQ API analysis requested', {
+            locationName,
+            hasApiKey: !!apiKey,
+            apiKeyLength: apiKey.length,
+            apiKeyPrefix: apiKey.substring(0, 7) || 'EMPTY',
+            timestamp: new Date().toISOString()
+        });
+        
         // Validate request body
         if (!stats) {
             logger.warn('Analysis requested without stats');
@@ -636,21 +663,38 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
 
         logger.info('Processing AI analysis request', { locationName, hasStats: !!stats });
         const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
+        logger.info('AI analysis completed successfully', { locationName });
         return res.json(result);
     } catch (error: any) {
         logger.error('Analysis error', { 
             error: error.message,
             stack: error.stack,
-            body: req.body
+            body: req.body,
+            errorType: error.constructor.name,
+            // Check for common Groq API errors
+            isRateLimitError: error.message?.includes('rate limit') || error.message?.includes('429'),
+            isAuthError: error.message?.includes('401') || error.message?.includes('unauthorized') || error.message?.includes('invalid api key'),
+            isNetworkError: error.message?.includes('ECONNREFUSED') || error.message?.includes('ETIMEDOUT')
         });
         
         // Sanitize error message to prevent injection
         const sanitizedMessage = String(error.message || 'Unknown error').slice(0, MAX_ERROR_MESSAGE_LENGTH);
         
+        // Provide more specific error messages
+        let userMessage = '**Erro na Análise AI**\n\nNão foi possível processar a análise. Por favor, tente novamente.';
+        
+        if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+            userMessage = '**Limite de Taxa Excedido**\n\nMuitas requisições à API Groq. Por favor, aguarde alguns momentos e tente novamente.';
+        } else if (error.message?.includes('401') || error.message?.includes('unauthorized') || error.message?.includes('invalid api key')) {
+            userMessage = '**Erro de Autenticação**\n\nA chave GROQ_API_KEY parece estar inválida. Verifique a configuração no Cloud Run.';
+        } else if (error.message?.includes('ECONNREFUSED') || error.message?.includes('ETIMEDOUT')) {
+            userMessage = '**Erro de Conexão**\n\nNão foi possível conectar à API Groq. Verifique a conectividade de rede.';
+        }
+        
         return res.status(500).json({ 
             error: 'Analysis failed',
             details: sanitizedMessage,
-            analysis: `**Erro na Análise AI**\n\nNão foi possível processar a análise. Por favor, tente novamente.`
+            analysis: userMessage
         });
     }
 });
