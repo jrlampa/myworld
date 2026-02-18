@@ -4,6 +4,7 @@ import 'dotenv/config';
 import multer from 'multer';
 import { z } from 'zod';
 import swaggerUi from 'swagger-ui-express';
+import { spawn } from 'child_process';
 
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -29,6 +30,10 @@ import { specs } from './swagger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Security constants
+const MAX_ERROR_MESSAGE_LENGTH = 200;
+const ALLOWED_PYTHON_COMMANDS = ['python3', 'python'];
 
 const app: Express = express();
 const port = process.env.PORT || 3001;
@@ -119,13 +124,27 @@ const corsOptions = {
             allowedOrigins.push(process.env.CLOUD_RUN_BASE_URL);
         }
         
+        // CRITICAL FIX: Allow Cloud Run service to call itself
+        // Cloud Run URLs follow pattern: https://{service}-{hash}.{region}.run.app
+        // Security: Parse URL and check hostname ends with .run.app
+        let isCloudRunOrigin = false;
+        try {
+            const originUrl = new URL(origin);
+            isCloudRunOrigin = originUrl.hostname.endsWith('.run.app') || 
+                             originUrl.hostname.endsWith('.southamerica-east1.run.app');
+        } catch (e) {
+            // Invalid URL, not a Cloud Run origin
+            isCloudRunOrigin = false;
+        }
+        
         // Check if origin is allowed
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        if (allowedOrigins.indexOf(origin) !== -1 || isCloudRunOrigin) {
+            logger.info('CORS request allowed', { origin, isCloudRun: isCloudRunOrigin });
             callback(null, true);
         } else {
             // In development mode, allow with warning; in production, reject
             if (process.env.NODE_ENV === 'production') {
-                logger.warn('CORS request rejected in production', { origin });
+                logger.warn('CORS request rejected in production', { origin, allowedOrigins });
                 callback(new Error('Not allowed by CORS'), false);
             } else {
                 logger.info('CORS request from unlisted origin allowed in development', { origin });
@@ -141,6 +160,18 @@ app.use(express.json({ limit: '50mb' }));
 app.use(generalRateLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+// DEBUG: Log environment variables on startup
+logger.info('Server starting with environment configuration', {
+    nodeEnv: process.env.NODE_ENV,
+    port: process.env.PORT,
+    dockerEnv: process.env.DOCKER_ENV,
+    hasGroqApiKey: !!process.env.GROQ_API_KEY,
+    groqKeyLength: process.env.GROQ_API_KEY?.length || 0,
+    groqKeyPrefix: process.env.GROQ_API_KEY?.substring(0, 7) || 'NOT_SET',
+    gcpProject: process.env.GCP_PROJECT || 'not-set',
+    cloudRunBaseUrl: process.env.CLOUD_RUN_BASE_URL || 'not-set'
+});
+
 // Logging Middleware
 app.use((req, _res, next) => {
     logger.info('Incoming request', {
@@ -152,12 +183,64 @@ app.use((req, _res, next) => {
 });
 
 // Health Check
-app.get('/health', (_req: Request, res: Response) => {
-    res.json({
-        status: 'online',
-        service: 'sisRUA Unified Backend',
-        version: '1.2.0'
-    });
+app.get('/health', async (_req: Request, res: Response) => {
+    try {
+        const pythonCommand = process.env.PYTHON_COMMAND || 'python3';
+        
+        // Security: Validate Python command
+        if (!ALLOWED_PYTHON_COMMANDS.includes(pythonCommand)) {
+            logger.error('Invalid PYTHON_COMMAND', { pythonCommand });
+            return res.json({
+                status: 'degraded',
+                service: 'sisRUA Unified Backend',
+                version: '1.2.0',
+                python: 'unavailable',
+                error: 'Invalid Python command configuration'
+            });
+        }
+        
+        // Quick Python availability check (non-blocking)
+        const pythonAvailable = await new Promise<boolean>((resolve) => {
+            const timeout = setTimeout(() => {
+                resolve(false);
+            }, 2000); // 2 second timeout
+            
+            const proc = spawn(pythonCommand, ['--version']);
+            
+            proc.on('close', (code) => {
+                clearTimeout(timeout);
+                resolve(code === 0);
+            });
+            
+            proc.on('error', () => {
+                clearTimeout(timeout);
+                resolve(false);
+            });
+        });
+
+        res.json({
+            status: 'online',
+            service: 'sisRUA Unified Backend',
+            version: '1.2.0',
+            python: pythonAvailable ? 'available' : 'unavailable',
+            environment: process.env.NODE_ENV || 'development',
+            dockerized: process.env.DOCKER_ENV === 'true',
+            // Include GROQ API key status for debugging
+            groqApiKey: {
+                configured: !!process.env.GROQ_API_KEY,
+                length: process.env.GROQ_API_KEY?.length || 0,
+                prefix: process.env.GROQ_API_KEY?.substring(0, 7) || 'NOT_SET'
+            }
+        });
+    } catch (error) {
+        // If health check fails, still return 200 but with degraded status
+        res.json({
+            status: 'degraded',
+            service: 'sisRUA Unified Backend',
+            version: '1.2.0',
+            error: 'Health check encountered an error'
+        });
+    }
 });
 
 // Serve generated files
@@ -514,12 +597,33 @@ app.post('/api/search', async (req: Request, res: Response) => {
 app.post('/api/elevation/profile', async (req: Request, res: Response) => {
     try {
         const { start, end, steps = 25 } = req.body;
-        if (!start || !end) return res.status(400).json({ error: 'Start and end coordinates required' });
+        
+        // Better validation for coordinate objects
+        if (!start || typeof start !== 'object' || !('lat' in start) || !('lng' in start)) {
+            logger.warn('Invalid start coordinate in elevation request', { start, body: req.body });
+            return res.status(400).json({ 
+                error: 'Invalid start coordinate',
+                details: 'Start coordinate must be an object with lat and lng properties'
+            });
+        }
+        
+        if (!end || typeof end !== 'object' || !('lat' in end) || !('lng' in end)) {
+            logger.warn('Invalid end coordinate in elevation request', { end, body: req.body });
+            return res.status(400).json({ 
+                error: 'Invalid end coordinate',
+                details: 'End coordinate must be an object with lat and lng properties'
+            });
+        }
 
+        logger.info('Fetching elevation profile', { start, end, steps });
         const profile = await ElevationService.getElevationProfile(start, end, steps);
         return res.json({ profile });
     } catch (error: any) {
-        logger.error('Elevation profile error', { error });
+        logger.error('Elevation profile error', { 
+            error: error.message,
+            stack: error.stack,
+            body: req.body
+        });
         return res.status(500).json({ error: error.message });
     }
 });
@@ -530,6 +634,24 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         const { stats, locationName } = req.body;
         const apiKey = process.env.GROQ_API_KEY || '';
         
+        // DEBUG: Log GROQ_API_KEY status at request time
+        logger.info('GROQ API analysis requested', {
+            locationName,
+            hasApiKey: !!apiKey,
+            apiKeyLength: apiKey.length,
+            apiKeyPrefix: apiKey.substring(0, 7) || 'EMPTY',
+            timestamp: new Date().toISOString()
+        });
+        
+        // Validate request body
+        if (!stats) {
+            logger.warn('Analysis requested without stats');
+            return res.status(400).json({ 
+                error: 'Stats required',
+                details: 'Request body must include stats object'
+            });
+        }
+        
         if (!apiKey) {
             logger.warn('Analysis requested but GROQ_API_KEY not configured');
             return res.status(503).json({ 
@@ -539,11 +661,41 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
             });
         }
 
+        logger.info('Processing AI analysis request', { locationName, hasStats: !!stats });
         const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
+        logger.info('AI analysis completed successfully', { locationName });
         return res.json(result);
     } catch (error: any) {
-        logger.error('Analysis error', { error });
-        return res.status(500).json({ error: error.message });
+        logger.error('Analysis error', { 
+            error: error.message,
+            stack: error.stack,
+            body: req.body,
+            errorType: error.constructor.name,
+            // Check for common Groq API errors
+            isRateLimitError: error.message?.includes('rate limit') || error.message?.includes('429'),
+            isAuthError: error.message?.includes('401') || error.message?.includes('unauthorized') || error.message?.includes('invalid api key'),
+            isNetworkError: error.message?.includes('ECONNREFUSED') || error.message?.includes('ETIMEDOUT')
+        });
+        
+        // Sanitize error message to prevent injection
+        const sanitizedMessage = String(error.message || 'Unknown error').slice(0, MAX_ERROR_MESSAGE_LENGTH);
+        
+        // Provide more specific error messages
+        let userMessage = '**Erro na Análise AI**\n\nNão foi possível processar a análise. Por favor, tente novamente.';
+        
+        if (error.message?.includes('rate limit') || error.message?.includes('429')) {
+            userMessage = '**Limite de Taxa Excedido**\n\nMuitas requisições à API Groq. Por favor, aguarde alguns momentos e tente novamente.';
+        } else if (error.message?.includes('401') || error.message?.includes('unauthorized') || error.message?.includes('invalid api key')) {
+            userMessage = '**Erro de Autenticação**\n\nA chave GROQ_API_KEY parece estar inválida. Verifique a configuração no Cloud Run.';
+        } else if (error.message?.includes('ECONNREFUSED') || error.message?.includes('ETIMEDOUT')) {
+            userMessage = '**Erro de Conexão**\n\nNão foi possível conectar à API Groq. Verifique a conectividade de rede.';
+        }
+        
+        return res.status(500).json({ 
+            error: 'Analysis failed',
+            details: sanitizedMessage,
+            analysis: userMessage
+        });
     }
 });
 
