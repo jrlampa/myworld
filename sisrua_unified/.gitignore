@@ -35,6 +35,31 @@ test_utm*.dxf
 test_utm_validation.py
 test_api_v*.dxf
 
+# Security: Executables and potentially dangerous files
+*.exe
+*.dll
+*.com
+*.bat
+*.cmd
+*.scr
+*.pif
+*.application
+*.gadget
+*.msi
+*.msp
+*.vbs
+*.vbe
+*.jse
+*.jar
+*.ws
+*.wsf
+*.wsc
+*.wsh
+*.scf
+*.lnk
+*.inf
+*.reg
+
 # Coverage reports
 coverage/
 *.coverage

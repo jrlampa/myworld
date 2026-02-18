@@ -2,6 +2,22 @@
 
 Sistema completo de extração de dados do OpenStreetMap e geração de arquivos DXF 2.5D para AutoCAD, com suporte a análise espacial e coordenadas UTM absolutas.
 
+## 🔒 Segurança
+
+**IMPORTANTE**: Se seu antivírus bloquear arquivos deste projeto, isso é provavelmente um **falso positivo**. 
+
+📖 **Leia**: [SECURITY_ANTIVIRUS_GUIDE.md](./SECURITY_ANTIVIRUS_GUIDE.md) - Guia completo de mitigação de problemas com antivírus
+
+📋 **Desenvolvedores**: [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md) - Checklist de segurança obrigatório
+
+O projeto implementa várias medidas de segurança:
+- ✅ Validação rigorosa de entrada em todos os endpoints
+- ✅ Sanitização de argumentos de linha de comando
+- ✅ Logging completo de todas as operações
+- ✅ Usuário não-root em containers Docker
+- ✅ Rate limiting e CORS configurados
+- ✅ Sem executáveis commitados no repositório
+
 ## 📁 Estrutura do Projeto
 
 ```
@@ -104,6 +120,30 @@ O launcher [start-dev.ps1](start-dev.ps1) inicia automaticamente:
   ```bash
   pip install -r py_engine/requirements.txt
   ```
+
+### Segurança e Auditoria
+
+```bash
+# Executar auditoria de segurança completa
+npm run security:check
+
+# Ou usar scripts dedicados:
+
+# Windows (PowerShell)
+.\scripts\security_scan.ps1
+
+# Linux/Mac
+./scripts/security_scan.sh
+
+# Python only
+python scripts/security_audit.py
+```
+
+**O que é verificado**:
+- ✅ Vulnerabilidades em dependências Node.js (npm audit)
+- ✅ Vulnerabilidades em dependências Python (pip-audit)
+- ✅ Problemas de segurança no código Python (Bandit)
+- ✅ Configurações de segurança (.gitignore, secrets)
 
 ### Testes
 

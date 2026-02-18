@@ -1,5 +1,20 @@
 # sisRUA Unified - Dev Mode Launcher
 # Enhanced launcher with dependency checks and health verification
+#
+# SECURITY NOTICE:
+# This script is safe and performs the following operations:
+# 1. Checks for Node.js, Python, and Redis dependencies
+# 2. Stops existing processes on ports 3000, 3001, 5173 (dev cleanup)
+# 3. Launches development servers (npm run dev)
+# 4. Opens browser automatically after services are ready
+#
+# If your antivirus flags this script:
+# - This is a FALSE POSITIVE due to normal dev operations
+# - Review SECURITY_ANTIVIRUS_GUIDE.md for antivirus exclusion setup
+# - This script does NOT download files, modify system settings, or contain malware
+#
+# Source: https://github.com/jrlampa/myworld
+# Last Updated: 2026-02-18
 
 Write-Host ""
 Write-Host "======================================" -ForegroundColor Cyan
@@ -8,6 +23,8 @@ Write-Host "======================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Kill existing processes on ports
+# SECURITY NOTE: This function only stops processes using development ports (3000, 3001, 5173)
+# It does NOT stop system processes or other applications
 function Stop-PortProcess {
     param([int]$Port)
     

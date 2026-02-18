@@ -18,6 +18,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:all": "npm run test:backend && npm run test:frontend && npm run test:e2e",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:audit:fix": "npm audit fix",
+    "security:check": "npm run security:audit && echo '\n--- Security audit complete ---'",
     "postinstall": "echo 'Setup complete. Please ensure Python dependencies are installed using pip install -r py_engine/requirements.txt'"
   },
   "dependencies": {
