@@ -152,12 +152,43 @@ app.use((req, _res, next) => {
 });
 
 // Health Check
-app.get('/health', (_req: Request, res: Response) => {
-    res.json({
-        status: 'online',
-        service: 'sisRUA Unified Backend',
-        version: '1.2.0'
-    });
+app.get('/health', async (_req: Request, res: Response) => {
+    try {
+        // Check if Python is available
+        const { spawn } = await import('child_process');
+        const pythonCommand = process.env.PYTHON_COMMAND || 'python3';
+        
+        // Quick Python availability check (non-blocking)
+        const pythonAvailable = await new Promise<boolean>((resolve) => {
+            const timeout = setTimeout(() => resolve(false), 2000); // 2 second timeout
+            const proc = spawn(pythonCommand, ['--version']);
+            proc.on('close', (code) => {
+                clearTimeout(timeout);
+                resolve(code === 0);
+            });
+            proc.on('error', () => {
+                clearTimeout(timeout);
+                resolve(false);
+            });
+        });
+
+        res.json({
+            status: 'online',
+            service: 'sisRUA Unified Backend',
+            version: '1.2.0',
+            python: pythonAvailable ? 'available' : 'unavailable',
+            environment: process.env.NODE_ENV || 'development',
+            dockerized: process.env.DOCKER_ENV === 'true'
+        });
+    } catch (error) {
+        // If health check fails, still return 200 but with degraded status
+        res.json({
+            status: 'degraded',
+            service: 'sisRUA Unified Backend',
+            version: '1.2.0',
+            error: 'Health check encountered an error'
+        });
+    }
 });
 
 // Serve generated files
@@ -514,12 +545,33 @@ app.post('/api/search', async (req: Request, res: Response) => {
 app.post('/api/elevation/profile', async (req: Request, res: Response) => {
     try {
         const { start, end, steps = 25 } = req.body;
-        if (!start || !end) return res.status(400).json({ error: 'Start and end coordinates required' });
+        
+        // Better validation for coordinate objects
+        if (!start || typeof start !== 'object' || !('lat' in start) || !('lng' in start)) {
+            logger.warn('Invalid start coordinate in elevation request', { start, body: req.body });
+            return res.status(400).json({ 
+                error: 'Invalid start coordinate',
+                details: 'Start coordinate must be an object with lat and lng properties'
+            });
+        }
+        
+        if (!end || typeof end !== 'object' || !('lat' in end) || !('lng' in end)) {
+            logger.warn('Invalid end coordinate in elevation request', { end, body: req.body });
+            return res.status(400).json({ 
+                error: 'Invalid end coordinate',
+                details: 'End coordinate must be an object with lat and lng properties'
+            });
+        }
 
+        logger.info('Fetching elevation profile', { start, end, steps });
         const profile = await ElevationService.getElevationProfile(start, end, steps);
         return res.json({ profile });
     } catch (error: any) {
-        logger.error('Elevation profile error', { error });
+        logger.error('Elevation profile error', { 
+            error: error.message,
+            stack: error.stack,
+            body: req.body
+        });
         return res.status(500).json({ error: error.message });
     }
 });
@@ -530,6 +582,15 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         const { stats, locationName } = req.body;
         const apiKey = process.env.GROQ_API_KEY || '';
         
+        // Validate request body
+        if (!stats) {
+            logger.warn('Analysis requested without stats');
+            return res.status(400).json({ 
+                error: 'Stats required',
+                details: 'Request body must include stats object'
+            });
+        }
+        
         if (!apiKey) {
             logger.warn('Analysis requested but GROQ_API_KEY not configured');
             return res.status(503).json({ 
@@ -539,11 +600,19 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
             });
         }
 
+        logger.info('Processing AI analysis request', { locationName, hasStats: !!stats });
         const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
         return res.json(result);
     } catch (error: any) {
-        logger.error('Analysis error', { error });
-        return res.status(500).json({ error: error.message });
+        logger.error('Analysis error', { 
+            error: error.message,
+            stack: error.stack,
+            body: req.body
+        });
+        return res.status(500).json({ 
+            error: error.message,
+            analysis: `**Erro na Análise AI**: ${error.message}\n\nNão foi possível processar a análise. Por favor, tente novamente.`
+        });
     }
 });
 
