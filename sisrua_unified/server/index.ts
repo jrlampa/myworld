@@ -454,7 +454,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
         }
         
         const responseStatus = alreadyCompleted ? 'success' : 'queued';
-        res.status(alreadyCompleted ? 200 : 202).json({
+        return res.status(alreadyCompleted ? 200 : 202).json({
             status: responseStatus,
             jobId: taskId,
             ...(alreadyCompleted && { 
@@ -465,7 +465,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
 
     } catch (err: any) {
         logger.error('DXF generation error', { error: err });
-        res.status(500).json({ error: 'Generation failed', details: err.message });
+        return res.status(500).json({ error: 'Generation failed', details: err.message });
     }
 });
 
@@ -477,7 +477,7 @@ app.get('/api/jobs/:id', async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Job not found' });
         }
 
-        res.json({
+        return res.json({
             id: job.id,
             status: job.status,
             progress: job.progress,
@@ -486,7 +486,7 @@ app.get('/api/jobs/:id', async (req: Request, res: Response) => {
         });
     } catch (err: any) {
         logger.error('Job status lookup failed', { error: err });
-        res.status(500).json({ error: 'Failed to retrieve job status', details: err.message });
+        return res.status(500).json({ error: 'Failed to retrieve job status', details: err.message });
     }
 });
 
@@ -499,13 +499,13 @@ app.post('/api/search', async (req: Request, res: Response) => {
         const location = await GeocodingService.resolveLocation(query);
 
         if (location) {
-            res.json(location);
+            return res.json(location);
         } else {
-            res.status(404).json({ error: 'Location not found' });
+            return res.status(404).json({ error: 'Location not found' });
         }
     } catch (error: any) {
         logger.error('Search error', { error });
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 });
 
@@ -516,10 +516,10 @@ app.post('/api/elevation/profile', async (req: Request, res: Response) => {
         if (!start || !end) return res.status(400).json({ error: 'Start and end coordinates required' });
 
         const profile = await ElevationService.getElevationProfile(start, end, steps);
-        res.json({ profile });
+        return res.json({ profile });
     } catch (error: any) {
         logger.error('Elevation profile error', { error });
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 });
 
@@ -539,10 +539,10 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         }
 
         const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
-        res.json(result);
+        return res.json(result);
     } catch (error: any) {
         logger.error('Analysis error', { error });
-        res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message });
     }
 });
 
