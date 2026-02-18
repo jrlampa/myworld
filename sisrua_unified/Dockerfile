@@ -25,9 +25,10 @@ RUN npx tsc -p tsconfig.server.json
 COPY py_engine/requirements.txt ./py_engine/
 RUN python3 -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
-    /opt/venv/bin/pip install --no-cache-dir -r py_engine/requirements.txt && \
-    apt-get purge -y --auto-remove build-essential python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+    /opt/venv/bin/pip install --no-cache-dir -r py_engine/requirements.txt
+
+# Note: Don't clean up build-essential here - it's needed for package compilation
+# The builder stage artifacts won't be in the final image anyway
 
 # Stage 2: Production runner (Python + Node.js)
 FROM ubuntu:24.04
