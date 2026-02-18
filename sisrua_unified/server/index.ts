@@ -31,6 +31,10 @@ import { specs } from './swagger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Security constants
+const MAX_ERROR_MESSAGE_LENGTH = 200;
+const ALLOWED_PYTHON_COMMANDS = ['python3', 'python'];
+
 const app: Express = express();
 const port = process.env.PORT || 3001;
 
@@ -122,10 +126,16 @@ const corsOptions = {
         
         // CRITICAL FIX: Allow Cloud Run service to call itself
         // Cloud Run URLs follow pattern: https://{service}-{hash}.{region}.run.app
-        const isCloudRunOrigin = origin && (
-            origin.includes('.run.app') ||
-            origin.includes('southamerica-east1.run.app')
-        );
+        // Security: Parse URL and check hostname ends with .run.app
+        let isCloudRunOrigin = false;
+        try {
+            const originUrl = new URL(origin);
+            isCloudRunOrigin = originUrl.hostname.endsWith('.run.app') || 
+                             originUrl.hostname.endsWith('.southamerica-east1.run.app');
+        } catch (e) {
+            // Invalid URL, not a Cloud Run origin
+            isCloudRunOrigin = false;
+        }
         
         // Check if origin is allowed
         if (allowedOrigins.indexOf(origin) !== -1 || isCloudRunOrigin) {
@@ -164,6 +174,18 @@ app.use((req, _res, next) => {
 app.get('/health', async (_req: Request, res: Response) => {
     try {
         const pythonCommand = process.env.PYTHON_COMMAND || 'python3';
+        
+        // Security: Validate Python command
+        if (!ALLOWED_PYTHON_COMMANDS.includes(pythonCommand)) {
+            logger.error('Invalid PYTHON_COMMAND', { pythonCommand });
+            return res.json({
+                status: 'degraded',
+                service: 'sisRUA Unified Backend',
+                version: '1.2.0',
+                python: 'unavailable',
+                error: 'Invalid Python command configuration'
+            });
+        }
         
         // Quick Python availability check (non-blocking)
         const pythonAvailable = await new Promise<boolean>((resolve) => {
@@ -623,7 +645,7 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         });
         
         // Sanitize error message to prevent injection
-        const sanitizedMessage = String(error.message || 'Unknown error').slice(0, 200);
+        const sanitizedMessage = String(error.message || 'Unknown error').slice(0, MAX_ERROR_MESSAGE_LENGTH);
         
         return res.status(500).json({ 
             error: 'Analysis failed',
