@@ -1,0 +1,167 @@
+name: Post-Deploy Verification
+
+on:
+  workflow_run:
+    workflows: ["Deploy to Cloud Run"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      service_url:
+        description: 'Cloud Run Service URL (optional, will auto-detect if not provided)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  verify-deployment:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Verify Cloud Run Service Deployed
+        id: verify-service
+        run: |
+          echo "🔍 Checking if Cloud Run service exists..."
+          
+          SERVICE_STATUS=$(gcloud run services describe sisrua-app \
+            --region=southamerica-east1 \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --format='value(status.conditions[0].status)' 2>&1)
+          
+          if [ $? -eq 0 ] && [ "$SERVICE_STATUS" = "True" ]; then
+            echo "✅ Cloud Run service is deployed and ready"
+            echo "service_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Cloud Run service not ready or doesn't exist"
+            echo "Service status: $SERVICE_STATUS"
+            exit 1
+          fi
+
+      - name: Get Service URL
+        id: get-url
+        run: |
+          if [ -n "${{ inputs.service_url }}" ]; then
+            SERVICE_URL="${{ inputs.service_url }}"
+            echo "Using provided service URL: $SERVICE_URL"
+          else
+            SERVICE_URL=$(gcloud run services describe sisrua-app \
+              --region=southamerica-east1 \
+              --project=${{ secrets.GCP_PROJECT_ID }} \
+              --format='value(status.url)')
+            echo "Auto-detected service URL: $SERVICE_URL"
+          fi
+          
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+
+      - name: Validate Environment Variables
+        run: |
+          echo "🔍 Checking environment variables in Cloud Run service..."
+          
+          ENV_VARS=$(gcloud run services describe sisrua-app \
+            --region=southamerica-east1 \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --format='json' | jq -r '.spec.template.spec.containers[0].env')
+          
+          echo "Environment variables found:"
+          echo "$ENV_VARS" | jq -r '.[] | "\(.name)=\(.value // "[secret]")'
+          
+          # Check for required environment variables
+          REQUIRED_VARS=("NODE_ENV" "GCP_PROJECT" "CLOUD_TASKS_LOCATION" "CLOUD_TASKS_QUEUE")
+          
+          for var in "${REQUIRED_VARS[@]}"; do
+            if echo "$ENV_VARS" | jq -e ".[] | select(.name==\"$var\")" > /dev/null; then
+              echo "✅ $var is set"
+            else
+              echo "❌ $var is missing"
+              exit 1
+            fi
+          done
+          
+          # Check that GROQ_API_KEY exists (value will be secret)
+          if echo "$ENV_VARS" | jq -e '.[] | select(.name=="GROQ_API_KEY")' > /dev/null; then
+            echo "✅ GROQ_API_KEY is set"
+          else
+            echo "❌ GROQ_API_KEY is missing"
+            exit 1
+          fi
+
+      - name: Test Service URL Accessibility
+        run: |
+          echo "🔍 Testing service URL accessibility..."
+          echo "Service URL: $SERVICE_URL"
+          
+          # Try to access the service URL
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$SERVICE_URL/health")
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Service URL is accessible (HTTP $HTTP_CODE)"
+          else
+            echo "❌ Service URL returned HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Verify Service Configuration
+        run: |
+          echo "🔍 Verifying service configuration..."
+          
+          # Get service configuration
+          CONFIG=$(gcloud run services describe sisrua-app \
+            --region=southamerica-east1 \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            --format='json')
+          
+          # Check memory allocation
+          MEMORY=$(echo "$CONFIG" | jq -r '.spec.template.spec.containers[0].resources.limits.memory')
+          echo "Memory: $MEMORY"
+          
+          # Check CPU allocation
+          CPU=$(echo "$CONFIG" | jq -r '.spec.template.spec.containers[0].resources.limits.cpu')
+          echo "CPU: $CPU"
+          
+          # Check timeout
+          TIMEOUT=$(echo "$CONFIG" | jq -r '.spec.template.spec.containerConcurrency')
+          echo "Container Concurrency: $TIMEOUT"
+          
+          # Check scaling configuration
+          MIN_INSTANCES=$(echo "$CONFIG" | jq -r '.spec.template.metadata.annotations."autoscaling.knative.dev/minScale" // "0"')
+          MAX_INSTANCES=$(echo "$CONFIG" | jq -r '.spec.template.metadata.annotations."autoscaling.knative.dev/maxScale" // "default"')
+          echo "Scaling: min=$MIN_INSTANCES, max=$MAX_INSTANCES"
+          
+          echo "✅ Service configuration verified"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "## 📊 Deployment Verification Summary"
+          echo ""
+          echo "- **Service**: sisrua-app"
+          echo "- **Region**: southamerica-east1"
+          echo "- **Project**: ${{ secrets.GCP_PROJECT_ID }}"
+          echo "- **URL**: $SERVICE_URL"
+          echo "- **Status**: ${{ job.status }}"
+          echo ""
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ All deployment verification checks passed!"
+          else
+            echo "❌ Some deployment verification checks failed. Please review the logs above."
+          fi
