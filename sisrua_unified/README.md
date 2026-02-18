@@ -121,6 +121,30 @@ O launcher [start-dev.ps1](start-dev.ps1) inicia automaticamente:
   pip install -r py_engine/requirements.txt
   ```
 
+### Segurança e Auditoria
+
+```bash
+# Executar auditoria de segurança completa
+npm run security:check
+
+# Ou usar scripts dedicados:
+
+# Windows (PowerShell)
+.\scripts\security_scan.ps1
+
+# Linux/Mac
+./scripts/security_scan.sh
+
+# Python only
+python scripts/security_audit.py
+```
+
+**O que é verificado**:
+- ✅ Vulnerabilidades em dependências Node.js (npm audit)
+- ✅ Vulnerabilidades em dependências Python (pip-audit)
+- ✅ Problemas de segurança no código Python (Bandit)
+- ✅ Configurações de segurança (.gitignore, secrets)
+
 ### Testes
 
 #### Testes Backend (Jest)
