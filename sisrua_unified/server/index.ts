@@ -32,6 +32,37 @@ const __dirname = path.dirname(__filename);
 const app: Express = express();
 const port = process.env.PORT || 3001;
 
+function resolveDxfDirectory(): string {
+    const candidates = [
+        path.resolve(__dirname, '../public/dxf'),
+        path.resolve(__dirname, '../../../public/dxf')
+    ];
+
+    const existing = candidates.find((candidate) => fs.existsSync(candidate));
+    if (existing) {
+        return existing;
+    }
+
+    return candidates[candidates.length - 1];
+}
+
+function resolveFrontendDistDirectory(): string {
+    const candidates = [
+        path.resolve(__dirname, '../../dist'),
+        path.resolve(__dirname, '../../../dist')
+    ];
+
+    const existing = candidates.find((candidate) => fs.existsSync(path.join(candidate, 'index.html')));
+    if (existing) {
+        return existing;
+    }
+
+    return candidates[candidates.length - 1];
+}
+
+const dxfDirectory = resolveDxfDirectory();
+const frontendDistDirectory = resolveFrontendDistDirectory();
+
 /**
  * Get the base URL for the application
  * Uses environment variable if available, otherwise derives from request
@@ -83,7 +114,7 @@ app.use((req, _res, next) => {
 });
 
 // Health Check
-app.get('/', (_req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
     res.json({
         status: 'online',
         service: 'sisRUA Unified Backend',
@@ -92,7 +123,7 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 // Serve generated files
-app.use('/downloads', express.static(path.join(__dirname, '../public/dxf')));
+app.use('/downloads', express.static(dxfDirectory));
 
 // Cloud Tasks Webhook - Process DXF Generation
 app.post('/api/tasks/process-dxf', async (req: Request, res: Response) => {
@@ -236,7 +267,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
 
             const cachedFilename = getCachedFilename(cacheKey);
             if (cachedFilename) {
-                const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
+                const cachedFilePath = path.join(dxfDirectory, cachedFilename);
                 if (fs.existsSync(cachedFilePath)) {
                     const baseUrl = getBaseUrl(req);
                     const cachedUrl = `${baseUrl}/downloads/${cachedFilename}`;
@@ -253,7 +284,7 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
 
             const safeName = name.toLowerCase().replace(/[^a-z0-9-_]+/g, '_').slice(0, 40) || 'batch';
             const filename = `dxf_${safeName}_${Date.now()}_${entry.line}.dxf`;
-            const outputFile = path.join(__dirname, '../public/dxf', filename);
+            const outputFile = path.join(dxfDirectory, filename);
             const baseUrl = getBaseUrl(req);
             const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
@@ -318,7 +349,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
 
         const cachedFilename = getCachedFilename(cacheKey);
         if (cachedFilename) {
-            const cachedFilePath = path.join(__dirname, '../public/dxf', cachedFilename);
+            const cachedFilePath = path.join(dxfDirectory, cachedFilename);
             if (fs.existsSync(cachedFilePath)) {
                 const baseUrl = getBaseUrl(req);
                 const cachedUrl = `${baseUrl}/downloads/${cachedFilename}`;
@@ -348,7 +379,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
         }
 
         const filename = `dxf_${Date.now()}.dxf`;
-        const outputFile = path.join(__dirname, '../public/dxf', filename);
+        const outputFile = path.join(dxfDirectory, filename);
         const baseUrl = getBaseUrl(req);
         const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
@@ -457,6 +488,18 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+if (fs.existsSync(path.join(frontendDistDirectory, 'index.html'))) {
+    app.use(express.static(frontendDistDirectory));
+
+    app.get('*', (req: Request, res: Response, next) => {
+        if (req.path.startsWith('/api') || req.path.startsWith('/downloads') || req.path.startsWith('/api-docs') || req.path === '/health') {
+            return next();
+        }
+
+        return res.sendFile(path.join(frontendDistDirectory, 'index.html'));
+    });
+}
 
 app.listen(port, () => {
     const baseUrl = getBaseUrl();
