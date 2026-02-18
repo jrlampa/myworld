@@ -99,7 +99,39 @@ const batchRowSchema = z.object({
 
 // Configuração
 app.set('trust proxy', true);
-app.use(cors());
+
+// CORS Configuration - Allow requests from development and production origins
+const corsOptions = {
+    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+        // Allow requests with no origin (like mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        
+        // List of allowed origins
+        const allowedOrigins = [
+            'http://localhost:3000',  // Vite dev server
+            'http://localhost:8080',  // Production server
+            'http://127.0.0.1:3000',
+            'http://127.0.0.1:8080',
+        ];
+        
+        // Add Cloud Run URL if configured
+        if (process.env.CLOUD_RUN_BASE_URL) {
+            allowedOrigins.push(process.env.CLOUD_RUN_BASE_URL);
+        }
+        
+        // Check if origin is allowed
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            // Log rejected origin for debugging
+            logger.warn('CORS request rejected', { origin });
+            callback(null, true); // Allow anyway in development, change to false in strict production
+        }
+    },
+    credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(generalRateLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));

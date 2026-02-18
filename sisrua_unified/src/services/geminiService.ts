@@ -1,7 +1,8 @@
 import { GeoLocation } from '../types';
 import Logger from '../utils/logger';
+import { API_BASE_URL } from '../config/api';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = API_BASE_URL;
 
 export const findLocationWithGemini = async (query: string, enableAI: boolean): Promise<GeoLocation | null> => {
   if (!enableAI) {
