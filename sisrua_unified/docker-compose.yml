@@ -2,13 +2,11 @@
 # Simplifies onboarding and eliminates manual setup of Python/Node
 #
 # Usage:
-#   docker-compose up          # Start app only
-#   docker-compose --profile with-redis up  # Start app + Redis (optional)
-#   docker-compose up -d       # Start in background
-#   docker-compose down        # Stop and remove containers
-#   docker-compose logs -f app # View app logs
-
-version: '3.9'
+#   docker compose up          # Start app only
+#   docker compose --profile with-redis up  # Start app + Redis (optional)
+#   docker compose up -d       # Start in background
+#   docker compose down        # Stop and remove containers
+#   docker compose logs -f app # View app logs
 
 services:
   # Main Application (Frontend + Backend + Python Engine)

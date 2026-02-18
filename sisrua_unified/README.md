@@ -105,7 +105,7 @@ cp .env.example .env
 # Edite .env e adicione sua GROQ_API_KEY
 
 # 3. Inicie a aplicação
-docker-compose up
+docker compose up
 
 # 4. Acesse no navegador
 # http://localhost:8080
@@ -127,10 +127,10 @@ pip install -r py_engine/requirements.txt
 #### Opção 1: Docker Compose (Recomendado - Setup Automático)
 ```bash
 # Inicia tudo com um comando (Node.js + Python + Frontend + Backend)
-docker-compose up
+docker compose up
 
 # Ou em background
-docker-compose up -d
+docker compose up -d
 
 # Acesse a aplicação
 # http://localhost:8080
@@ -171,7 +171,7 @@ O launcher [start-dev.ps1](start-dev.ps1) inicia automaticamente:
 Se quiser testar com Redis (futuro):
 ```bash
 # Inicia app + Redis
-docker-compose --profile with-redis up
+docker compose --profile with-redis up
 ```
 
 📖 **Detalhes**: Ver [ARCHITECTURE.md](./ARCHITECTURE.md) - Task Processing Strategy

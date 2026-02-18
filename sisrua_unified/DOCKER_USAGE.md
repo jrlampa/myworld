@@ -30,7 +30,7 @@ git clone https://github.com/jrlampa/myworld.git
 cd myworld/sisrua_unified
 
 # Inicie todos os serviços
-docker-compose up
+docker compose up
 
 # Acesse a aplicação
 # http://localhost:8080
@@ -51,57 +51,57 @@ docker-compose up
 
 ```bash
 # Iniciar (modo attached - vê logs no terminal)
-docker-compose up
+docker compose up
 
 # Iniciar em background (detached mode)
-docker-compose up -d
+docker compose up -d
 
 # Parar containers
-docker-compose down
+docker compose down
 
 # Parar e remover volumes (limpa cache e DXFs gerados)
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Logs
 
 ```bash
 # Ver logs de todos os serviços
-docker-compose logs -f
+docker compose logs -f
 
 # Ver logs apenas da aplicação
-docker-compose logs -f app
+docker compose logs -f app
 
 # Ver últimas 100 linhas de log
-docker-compose logs --tail=100 app
+docker compose logs --tail=100 app
 ```
 
 ### Rebuild
 
 ```bash
 # Rebuild da imagem (após mudanças no código)
-docker-compose build
+docker compose build
 
 # Rebuild e restart
-docker-compose up --build
+docker compose up --build
 
 # Rebuild forçado (ignora cache)
-docker-compose build --no-cache
+docker compose build --no-cache
 ```
 
 ### Shell Interativo
 
 ```bash
 # Acessar shell do container
-docker-compose exec app bash
+docker compose exec app bash
 
 # Rodar comandos Node.js
-docker-compose exec app node --version
-docker-compose exec app npm run test
+docker compose exec app node --version
+docker compose exec app npm run test
 
 # Rodar comandos Python
-docker-compose exec app python3 --version
-docker-compose exec app python3 py_engine/main.py --help
+docker compose exec app python3 --version
+docker compose exec app python3 py_engine/main.py --help
 ```
 
 ---
@@ -113,11 +113,11 @@ docker-compose exec app python3 py_engine/main.py --help
 **Opção A: Docker para Ambiente Completo** (Recomendado para novos devs)
 ```bash
 # Inicie uma vez
-docker-compose up -d
+docker compose up -d
 
 # Faça mudanças no código (src/, server/, py_engine/)
 # Rebuild quando necessário
-docker-compose up --build
+docker compose up --build
 ```
 
 **Opção B: Nativo para Hot Reload** (Mais rápido para desenvolvimento ativo)
@@ -126,7 +126,7 @@ docker-compose up --build
 npm run dev
 
 # Use Docker apenas para testes de integração
-docker-compose up --build
+docker compose up --build
 ```
 
 ### Volumes Persistentes
@@ -142,7 +142,7 @@ Docker Compose cria volumes para persistir dados:
 **Limpar volumes**:
 ```bash
 # Remove todos os volumes (CUIDADO: perde DXFs e cache)
-docker-compose down -v
+docker compose down -v
 
 # Remove volume específico
 docker volume rm sisrua_dxf_output
@@ -154,14 +154,14 @@ docker volume rm sisrua_dxf_output
 # Opção 1: Arquivo .env (recomendado)
 cp .env.example .env
 # Edite .env com suas configurações
-docker-compose up
+docker compose up
 
 # Opção 2: Variáveis inline
-GROQ_API_KEY=gsk_xxx docker-compose up
+GROQ_API_KEY=gsk_xxx docker compose up
 
 # Opção 3: Export (persiste na sessão do shell)
 export GROQ_API_KEY=gsk_xxx
-docker-compose up
+docker compose up
 ```
 
 ---
@@ -243,8 +243,8 @@ gcloud run deploy sisrua-app \
 **Erro**: `Error: Cannot find module...`
 ```bash
 # Rebuild sem cache
-docker-compose build --no-cache
-docker-compose up
+docker compose build --no-cache
+docker compose up
 ```
 
 **Erro**: `Port 8080 is already in use`
@@ -254,7 +254,7 @@ lsof -ti:8080 | xargs kill -9  # Linux/Mac
 netstat -ano | findstr :8080   # Windows (veja PID e use taskkill)
 
 # Opção 2: Use outra porta
-# Edite docker-compose.yml:
+# Edite docker compose.yml:
 ports:
   - "8081:8080"  # Usa 8081 no host, 8080 no container
 ```
@@ -264,19 +264,19 @@ ports:
 **Erro**: `ModuleNotFoundError: No module named 'osmnx'`
 ```bash
 # Rebuild da imagem (Python venv pode estar corrompido)
-docker-compose down
-docker-compose build --no-cache
-docker-compose up
+docker compose down
+docker compose build --no-cache
+docker compose up
 ```
 
 ### ❌ DXF gerado vazio ou com erro
 
 ```bash
 # Veja logs detalhados do Python engine
-docker-compose logs -f app | grep -i "python\|dxf\|error"
+docker compose logs -f app | grep -i "python\|dxf\|error"
 
 # Teste Python engine diretamente
-docker-compose exec app python3 py_engine/main.py \
+docker compose exec app python3 py_engine/main.py \
   --lat -23.566390 \
   --lon -46.656081 \
   --radius 500 \
@@ -307,7 +307,7 @@ test_files
 ```bash
 # Habilite BuildKit
 export DOCKER_BUILDKIT=1
-docker-compose build
+docker compose build
 
 # Ou permanentemente (Linux/Mac)
 echo 'export DOCKER_BUILDKIT=1' >> ~/.bashrc
@@ -316,8 +316,8 @@ echo 'export DOCKER_BUILDKIT=1' >> ~/.bashrc
 **Solução 2: Cache de layers**
 ```bash
 # Certifique-se de não usar --no-cache desnecessariamente
-docker-compose build  # Usa cache (rápido)
-docker-compose build --no-cache  # Sem cache (lento, use apenas se necessário)
+docker compose build  # Usa cache (rápido)
+docker compose build --no-cache  # Sem cache (lento, use apenas se necessário)
 ```
 
 ---
@@ -371,7 +371,7 @@ else {
 ## 📚 Recursos Adicionais
 
 - **Dockerfile**: [sisrua_unified/Dockerfile](./Dockerfile)
-- **docker-compose.yml**: [sisrua_unified/docker-compose.yml](./docker-compose.yml)
+- **docker compose.yml**: [sisrua_unified/docker compose.yml](./docker compose.yml)
 - **Arquitetura**: [ARCHITECTURE.md](./ARCHITECTURE.md)
 - **Avaliação Docker**: [/DOCKER_EVALUATION.md](../DOCKER_EVALUATION.md)
 
@@ -381,9 +381,9 @@ else {
 
 Se encontrar problemas:
 
-1. **Verifique logs**: `docker-compose logs -f app`
+1. **Verifique logs**: `docker compose logs -f app`
 2. **Health check**: `curl http://localhost:8080/health`
-3. **Rebuild**: `docker-compose build --no-cache`
+3. **Rebuild**: `docker compose build --no-cache`
 4. **Issues**: [GitHub Issues](https://github.com/jrlampa/myworld/issues)
 
 ---
