@@ -528,7 +528,15 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
     try {
         const { stats, locationName } = req.body;
         const apiKey = process.env.GROQ_API_KEY || '';
-        if (!apiKey) return res.status(500).json({ error: 'GROQ_API_KEY not set' });
+        
+        if (!apiKey) {
+            logger.warn('Analysis requested but GROQ_API_KEY not configured');
+            return res.status(503).json({ 
+                error: 'GROQ_API_KEY not configured',
+                message: 'AI analysis is unavailable. Please configure GROQ_API_KEY in the .env file to enable intelligent analysis features.',
+                analysis: '**Análise AI Indisponível**\n\nPara habilitar análises inteligentes com IA, configure a variável `GROQ_API_KEY` no arquivo `.env`.\n\nObtenha sua chave gratuita em: https://console.groq.com/keys'
+            });
+        }
 
         const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
         res.json(result);

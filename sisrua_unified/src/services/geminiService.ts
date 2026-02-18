@@ -36,12 +36,34 @@ export const analyzeArea = async (stats: any, locationName: string, enableAI: bo
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stats, locationName })
     });
-    if (!response.ok) return "Analysis failed.";
+    
+    // Handle error responses
+    if (!response.ok) {
+      try {
+        const errorData = await response.json();
+        Logger.warn("Analysis request failed", { status: response.status, error: errorData });
+        
+        // If the backend provides an analysis message (e.g., for missing API key), use it
+        if (errorData.analysis) {
+          return errorData.analysis;
+        }
+        
+        // Otherwise provide a helpful error message
+        const errorMsg = errorData.message || errorData.error || 'Analysis failed';
+        if (errorMsg.includes('GROQ_API_KEY')) {
+          return "**Análise AI Indisponível**\n\nPara habilitar análises inteligentes com IA, configure a variável `GROQ_API_KEY` no arquivo `.env`.\n\nObtenha sua chave gratuita em: https://console.groq.com/keys";
+        }
+        return `**Erro na análise**: ${errorMsg}`;
+      } catch {
+        return "**Erro na análise**: Não foi possível processar a resposta do servidor.";
+      }
+    }
+    
     const data = await response.json();
     Logger.info("Analysis completed");
     return data.analysis;
   } catch (error) {
     Logger.error("Analysis error:", error);
-    return "Could not contact analysis backend.";
+    return "**Erro de conexão**: Não foi possível contatar o servidor de análise. Verifique se o backend está em execução na porta 3001.";
   }
 };
