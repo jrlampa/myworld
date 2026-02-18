@@ -2,12 +2,28 @@
 # Optimized for Cloud Run deployment with security best practices
 
 # Stage 1: Build (Frontend + Backend + Python)
-FROM node:22-bookworm-slim AS builder
+# Using ubuntu:24.04 to match production stage Python version (3.12)
+FROM ubuntu:24.04 AS builder
 WORKDIR /app
 
-# Install Python build dependencies
+# Environment variables for non-interactive installs
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Node.js 22, Python, and build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-pip python3-venv build-essential && \
+    ca-certificates \
+    curl \
+    gnupg \
+    python3 \
+    python3-pip \
+    python3-venv \
+    build-essential && \
+    # Add NodeSource repository for Node.js 22
+    mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends nodejs && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files first for better layer caching
