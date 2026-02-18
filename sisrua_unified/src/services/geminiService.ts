@@ -50,9 +50,6 @@ export const analyzeArea = async (stats: any, locationName: string, enableAI: bo
         
         // Otherwise provide a helpful error message
         const errorMsg = errorData.message || errorData.error || 'Analysis failed';
-        if (errorMsg.includes('GROQ_API_KEY')) {
-          return "**Análise AI Indisponível**\n\nPara habilitar análises inteligentes com IA, configure a variável `GROQ_API_KEY` no arquivo `.env`.\n\nObtenha sua chave gratuita em: https://console.groq.com/keys";
-        }
         return `**Erro na análise**: ${errorMsg}`;
       } catch {
         return "**Erro na análise**: Não foi possível processar a resposta do servidor.";

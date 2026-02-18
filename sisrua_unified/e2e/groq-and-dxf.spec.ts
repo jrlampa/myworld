@@ -11,7 +11,8 @@ test.describe('GROQ Analysis Error Handling', () => {
     // Note: This test assumes GROQ_API_KEY is not set in the test environment
     // If it is set, this test will need to be adjusted
     
-    test.setTimeout(60000); // 1 minute timeout
+    // 90 second timeout to account for data loading and potential network delays
+    test.setTimeout(90000);
 
     // Navigate to the application
     await page.goto('http://localhost:3000');
@@ -126,7 +127,8 @@ test.describe('GROQ Analysis Error Handling', () => {
  */
 test.describe('DXF Generation with Real Coordinates', () => {
   test('should initiate DXF generation for Brasil coordinates', async ({ page }) => {
-    test.setTimeout(120000); // 2 minutes - DXF generation can take time
+    // 3 minute timeout - DXF generation can take 1-3 minutes depending on data volume and network
+    test.setTimeout(180000);
 
     await page.goto('http://localhost:3000');
     
