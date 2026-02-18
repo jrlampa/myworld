@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,9 +30,9 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
         let args: string[];
 
         // Check if EXE exists in expected production or dev dist location
-        if (isProduction || require('fs').existsSync(devExePath)) {
+        if (isProduction || fs.existsSync(devExePath)) {
             const finalExePath = isProduction ? prodExePath : devExePath;
-            if (require('fs').existsSync(finalExePath)) {
+            if (fs.existsSync(finalExePath)) {
                 command = finalExePath;
                 args = [];
             } else {

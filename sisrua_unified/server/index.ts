@@ -378,9 +378,9 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
             });
         }
 
+        const baseUrl = getBaseUrl(req);
         const filename = `dxf_${Date.now()}.dxf`;
         const outputFile = path.join(dxfDirectory, filename);
-        const baseUrl = getBaseUrl(req);
         const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
         logger.info('Queueing DXF generation', {
@@ -392,7 +392,7 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
             cacheKey
         });
 
-        const { taskId } = await createDxfTask({
+        const { taskId, alreadyCompleted } = await createDxfTask({
             lat,
             lon,
             radius,
@@ -406,12 +406,20 @@ app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
             downloadUrl
         });
 
-        // Create job for status tracking
-        createJob(taskId);
-
-        res.status(202).json({
-            status: 'queued',
-            jobId: taskId
+        // Create job for status tracking (unless it's already completed in dev mode)
+        // In dev mode, createJob is called inside createDxfTask, so we don't call it again
+        if (!alreadyCompleted) {
+            createJob(taskId);
+        }
+        
+        const responseStatus = alreadyCompleted ? 'success' : 'queued';
+        res.status(alreadyCompleted ? 200 : 202).json({
+            status: responseStatus,
+            jobId: taskId,
+            ...(alreadyCompleted && { 
+                url: downloadUrl,
+                message: 'DXF generated immediately in development mode' 
+            })
         });
 
     } catch (err: any) {

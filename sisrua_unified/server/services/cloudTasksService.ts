@@ -1,12 +1,16 @@
 import { CloudTasksClient } from '@google-cloud/tasks';
 import { logger } from '../utils/logger.js';
 import { v4 as uuidv4 } from 'uuid';
+import { generateDxf } from '../pythonBridge.js';
+import { completeJob, failJob, updateJobStatus, createJob } from './jobStatusService.js';
 
 // Environment variables
 const GCP_PROJECT = process.env.GCP_PROJECT || '';
 const CLOUD_TASKS_LOCATION = process.env.CLOUD_TASKS_LOCATION || 'southamerica-east1';
 const CLOUD_TASKS_QUEUE = process.env.CLOUD_TASKS_QUEUE || 'sisrua-queue';
 const CLOUD_RUN_BASE_URL = process.env.CLOUD_RUN_BASE_URL || 'http://localhost:3001';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const IS_DEVELOPMENT = NODE_ENV === 'development' || !GCP_PROJECT;
 
 // Initialize Cloud Tasks client
 const tasksClient = new CloudTasksClient();
@@ -29,10 +33,12 @@ export interface DxfTaskPayload {
 export interface TaskCreationResult {
     taskId: string;
     taskName: string;
+    alreadyCompleted?: boolean;  // For dev mode where DXF is generated immediately
 }
 
 /**
  * Creates a Cloud Task to process DXF generation
+ * In development mode (when GCP_PROJECT is not set), generates DXF directly
  */
 export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Promise<TaskCreationResult> {
     const taskId = uuidv4();
@@ -41,7 +47,58 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
         ...payload
     };
 
-    // Construct the fully qualified queue name
+    // Development mode: Generate DXF directly
+    if (IS_DEVELOPMENT) {
+        logger.info('Development mode: Generating DXF directly (no Cloud Tasks)', {
+            taskId,
+            cacheKey: payload.cacheKey
+        });
+
+        try {
+            // Create job FIRST (must exist before updateJobStatus)
+            createJob(taskId);
+            updateJobStatus(taskId, 'processing', 10);
+
+            // Generate DXF directly using Python bridge
+            await generateDxf({
+                lat: payload.lat,
+                lon: payload.lon,
+                radius: payload.radius,
+                mode: payload.mode,
+                polygon: payload.polygon,
+                outputFile: payload.outputFile
+            });
+
+            // Mark job as completed
+            completeJob(taskId, {
+                url: payload.downloadUrl,
+                filename: payload.filename
+            });
+
+            logger.info('DXF generation completed (dev mode)', {
+                taskId,
+                filename: payload.filename,
+                cacheKey: payload.cacheKey
+            });
+
+            return {
+                taskId,
+                taskName: `dev-task-${taskId}`,
+                alreadyCompleted: true  // Job already completed in dev mode
+            };
+        } catch (error: any) {
+            logger.error('DXF generation failed in dev mode', {
+                taskId,
+                error: error.message,
+                stack: error.stack
+            });
+
+            failJob(taskId, error.message);
+            throw new Error(`DXF generation failed: ${error.message}`);
+        }
+    }
+
+    // Production mode: Use Cloud Tasks
     const parent = tasksClient.queuePath(GCP_PROJECT, CLOUD_TASKS_LOCATION, CLOUD_TASKS_QUEUE);
     
     // Construct the webhook URL
