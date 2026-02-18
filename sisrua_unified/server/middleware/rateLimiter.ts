@@ -1,14 +1,15 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Request } from 'express';
 import { logger } from '../utils/logger.js';
 
 /**
  * Custom key generator that uses the client IP address
  * This respects X-Forwarded-For when trust proxy is enabled
- * Fixes: ValidationError about Forwarded header being ignored
+ * Uses ipKeyGenerator to properly handle both IPv4 and IPv6 addresses
+ * Fixes: ValidationError about IPv6 addresses bypassing rate limits
  */
 const keyGenerator = (req: Request): string => {
-    return req.ip || 'unknown';
+    return ipKeyGenerator(req.ip || 'unknown');
 };
 
 const dxfRateLimiter = rateLimit({
