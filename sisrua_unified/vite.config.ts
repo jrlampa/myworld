@@ -20,31 +20,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      rollupOptions: {
-        output: {
-          manualChunks: (id) => {
-            // Simplified chunking to avoid circular dependencies
-            if (id.includes('node_modules')) {
-              // Put all React-related packages together (react, react-dom, react-leaflet, lucide-react, etc.)
-              if (id.includes('react')) {
-                return 'react-vendor';
-              }
-              // Leaflet core (non-React) - exclude react-leaflet which is already in react-vendor
-              if (id.includes('leaflet') && !id.includes('react-leaflet')) {
-                return 'map-vendor';
-              }
-              // Other UI libraries
-              if (id.includes('recharts') || id.includes('framer-motion')) {
-                return 'ui-vendor';
-              }
-              // Everything else
-              return 'vendor';
-            }
-          }
-        }
-      },
-      // Increased from 300KB to 500KB because bundling all React packages together
-      // creates a larger react-vendor chunk (~214KB) which is expected and acceptable
+      // Use Vite default chunk splitting to avoid runtime module init ordering issues
       chunkSizeWarningLimit: 500,
       // Use esbuild minification (faster and already included)
       minify: 'esbuild',
