@@ -199,6 +199,11 @@ docker compose --profile with-redis up
 
 📖 **Detalhes**: Ver [ARCHITECTURE.md](./ARCHITECTURE.md) - Task Processing Strategy
 
+#### Troubleshooting Cloud Tasks
+Se você encontrar erros relacionados ao Cloud Tasks (ex: "Queue not found"):
+- 📖 Ver [CLOUD_TASKS_TROUBLESHOOTING.md](./CLOUD_TASKS_TROUBLESHOOTING.md) para soluções completas
+- 🔧 Executar: `./scripts/setup-cloud-tasks-queue.sh` para criar a fila manualmente
+
 ### Segurança e Auditoria
 
 ```bash
