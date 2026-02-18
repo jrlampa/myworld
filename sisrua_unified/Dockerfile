@@ -71,8 +71,8 @@ RUN npm ci --only=production --prefer-offline --no-audit && \
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Verify Python dependencies are installed
-RUN python3 -c "import osmnx, ezdxf, geopandas; print('✅ Python dependencies verified')"
+# Verify Python dependencies are installed (use venv Python explicitly)
+RUN /opt/venv/bin/python3 -c "import osmnx, ezdxf, geopandas; print('✅ Python dependencies verified')"
 
 # Copy application files
 COPY py_engine ./py_engine
