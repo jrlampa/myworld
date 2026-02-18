@@ -1,4 +1,4 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import multer from 'multer';
@@ -560,7 +560,7 @@ if (fs.existsSync(path.join(frontendDistDirectory, 'index.html'))) {
 }
 
 // Global error handler - must be after all routes
-app.use((err: any, req: Request, res: Response, next: any) => {
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     logger.error('Unhandled error', {
         error: err.message,
         stack: err.stack,
