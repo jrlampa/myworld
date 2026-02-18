@@ -200,7 +200,7 @@ function App() {
             }
           }, false);
         }, (_err) => {
-          console.log("Geolocation permission denied, using default.");
+          // Geolocation permission denied, using default
         });
       }
     }

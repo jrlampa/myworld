@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.js';
 import { v4 as uuidv4 } from 'uuid';
 import { generateDxf } from '../pythonBridge.js';
 import { completeJob, failJob, updateJobStatus, createJob } from './jobStatusService.js';
+import { scheduleDxfDeletion } from './dxfCleanupService.js';
 
 // Environment variables
 const GCP_PROJECT = process.env.GCP_PROJECT || '';
@@ -68,6 +69,9 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
                 polygon: payload.polygon,
                 outputFile: payload.outputFile
             });
+
+            // Schedule DXF file for deletion after 10 minutes
+            scheduleDxfDeletion(payload.outputFile);
 
             // Mark job as completed
             completeJob(taskId, {

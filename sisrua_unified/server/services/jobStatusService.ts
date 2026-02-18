@@ -23,15 +23,34 @@ const jobs = new Map<string, JobInfo>();
 const CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
 const MAX_JOB_AGE = 60 * 60 * 1000; // 1 hour
 
-setInterval(() => {
-    const now = Date.now();
-    for (const [id, job] of jobs.entries()) {
-        if (now - job.createdAt.getTime() > MAX_JOB_AGE) {
-            jobs.delete(id);
-            logger.info('Cleaned up old job', { jobId: id });
-        }
+let cleanupIntervalId: NodeJS.Timeout | null = null;
+
+function startCleanupInterval() {
+    if (cleanupIntervalId) {
+        return; // Already running
     }
-}, CLEANUP_INTERVAL);
+    
+    cleanupIntervalId = setInterval(() => {
+        const now = Date.now();
+        for (const [id, job] of jobs.entries()) {
+            if (now - job.createdAt.getTime() > MAX_JOB_AGE) {
+                jobs.delete(id);
+                logger.info('Cleaned up old job', { jobId: id });
+            }
+        }
+    }, CLEANUP_INTERVAL);
+}
+
+export function stopCleanupInterval() {
+    if (cleanupIntervalId) {
+        clearInterval(cleanupIntervalId);
+        cleanupIntervalId = null;
+        logger.info('Job cleanup interval stopped');
+    }
+}
+
+// Start cleanup interval on module load
+startCleanupInterval();
 
 export function createJob(id: string): JobInfo {
     const job: JobInfo = {
