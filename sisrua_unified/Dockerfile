@@ -22,6 +22,7 @@ RUN npm ci --prefer-offline --no-audit
 
 COPY tsconfig*.json ./
 COPY server ./server
+COPY src ./src
 RUN npx tsc -p tsconfig.server.json
 
 # Stage 3: Production runner (Python + Node.js)
@@ -29,7 +30,7 @@ FROM ubuntu:24.04
 WORKDIR /app
 
 # Security: Run as non-root user
-RUN useradd -m -u 1000 appuser
+RUN useradd -m -u 10000 appuser
 
 # Environment variables
 ENV NODE_ENV=production \

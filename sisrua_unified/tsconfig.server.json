@@ -13,5 +13,10 @@
     "include": [
         "server",
         "types.ts"
+    ],
+    "exclude": [
+        "server/tests",
+        "**/*.test.ts",
+        "**/*.spec.ts"
     ]
 }
