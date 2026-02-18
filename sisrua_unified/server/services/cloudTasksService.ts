@@ -15,6 +15,7 @@ const IS_DEVELOPMENT = NODE_ENV === 'development' || !GCP_PROJECT;
 
 // gRPC error codes
 const GRPC_NOT_FOUND_CODE = 5;
+const GRPC_PERMISSION_DENIED_CODE = 7;
 
 // Initialize Cloud Tasks client
 const tasksClient = new CloudTasksClient();
@@ -153,6 +154,7 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
         logger.error('Failed to create Cloud Task', {
             taskId,
             error: error.message,
+            errorCode: error.code,
             stack: error.stack,
             queueName: parent,
             gcpProject: GCP_PROJECT,
@@ -160,10 +162,33 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
             queue: CLOUD_TASKS_QUEUE
         });
         
+        // Check for permission denied errors
+        if (error.message?.includes('PERMISSION_DENIED') || error.code === GRPC_PERMISSION_DENIED_CODE) {
+            const serviceAccount = `${GCP_PROJECT}@appspot.gserviceaccount.com`;
+            const errorMsg = `Permission denied to access Cloud Tasks queue '${CLOUD_TASKS_QUEUE}'. ` +
+                           `The service account '${serviceAccount}' needs the following roles:\n` +
+                           `1. roles/cloudtasks.enqueuer - To create tasks in the queue\n` +
+                           `2. roles/run.invoker - To invoke the Cloud Run webhook\n\n` +
+                           `Grant permissions using:\n` +
+                           `gcloud projects add-iam-policy-binding ${GCP_PROJECT} --member="serviceAccount:${serviceAccount}" --role="roles/cloudtasks.enqueuer"\n` +
+                           `gcloud run services add-iam-policy-binding sisrua-app --region=${CLOUD_TASKS_LOCATION} --member="serviceAccount:${serviceAccount}" --role="roles/run.invoker"`;
+            logger.error('Cloud Tasks permission denied', { 
+                queue: parent,
+                serviceAccount,
+                suggestion: errorMsg 
+            });
+            throw new Error(errorMsg);
+        }
+        
         // Provide more specific error message for missing queue
         if (error.message?.includes('NOT_FOUND') || error.code === GRPC_NOT_FOUND_CODE) {
             const errorMsg = `Cloud Tasks queue '${CLOUD_TASKS_QUEUE}' not found in project '${GCP_PROJECT}' at location '${CLOUD_TASKS_LOCATION}'. ` +
-                           `Please create the queue using: gcloud tasks queues create ${CLOUD_TASKS_QUEUE} --location=${CLOUD_TASKS_LOCATION}`;
+                           `Please verify that:\n` +
+                           `1. The queue exists: gcloud tasks queues describe ${CLOUD_TASKS_QUEUE} --location=${CLOUD_TASKS_LOCATION} --project=${GCP_PROJECT}\n` +
+                           `2. The GCP_PROJECT environment variable is set correctly (current value: '${GCP_PROJECT}')\n` +
+                           `3. The service account has permission to access the queue\n\n` +
+                           `If the queue doesn't exist, create it using:\n` +
+                           `gcloud tasks queues create ${CLOUD_TASKS_QUEUE} --location=${CLOUD_TASKS_LOCATION} --project=${GCP_PROJECT}`;
             logger.error('Cloud Tasks queue does not exist', { 
                 queue: parent,
                 suggestion: errorMsg 
