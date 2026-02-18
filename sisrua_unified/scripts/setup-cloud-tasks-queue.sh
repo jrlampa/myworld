@@ -33,11 +33,14 @@ if ! command -v gcloud &> /dev/null; then
 fi
 
 # Check if user is authenticated
-if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" &> /dev/null; then
+ACTIVE_ACCOUNT=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null)
+if [ -z "$ACTIVE_ACCOUNT" ]; then
     echo -e "${RED}ERROR: Not authenticated with gcloud${NC}"
     echo "Please run: gcloud auth login"
     exit 1
 fi
+echo -e "Authenticated as: ${GREEN}${ACTIVE_ACCOUNT}${NC}"
+echo ""
 
 # Check if queue already exists
 echo "Checking if queue '${QUEUE_NAME}' exists..."

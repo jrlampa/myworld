@@ -13,6 +13,9 @@ const CLOUD_RUN_BASE_URL = process.env.CLOUD_RUN_BASE_URL || 'http://localhost:3
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_DEVELOPMENT = NODE_ENV === 'development' || !GCP_PROJECT;
 
+// gRPC error codes
+const GRPC_NOT_FOUND_CODE = 5;
+
 // Initialize Cloud Tasks client
 const tasksClient = new CloudTasksClient();
 
@@ -158,7 +161,7 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
         });
         
         // Provide more specific error message for missing queue
-        if (error.message?.includes('NOT_FOUND') || error.code === 5) {
+        if (error.message?.includes('NOT_FOUND') || error.code === GRPC_NOT_FOUND_CODE) {
             const errorMsg = `Cloud Tasks queue '${CLOUD_TASKS_QUEUE}' not found in project '${GCP_PROJECT}' at location '${CLOUD_TASKS_LOCATION}'. ` +
                            `Please create the queue using: gcloud tasks queues create ${CLOUD_TASKS_QUEUE} --location=${CLOUD_TASKS_LOCATION}`;
             logger.error('Cloud Tasks queue does not exist', { 
