@@ -48,7 +48,7 @@ const Dashboard: React.FC<DashboardProps> = ({ stats, analysisText }) => {
 
       {/* Chart */}
       <div className="h-48 w-full glass-panel p-4 rounded-lg">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <BarChart data={data} layout="vertical">
              <XAxis type="number" hide />
              <YAxis dataKey="name" type="category" width={100} tick={{fill: '#64748b', fontSize: 12, fontWeight: 600}} />

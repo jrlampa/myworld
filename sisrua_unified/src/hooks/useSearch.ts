@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { GeoLocation } from '../types';
 import { parseUtmQuery } from '../utils/geo';
-
-const API_BASE_URL = 'http://localhost:3001/api';
+import { API_BASE_URL } from '../config/api';
 
 interface UseSearchProps {
   onLocationFound: (location: GeoLocation) => void;

@@ -89,7 +89,7 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
 export const fetchElevationProfile = async (start: GeoLocation, end: GeoLocation) => {
   try {
     Logger.debug('Fetching elevation profile');
-    const response = await fetch('http://localhost:3001/api/elevation/profile', {
+    const response = await fetch('/api/elevation/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ start, end, steps: 25 })

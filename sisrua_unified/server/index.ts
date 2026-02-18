@@ -99,7 +99,44 @@ const batchRowSchema = z.object({
 
 // Configuração
 app.set('trust proxy', true);
-app.use(cors());
+
+// CORS Configuration - Allow requests from development and production origins
+const corsOptions = {
+    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+        // Allow requests with no origin (like mobile apps, curl, Postman)
+        if (!origin) return callback(null, true);
+        
+        // List of allowed origins
+        const allowedOrigins = [
+            'http://localhost:3000',  // Vite dev server
+            'http://localhost:8080',  // Production server
+            'http://127.0.0.1:3000',
+            'http://127.0.0.1:8080',
+        ];
+        
+        // Add Cloud Run URL if configured
+        if (process.env.CLOUD_RUN_BASE_URL) {
+            allowedOrigins.push(process.env.CLOUD_RUN_BASE_URL);
+        }
+        
+        // Check if origin is allowed
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            // In development mode, allow with warning; in production, reject
+            if (process.env.NODE_ENV === 'production') {
+                logger.warn('CORS request rejected in production', { origin });
+                callback(new Error('Not allowed by CORS'), false);
+            } else {
+                logger.info('CORS request from unlisted origin allowed in development', { origin });
+                callback(null, true);
+            }
+        }
+    },
+    credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
 app.use(generalRateLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
@@ -491,7 +528,15 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
     try {
         const { stats, locationName } = req.body;
         const apiKey = process.env.GROQ_API_KEY || '';
-        if (!apiKey) return res.status(500).json({ error: 'GROQ_API_KEY not set' });
+        
+        if (!apiKey) {
+            logger.warn('Analysis requested but GROQ_API_KEY not configured');
+            return res.status(503).json({ 
+                error: 'GROQ_API_KEY not configured',
+                message: 'AI analysis is unavailable. Please configure GROQ_API_KEY in the .env file to enable intelligent analysis features.',
+                analysis: '**Análise AI Indisponível**\n\nPara habilitar análises inteligentes com IA, configure a variável `GROQ_API_KEY` no arquivo `.env`.\n\nObtenha sua chave gratuita em: https://console.groq.com/keys'
+            });
+        }
 
         const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
         res.json(result);

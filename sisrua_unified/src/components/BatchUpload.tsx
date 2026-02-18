@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Upload, DownloadCloud, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { getDxfJobStatus } from '../services/dxfService';
+import { API_BASE_URL } from '../config/api';
 
 type BatchResult = {
   name: string;
@@ -27,7 +28,7 @@ type BatchUploadProps = {
   onInfo: (message: string) => void;
 };
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = API_BASE_URL;
 
 const sanitizeFileName = (name: string) =>
   name.toLowerCase().replace(/[^a-z0-9-_]+/g, '_').slice(0, 40) || 'batch';
