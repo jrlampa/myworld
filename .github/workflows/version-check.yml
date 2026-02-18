@@ -1,0 +1,137 @@
+name: Version Consistency Check
+
+on:
+  pull_request:
+    branches:
+      - main
+      - production
+      - release/*
+    paths:
+      - 'sisrua_unified/VERSION'
+      - 'sisrua_unified/package.json'
+      - 'sisrua_unified/package-lock.json'
+      - 'sisrua_unified/py_engine/constants.py'
+      - 'sisrua_unified/src/hooks/useFileOperations.ts'
+      - '.github/workflows/version-check.yml'
+  push:
+    branches:
+      - main
+      - production
+    paths:
+      - 'sisrua_unified/VERSION'
+      - 'sisrua_unified/package.json'
+      - 'sisrua_unified/package-lock.json'
+      - 'sisrua_unified/py_engine/constants.py'
+      - 'sisrua_unified/src/hooks/useFileOperations.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-version-consistency:
+    name: Validate Version Consistency
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: sisrua_unified
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: sisrua_unified/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: Check VERSION file exists
+        run: |
+          if [ ! -f VERSION ]; then
+            echo "❌ VERSION file not found!"
+            exit 1
+          fi
+          echo "✅ VERSION file exists"
+      
+      - name: Validate VERSION format (SemVer)
+        run: |
+          VERSION=$(cat VERSION)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ VERSION file contains invalid semantic version: $VERSION"
+            echo "Expected format: MAJOR.MINOR.PATCH (e.g., 1.0.0, 1.0.0-alpha.1, 1.0.0+build.123)"
+            exit 1
+          fi
+          echo "✅ VERSION format is valid: $VERSION"
+      
+      - name: Check version consistency across files
+        run: |
+          # Get version from VERSION file (source of truth)
+          EXPECTED_VERSION=$(cat VERSION)
+          echo "Expected version from VERSION file: $EXPECTED_VERSION"
+          
+          # Check package.json
+          PKG_VERSION=$(grep '"version"' package.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+          if [ "$PKG_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "❌ package.json version mismatch: expected $EXPECTED_VERSION, got $PKG_VERSION"
+            exit 1
+          fi
+          echo "✅ package.json version matches: $PKG_VERSION"
+          
+          # Check package-lock.json
+          PKG_LOCK_VERSION=$(grep '"version"' package-lock.json | head -1 | sed 's/.*"version": "\(.*\)".*/\1/')
+          if [ "$PKG_LOCK_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "❌ package-lock.json version mismatch: expected $EXPECTED_VERSION, got $PKG_LOCK_VERSION"
+            exit 1
+          fi
+          echo "✅ package-lock.json version matches: $PKG_LOCK_VERSION"
+          
+          # Check Python constants
+          PY_VERSION=$(grep "PROJECT_VERSION = " py_engine/constants.py | sed "s/.*PROJECT_VERSION = '\(.*\)'.*/\1/")
+          if [ "$PY_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "❌ py_engine/constants.py version mismatch: expected $EXPECTED_VERSION, got $PY_VERSION"
+            exit 1
+          fi
+          echo "✅ py_engine/constants.py version matches: $PY_VERSION"
+          
+          # Check TypeScript file
+          TS_VERSION=$(grep "const PROJECT_VERSION = " src/hooks/useFileOperations.ts | sed "s/.*const PROJECT_VERSION = '\(.*\)'.*/\1/")
+          if [ "$TS_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "❌ src/hooks/useFileOperations.ts version mismatch: expected $EXPECTED_VERSION, got $TS_VERSION"
+            exit 1
+          fi
+          echo "✅ src/hooks/useFileOperations.ts version matches: $TS_VERSION"
+          
+          echo ""
+          echo "================================================"
+          echo "✅ All version checks passed!"
+          echo "Version: $EXPECTED_VERSION"
+          echo "================================================"
+      
+      - name: Run version consistency tests
+        run: npx vitest run tests/version.test.ts
+      
+      - name: Verify update script is executable
+        run: |
+          if [ ! -x scripts/update-version.sh ]; then
+            echo "⚠️  scripts/update-version.sh is not executable"
+            chmod +x scripts/update-version.sh
+            echo "✅ Made scripts/update-version.sh executable"
+          else
+            echo "✅ scripts/update-version.sh is executable"
+          fi
+      
+      - name: Show version info
+        run: |
+          echo "Current project version: $(cat VERSION)"
+          echo ""
+          echo "To update version, run:"
+          echo "  ./scripts/update-version.sh <new_version>"
+          echo "  (or on Windows: .\\scripts\\update-version.ps1 <new_version>)"
+          echo ""
+          echo "See VERSIONING.md for more details"

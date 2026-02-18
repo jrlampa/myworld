@@ -2,6 +2,7 @@
   "name": "sisrua-unified",
   "private": true,
   "version": "1.0.0",
+  "description": "Sistema de Exportação OSM para DXF - IMPORTANT: Do not update version manually. Use ./scripts/update-version.sh instead. See VERSIONING.md for details.",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"vite\"",
@@ -10,6 +11,8 @@
     "build:all": "powershell -ExecutionPolicy Bypass -File scripts/build_release.ps1",
     "preview": "vite preview",
     "server": "tsx watch server/index.ts",
+    "version:update": "bash scripts/update-version.sh",
+    "version:check": "bash scripts/check-version.sh",
     "docker:build": "docker build -t sisrua-unified:latest .",
     "docker:run": "docker run -p 8080:8080 --env-file .env sisrua-unified:latest",
     "docker:dev": "docker compose up",

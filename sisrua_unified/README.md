@@ -319,3 +319,17 @@ O sistema suporta dois modos de projeção:
 ## 📝 Licença
 
 Proprietary
+
+## 📌 Versionamento
+
+Este projeto segue [Semantic Versioning (SemVer)](https://semver.org/). Para atualizar a versão do projeto:
+
+```bash
+# Linux/Mac
+./scripts/update-version.sh 1.1.0
+
+# Windows
+.\scripts\update-version.ps1 1.1.0
+```
+
+📖 **Guia completo**: [VERSIONING.md](./VERSIONING.md)

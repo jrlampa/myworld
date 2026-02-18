@@ -8,7 +8,9 @@ interface UseFileOperationsProps {
   onError: (message: string) => void;
 }
 
-const PROJECT_VERSION = '3.0.0';
+// NOTE: Do not update PROJECT_VERSION manually. Use ./scripts/update-version.sh instead.
+// See VERSIONING.md for details about version management.
+const PROJECT_VERSION = '1.0.0';
 
 export function useFileOperations({
   appState,
