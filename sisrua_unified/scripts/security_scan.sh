@@ -157,7 +157,7 @@ fi
 
 # Check .gitignore for security-sensitive patterns
 echo ""
-if grep -q "\.env" .gitignore 2>/dev/null && \
+if (grep -q "\.env" .gitignore 2>/dev/null || grep -q "\.env" sisrua_unified/.gitignore 2>/dev/null) && \
    grep -q "\.exe" sisrua_unified/.gitignore 2>/dev/null && \
    grep -q "\.dll" sisrua_unified/.gitignore 2>/dev/null; then
     print_status 0 ".gitignore properly configured for security"
