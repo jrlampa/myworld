@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "server": "tsx watch server/index.ts",
     "version:update": "bash scripts/update-version.sh",
-    "version:check": "echo 'VERSION file:' && cat VERSION && echo '' && echo 'package.json:' && grep '\"version\"' package.json | head -1 && echo '' && echo 'constants.py:' && grep 'PROJECT_VERSION' py_engine/constants.py && echo '' && echo 'useFileOperations.ts:' && grep 'PROJECT_VERSION' src/hooks/useFileOperations.ts | head -1",
+    "version:check": "bash scripts/check-version.sh",
     "docker:build": "docker build -t sisrua-unified:latest .",
     "docker:run": "docker run -p 8080:8080 --env-file .env sisrua-unified:latest",
     "docker:dev": "docker compose up",

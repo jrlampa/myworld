@@ -39,8 +39,8 @@ fi
 
 echo -e "${YELLOW}Updating version from $CURRENT_VERSION to $NEW_VERSION...${NC}"
 
-# Update VERSION file
-echo "$NEW_VERSION" > "$VERSION_FILE"
+# Update VERSION file (without trailing newline)
+printf '%s' "$NEW_VERSION" > "$VERSION_FILE"
 echo -e "${GREEN}✓ Updated VERSION file${NC}"
 
 # Update package.json
@@ -72,14 +72,24 @@ fi
 # Update Python constants.py
 CONSTANTS_FILE="$PROJECT_ROOT/py_engine/constants.py"
 if [ -f "$CONSTANTS_FILE" ]; then
-    sed -i "s/PROJECT_VERSION = '[^']*'/PROJECT_VERSION = '$NEW_VERSION'/" "$CONSTANTS_FILE"
+    # Cross-platform sed (works on both Linux and macOS)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/PROJECT_VERSION = '[^']*'/PROJECT_VERSION = '$NEW_VERSION'/" "$CONSTANTS_FILE"
+    else
+        sed -i "s/PROJECT_VERSION = '[^']*'/PROJECT_VERSION = '$NEW_VERSION'/" "$CONSTANTS_FILE"
+    fi
     echo -e "${GREEN}✓ Updated py_engine/constants.py${NC}"
 fi
 
 # Update TypeScript useFileOperations.ts
 TS_FILE="$PROJECT_ROOT/src/hooks/useFileOperations.ts"
 if [ -f "$TS_FILE" ]; then
-    sed -i "s/const PROJECT_VERSION = '[^']*'/const PROJECT_VERSION = '$NEW_VERSION'/" "$TS_FILE"
+    # Cross-platform sed (works on both Linux and macOS)
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/const PROJECT_VERSION = '[^']*'/const PROJECT_VERSION = '$NEW_VERSION'/" "$TS_FILE"
+    else
+        sed -i "s/const PROJECT_VERSION = '[^']*'/const PROJECT_VERSION = '$NEW_VERSION'/" "$TS_FILE"
+    fi
     echo -e "${GREEN}✓ Updated src/hooks/useFileOperations.ts${NC}"
 fi
 
