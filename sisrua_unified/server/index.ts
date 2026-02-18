@@ -559,6 +559,27 @@ if (fs.existsSync(path.join(frontendDistDirectory, 'index.html'))) {
     });
 }
 
+// Global error handler - must be after all routes
+app.use((err: any, req: Request, res: Response, next: any) => {
+    logger.error('Unhandled error', {
+        error: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method
+    });
+    
+    // Ensure we always send JSON for API endpoints
+    if (req.path.startsWith('/api')) {
+        return res.status(err.status || 500).json({
+            error: err.message || 'Internal server error',
+            details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
+    }
+    
+    // For non-API routes, send error page if available
+    return res.status(err.status || 500).send('Internal Server Error');
+});
+
 app.listen(port, () => {
     const baseUrl = getBaseUrl();
     logger.info('Backend online', {
