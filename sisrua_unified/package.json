@@ -10,6 +10,12 @@
     "build:all": "powershell -ExecutionPolicy Bypass -File scripts/build_release.ps1",
     "preview": "vite preview",
     "server": "tsx watch server/index.ts",
+    "docker:build": "docker build -t sisrua-unified:latest .",
+    "docker:run": "docker run -p 8080:8080 --env-file .env sisrua-unified:latest",
+    "docker:dev": "docker compose up",
+    "docker:dev:build": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f app",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "npm run test:frontend && npm run test:backend",
     "test:frontend": "vitest run --coverage",
@@ -21,7 +27,7 @@
     "security:audit": "npm audit --audit-level=moderate",
     "security:audit:fix": "npm audit fix",
     "security:check": "npm run security:audit && echo '\n--- Security audit complete ---'",
-    "postinstall": "echo 'Setup complete. Please ensure Python dependencies are installed using pip install -r py_engine/requirements.txt'"
+    "postinstall": "echo '\n✅ Setup complete!\n\n🐳 RECOMMENDED: Use Docker for the best experience:\n   npm run docker:dev\n\n💻 Or install Python dependencies manually:\n   pip install -r py_engine/requirements.txt\n'"
   },
   "dependencies": {
     "@google-cloud/tasks": "^6.2.1",
