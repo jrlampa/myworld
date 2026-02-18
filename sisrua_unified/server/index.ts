@@ -120,13 +120,21 @@ const corsOptions = {
             allowedOrigins.push(process.env.CLOUD_RUN_BASE_URL);
         }
         
+        // CRITICAL FIX: Allow Cloud Run service to call itself
+        // Cloud Run URLs follow pattern: https://{service}-{hash}.{region}.run.app
+        const isCloudRunOrigin = origin && (
+            origin.includes('.run.app') ||
+            origin.includes('southamerica-east1.run.app')
+        );
+        
         // Check if origin is allowed
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        if (allowedOrigins.indexOf(origin) !== -1 || isCloudRunOrigin) {
+            logger.info('CORS request allowed', { origin, isCloudRun: isCloudRunOrigin });
             callback(null, true);
         } else {
             // In development mode, allow with warning; in production, reject
             if (process.env.NODE_ENV === 'production') {
-                logger.warn('CORS request rejected in production', { origin });
+                logger.warn('CORS request rejected in production', { origin, allowedOrigins });
                 callback(new Error('Not allowed by CORS'), false);
             } else {
                 logger.info('CORS request from unlisted origin allowed in development', { origin });
