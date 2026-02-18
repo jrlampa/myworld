@@ -17,6 +17,7 @@ Este guia fornece instruções completas para deploy da aplicação SIS RUA Unif
   - Cloud Run API
   - Cloud Build API
   - Container Registry API
+  - Cloud Tasks API
   - Workload Identity Federation
 
 ### 2. Configuração do GitHub

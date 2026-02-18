@@ -41,6 +41,23 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Ensure Cloud Tasks Queue Exists
+        run: |
+          # Check if queue exists
+          if ! gcloud tasks queues describe sisrua-queue \
+            --location=southamerica-east1 \
+            --project=${{ secrets.GCP_PROJECT_ID }} &> /dev/null; then
+            echo "Queue 'sisrua-queue' not found. Creating..."
+            gcloud tasks queues create sisrua-queue \
+              --location=southamerica-east1 \
+              --project=${{ secrets.GCP_PROJECT_ID }} \
+              --max-dispatches-per-second=10 \
+              --max-concurrent-dispatches=10
+            echo "Queue 'sisrua-queue' created successfully."
+          else
+            echo "Queue 'sisrua-queue' already exists."
+          fi
+
       - name: Deploy to Cloud Run
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
