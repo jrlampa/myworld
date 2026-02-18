@@ -1,11 +1,28 @@
-# sisRUA Unified - Release Build Script
-# Orchestrates the full compilation of the project
+# sisRUA Unified - Release Build Script (DEPRECATED)
+# 
+# ⚠️ DEPRECATION NOTICE ⚠️
+# This script is DEPRECATED in favor of Docker-based builds.
+# 
+# RECOMMENDED APPROACH:
+#   Use Docker for enterprise-level distribution:
+#   npm run docker:build
+#
+# This legacy script remains for local Windows development only.
+# It compiles the Python engine to .exe using PyInstaller, which:
+# - May trigger antivirus false positives
+# - Is Windows-only
+# - Requires manual PyInstaller installation
+# - Is NOT used in production (Docker/Cloud Run uses Python directly)
+#
+# For production deployments, always use Docker.
+# ==========================================
 
 $BuildStart = Get-Date
 Write-Host ""
-Write-Host "======================================" -ForegroundColor Cyan
-Write-Host "   sisRUA Unified - Release Build" -ForegroundColor Cyan
-Write-Host "======================================" -ForegroundColor Cyan
+Write-Host "======================================" -ForegroundColor Yellow
+Write-Host "   ⚠️  LEGACY BUILD (Deprecated)" -ForegroundColor Yellow
+Write-Host "   Use 'npm run docker:build' instead" -ForegroundColor Yellow  
+Write-Host "======================================" -ForegroundColor Yellow
 Write-Host ""
 
 $RootDir = Get-Location

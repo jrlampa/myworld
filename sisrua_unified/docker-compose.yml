@@ -20,6 +20,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8080
+      - PYTHON_COMMAND=python3
+      - DOCKER_ENV=true
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - GCP_PROJECT=${GCP_PROJECT:-sisrua-dev}
       - CLOUD_TASKS_LOCATION=${CLOUD_TASKS_LOCATION:-southamerica-east1}

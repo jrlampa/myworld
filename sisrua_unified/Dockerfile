@@ -41,7 +41,9 @@ ENV NODE_ENV=production \
     PORT=8080 \
     DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHON_COMMAND=python3 \
+    DOCKER_ENV=true
 
 # Install Node.js and Python runtime (single installation)
 RUN apt-get update && \

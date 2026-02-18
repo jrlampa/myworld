@@ -2,13 +2,36 @@
 
 Sistema completo de extração de dados do OpenStreetMap e geração de arquivos DXF 2.5D para AutoCAD, com suporte a análise espacial e coordenadas UTM absolutas.
 
+## 🐳 Arquitetura Docker-First (Enterprise)
+
+**Este projeto usa Docker como método PRIMARY de distribuição**, isolando completamente o motor Python e eliminando dependências de binários .exe.
+
+### Por que Docker?
+- ✅ **Isolamento completo** - Python roda em container, não no SO do usuário
+- ✅ **Zero dependências** - Não precisa instalar Node.js ou Python
+- ✅ **Sem antivírus** - Nenhum falso positivo com executáveis
+- ✅ **Multiplataforma** - Roda em Windows, Linux e Mac
+- ✅ **Enterprise-ready** - Deploy automatizado para Cloud Run
+
+### Quick Start
+```bash
+# Pré-requisito: Docker instalado
+docker compose up
+
+# Acesse: http://localhost:8080
+```
+
+**Pronto!** Todo o ambiente está configurado automaticamente. 🚀
+
+📖 **Guia completo**: [DOCKER_USAGE.md](./DOCKER_USAGE.md)
+
 ## 🔒 Segurança
 
-**IMPORTANTE**: Se seu antivírus bloquear arquivos deste projeto, isso é provavelmente um **falso positivo**. 
+**Com Docker (Recomendado)**: Antivírus NÃO é problema! Python roda em container isolado.
 
-📖 **Leia**: [SECURITY_ANTIVIRUS_GUIDE.md](./SECURITY_ANTIVIRUS_GUIDE.md) - Guia completo de mitigação de problemas com antivírus
-
-📋 **Desenvolvedores**: [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md) - Checklist de segurança obrigatório
+**Sem Docker**: Se preferir instalação nativa e seu antivírus bloquear, veja:
+- 📖 [SECURITY_ANTIVIRUS_GUIDE.md](./SECURITY_ANTIVIRUS_GUIDE.md) - Mitigação de problemas
+- 📋 [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md) - Checklist de segurança
 
 O projeto implementa várias medidas de segurança:
 - ✅ Validação rigorosa de entrada em todos os endpoints
