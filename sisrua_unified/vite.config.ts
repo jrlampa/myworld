@@ -34,13 +34,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('recharts') || id.includes('framer-motion') || id.includes('lucide-react')) {
                 return 'ui-vendor';
               }
-              // Split large libraries separately
-              if (id.includes('groq-sdk')) {
-                return 'groq-vendor';
-              }
-              if (id.includes('bull') || id.includes('ioredis')) {
-                return 'queue-vendor';
-              }
               // Other vendor code
               return 'vendor';
             }
