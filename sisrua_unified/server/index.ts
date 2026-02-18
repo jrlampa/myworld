@@ -4,6 +4,7 @@ import 'dotenv/config';
 import multer from 'multer';
 import { z } from 'zod';
 import swaggerUi from 'swagger-ui-express';
+import { spawn } from 'child_process';
 
 import { fileURLToPath } from 'url';
 import path from 'path';
@@ -154,18 +155,21 @@ app.use((req, _res, next) => {
 // Health Check
 app.get('/health', async (_req: Request, res: Response) => {
     try {
-        // Check if Python is available
-        const { spawn } = await import('child_process');
         const pythonCommand = process.env.PYTHON_COMMAND || 'python3';
         
         // Quick Python availability check (non-blocking)
         const pythonAvailable = await new Promise<boolean>((resolve) => {
-            const timeout = setTimeout(() => resolve(false), 2000); // 2 second timeout
+            const timeout = setTimeout(() => {
+                resolve(false);
+            }, 2000); // 2 second timeout
+            
             const proc = spawn(pythonCommand, ['--version']);
+            
             proc.on('close', (code) => {
                 clearTimeout(timeout);
                 resolve(code === 0);
             });
+            
             proc.on('error', () => {
                 clearTimeout(timeout);
                 resolve(false);
@@ -609,9 +613,14 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
             stack: error.stack,
             body: req.body
         });
+        
+        // Sanitize error message to prevent injection
+        const sanitizedMessage = String(error.message || 'Unknown error').slice(0, 200);
+        
         return res.status(500).json({ 
-            error: error.message,
-            analysis: `**Erro na Análise AI**: ${error.message}\n\nNão foi possível processar a análise. Por favor, tente novamente.`
+            error: 'Analysis failed',
+            details: sanitizedMessage,
+            analysis: `**Erro na Análise AI**\n\nNão foi possível processar a análise. Por favor, tente novamente.`
         });
     }
 });
