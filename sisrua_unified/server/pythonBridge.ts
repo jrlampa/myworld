@@ -35,6 +35,7 @@ interface DxfOptions {
     layers?: Record<string, boolean>;
     mode?: string;
     polygon?: string;
+    projection?: string;
 }
 
 export const generateDxf = (options: DxfOptions): Promise<string> => {
@@ -78,6 +79,7 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
             '--output', String(options.outputFile),
             '--selection_mode', String(options.mode || 'circle'),
             '--polygon', String(options.polygon || '[]'),
+            '--projection', String(options.projection || 'local'),
             '--no-preview'
         );
 

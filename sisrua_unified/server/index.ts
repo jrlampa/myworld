@@ -214,6 +214,7 @@ app.post('/api/tasks/process-dxf', async (req: Request, res: Response) => {
                 mode,
                 polygon,
                 layers,
+                projection,
                 outputFile
             });
 

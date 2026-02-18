@@ -67,6 +67,7 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
                 radius: payload.radius,
                 mode: payload.mode,
                 polygon: payload.polygon,
+                projection: payload.projection,
                 outputFile: payload.outputFile
             });
 
