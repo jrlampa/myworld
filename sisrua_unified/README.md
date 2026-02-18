@@ -91,13 +91,57 @@ sisrua_unified/
 
 ## 🚀 Como Usar
 
-### Instalação
+### 🐳 Quick Start com Docker (Mais Fácil)
+
+**Requisito**: Docker instalado ([Get Docker](https://docs.docker.com/get-docker/))
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/jrlampa/myworld.git
+cd myworld/sisrua_unified
+
+# 2. (Opcional) Configure variáveis de ambiente
+cp .env.example .env
+# Edite .env e adicione sua GROQ_API_KEY
+
+# 3. Inicie a aplicação
+docker-compose up
+
+# 4. Acesse no navegador
+# http://localhost:8080
+```
+
+**Pronto!** Todo o ambiente (Node.js, Python, dependências) está configurado automaticamente.
+
+### 💻 Instalação Nativa (Node.js + Python)
+
+Se preferir rodar sem Docker:
+
 ```bash
 npm install
 pip install -r py_engine/requirements.txt
 ```
 
 ### Desenvolvimento
+
+#### Opção 1: Docker Compose (Recomendado - Setup Automático)
+```bash
+# Inicia tudo com um comando (Node.js + Python + Frontend + Backend)
+docker-compose up
+
+# Ou em background
+docker-compose up -d
+
+# Acesse a aplicação
+# http://localhost:8080
+```
+
+**Vantagens**:
+- ✅ Zero configuração manual de Python/Node.js
+- ✅ Ambiente isolado e reproduzível
+- ✅ Ideal para onboarding de novos devs
+
+#### Opção 2: Desenvolvimento Nativo (Node.js + Python instalados)
 ```bash
 # Start all services (frontend + backend)
 npm run dev
@@ -111,15 +155,26 @@ O launcher [start-dev.ps1](start-dev.ps1) inicia automaticamente:
 - **Backend** (Express): http://localhost:3001
 - **Swagger API Docs**: http://localhost:3001/api-docs
 
-**Pré-requisitos para funcionalidade completa:**
-- **Redis** (para job queue assíncrono):
+**Pré-requisitos**:
+- **Node.js 22+** e **Python 3.9+** instalados
+- Dependências instaladas:
   ```bash
-  docker run -d --name sisrua-redis -p 6379:6379 redis:7-alpine
-  ```
-- **Python** com dependências instaladas:
-  ```bash
+  npm install
   pip install -r py_engine/requirements.txt
   ```
+
+### ℹ️ Nota sobre Job Queue
+
+**PRODUÇÃO (Cloud Run)**: Usa **Google Cloud Tasks** (serverless, sem Redis)  
+**DESENVOLVIMENTO LOCAL**: Redis é **OPCIONAL** e não utilizado atualmente
+
+Se quiser testar com Redis (futuro):
+```bash
+# Inicia app + Redis
+docker-compose --profile with-redis up
+```
+
+📖 **Detalhes**: Ver [ARCHITECTURE.md](./ARCHITECTURE.md) - Task Processing Strategy
 
 ### Segurança e Auditoria
 

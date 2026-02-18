@@ -1,0 +1,77 @@
+# SIS RUA Unified - Docker Compose for Local Development
+# Simplifies onboarding and eliminates manual setup of Python/Node
+#
+# Usage:
+#   docker-compose up          # Start app only
+#   docker-compose --profile with-redis up  # Start app + Redis (optional)
+#   docker-compose up -d       # Start in background
+#   docker-compose down        # Stop and remove containers
+#   docker-compose logs -f app # View app logs
+
+version: '3.9'
+
+services:
+  # Main Application (Frontend + Backend + Python Engine)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sisrua-app
+    ports:
+      - "8080:8080"  # Backend API and frontend
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GCP_PROJECT=${GCP_PROJECT:-sisrua-dev}
+      - CLOUD_TASKS_LOCATION=${CLOUD_TASKS_LOCATION:-southamerica-east1}
+      - CLOUD_TASKS_QUEUE=${CLOUD_TASKS_QUEUE:-sisrua-queue}
+      - CLOUD_RUN_BASE_URL=http://localhost:8080
+    volumes:
+      # Persist generated DXF files
+      - dxf-output:/app/public/dxf
+      # Persist cache
+      - cache-data:/app/cache
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - sisrua-network
+
+  # Optional: Redis for local async job queue simulation
+  # NOTE: NOT REQUIRED for production - Google Cloud Tasks is used instead
+  # Enable with: docker-compose --profile with-redis up
+  redis:
+    image: redis:7-alpine
+    container_name: sisrua-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - sisrua-network
+    profiles:
+      - with-redis
+
+volumes:
+  dxf-output:
+    name: sisrua_dxf_output
+  cache-data:
+    name: sisrua_cache
+  redis-data:
+    name: sisrua_redis_data
+
+networks:
+  sisrua-network:
+    name: sisrua-network
+    driver: bridge
