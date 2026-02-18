@@ -150,8 +150,24 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
         logger.error('Failed to create Cloud Task', {
             taskId,
             error: error.message,
-            stack: error.stack
+            stack: error.stack,
+            queueName: parent,
+            gcpProject: GCP_PROJECT,
+            location: CLOUD_TASKS_LOCATION,
+            queue: CLOUD_TASKS_QUEUE
         });
+        
+        // Provide more specific error message for missing queue
+        if (error.message?.includes('NOT_FOUND') || error.code === 5) {
+            const errorMsg = `Cloud Tasks queue '${CLOUD_TASKS_QUEUE}' not found in project '${GCP_PROJECT}' at location '${CLOUD_TASKS_LOCATION}'. ` +
+                           `Please create the queue using: gcloud tasks queues create ${CLOUD_TASKS_QUEUE} --location=${CLOUD_TASKS_LOCATION}`;
+            logger.error('Cloud Tasks queue does not exist', { 
+                queue: parent,
+                suggestion: errorMsg 
+            });
+            throw new Error(errorMsg);
+        }
+        
         throw new Error(`Failed to create Cloud Task: ${error.message}`);
     }
 }

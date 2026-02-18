@@ -9,10 +9,23 @@
 
 ### Prerequisites
 
-1. **Cloud Tasks Queue Setup** (GCP Console):
+1. **Cloud Tasks Queue Setup** (Automated or Manual):
+   
+   **Option A - Automated (Recommended)**: The queue is automatically created during deployment by the GitHub Actions workflow.
+   
+   **Option B - Manual Setup**: Run the setup script:
+   ```bash
+   cd sisrua_unified
+   ./scripts/setup-cloud-tasks-queue.sh
+   ```
+   
+   **Option C - Using gcloud directly**:
    ```bash
    gcloud tasks queues create sisrua-queue \
-     --location=southamerica-east1
+     --location=southamerica-east1 \
+     --project=sisrua-producao \
+     --max-dispatches-per-second=10 \
+     --max-concurrent-dispatches=10
    ```
 
 2. **Environment Variables** (in Cloud Run or .env):
