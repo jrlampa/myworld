@@ -17,7 +17,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  predeploy:
+    uses: ./.github/workflows/pre-deploy.yml
+    secrets: inherit
+
   deploy:
+    needs: predeploy
     runs-on: ubuntu-latest
     environment: production
 
