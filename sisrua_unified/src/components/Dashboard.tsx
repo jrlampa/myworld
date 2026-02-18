@@ -9,54 +9,61 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ stats, analysisText }) => {
   const data = [
-    { name: 'Buildings', value: stats.totalBuildings, color: '#facc15' }, // Yellow
-    { name: 'Roads', value: stats.totalRoads, color: '#f87171' }, // Red
-    { name: 'Nature', value: stats.totalNature, color: '#4ade80' }, // Green
+    { name: 'Edificações', value: stats.totalBuildings, color: '#facc15' }, // Yellow
+    { name: 'Vias', value: stats.totalRoads, color: '#f87171' }, // Red
+    { name: 'Natureza', value: stats.totalNature, color: '#4ade80' }, // Green
   ];
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-lg space-y-6">
+    <div className="glass-panel p-6 rounded-xl shadow-lg space-y-6">
       
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/50 p-4 rounded-lg">
-          <p className="text-slate-400 text-xs uppercase tracking-wider">Objects</p>
-          <p className="text-2xl font-bold text-white">{stats.totalBuildings + stats.totalRoads + stats.totalNature}</p>
+        <div className="glass-panel-hover p-4 rounded-lg">
+          <p className="text-slate-600 text-xs uppercase tracking-wider font-semibold">Objetos</p>
+          <p className="text-2xl font-bold text-slate-800">{stats.totalBuildings + stats.totalRoads + stats.totalNature}</p>
         </div>
-        <div className="bg-slate-800/50 p-4 rounded-lg">
-          <p className="text-slate-400 text-xs uppercase tracking-wider">Max Height</p>
-          <p className="text-2xl font-bold text-blue-400">{stats.maxHeight.toFixed(1)}m</p>
+        <div className="glass-panel-hover p-4 rounded-lg">
+          <p className="text-slate-600 text-xs uppercase tracking-wider font-semibold">Altura Máx.</p>
+          <p className="text-2xl font-bold" style={{ color: 'var(--enterprise-blue)' }}>{stats.maxHeight.toFixed(1)}m</p>
         </div>
-        <div className="bg-slate-800/50 p-4 rounded-lg">
-          <p className="text-slate-400 text-xs uppercase tracking-wider">Avg Height</p>
-          <p className="text-2xl font-bold text-blue-400">{stats.avgHeight.toFixed(1)}m</p>
+        <div className="glass-panel-hover p-4 rounded-lg">
+          <p className="text-slate-600 text-xs uppercase tracking-wider font-semibold">Altura Média</p>
+          <p className="text-2xl font-bold" style={{ color: 'var(--enterprise-blue)' }}>{stats.avgHeight.toFixed(1)}m</p>
         </div>
-        <div className="bg-slate-800/50 p-4 rounded-lg">
-          <p className="text-slate-400 text-xs uppercase tracking-wider">Density</p>
-          <p className="text-2xl font-bold text-purple-400">
-            {stats.totalBuildings > 500 ? 'High' : stats.totalBuildings > 100 ? 'Med' : 'Low'}
+        <div className="glass-panel-hover p-4 rounded-lg">
+          <p className="text-slate-600 text-xs uppercase tracking-wider font-semibold">Densidade</p>
+          <p className="text-2xl font-bold text-purple-600">
+            {stats.totalBuildings > 500 ? 'Alta' : stats.totalBuildings > 100 ? 'Média' : 'Baixa'}
           </p>
         </div>
       </div>
 
-      <div className="bg-slate-800/30 p-4 rounded-lg border-l-4 border-indigo-500">
-        <h3 className="text-sm font-semibold text-indigo-400 mb-1">Analysis Summary</h3>
-        <p className="text-slate-300 text-sm leading-relaxed italic">
+      <div className="glass-panel p-4 rounded-lg border-l-4" style={{ borderLeftColor: 'var(--enterprise-blue)' }}>
+        <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--enterprise-blue)' }}>Resumo da Análise</h3>
+        <p className="text-slate-700 text-sm leading-relaxed italic">
           "{analysisText}"
         </p>
       </div>
 
       {/* Chart */}
-      <div className="h-48 w-full">
+      <div className="h-48 w-full glass-panel p-4 rounded-lg">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical">
              <XAxis type="number" hide />
-             <YAxis dataKey="name" type="category" width={80} tick={{fill: '#94a3b8', fontSize: 12}} />
+             <YAxis dataKey="name" type="category" width={100} tick={{fill: '#64748b', fontSize: 12, fontWeight: 600}} />
              <Tooltip 
-                contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                cursor={{fill: 'transparent'}}
+                contentStyle={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                  borderColor: 'rgba(255, 255, 255, 0.5)', 
+                  color: '#1e293b',
+                  backdropFilter: 'blur(12px)',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1)'
+                }}
+                cursor={{fill: 'rgba(6, 182, 212, 0.05)'}}
              />
-             <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
+             <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={24}>
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
