@@ -148,7 +148,8 @@ fi
 # Check for hardcoded secrets in recent commits
 echo ""
 echo "Checking for potential secrets in recent commits..."
-if git log --all --full-history -10 --grep="password\|secret\|api_key\|token" -i | grep -q "password\|secret\|api_key\|token"; then
+if git log --all --full-history -10 --grep="password\|secret\|api_key\|token" -i --oneline 2>/dev/null | grep -q .; then
+    # If there's any output, matches were found
     print_warning "Found potential secret keywords in recent commits"
     echo "   Review commit messages manually"
 else
