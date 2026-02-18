@@ -133,16 +133,43 @@ Todos devem mostrar a **mesma versão**.
 
 ## Integração CI/CD
 
+### GitHub Actions Workflow
+
+O projeto inclui um workflow automático (`.github/workflows/version-check.yml`) que valida a consistência de versionamento em cada Pull Request.
+
+**O workflow verifica:**
+- ✅ Existência do arquivo VERSION
+- ✅ Formato válido de Semantic Versioning
+- ✅ Consistência entre todos os arquivos com versão
+- ✅ Execução dos testes de versionamento
+
+**Quando é executado:**
+- Em Pull Requests para branches principais (main, production, release/*)
+- Quando arquivos de versão são modificados
+- Manualmente via workflow_dispatch
+
+### Usando Versão em Workflows
+
 Os workflows do GitHub Actions podem acessar a versão através de:
 
 ```yaml
 - name: Get version
   id: version
-  run: echo "::set-output name=version::$(cat VERSION)"
+  run: echo "version=$(cat sisrua_unified/VERSION)" >> $GITHUB_OUTPUT
 
 - name: Use version
   run: echo "Building version ${{ steps.version.outputs.version }}"
 ```
+
+### Proteção de Branch
+
+Recomenda-se configurar a proteção de branch para exigir que o workflow de verificação de versão passe antes de fazer merge:
+
+1. Vá para Settings > Branches no GitHub
+2. Adicione uma regra para branches protegidas (main, production)
+3. Marque "Require status checks to pass before merging"
+4. Selecione "Version Consistency Check"
+
 
 ## Histórico de Versões
 
