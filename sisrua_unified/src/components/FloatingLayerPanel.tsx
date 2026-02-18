@@ -24,17 +24,18 @@ const FloatingLayerPanel: React.FC<FloatingLayerPanelProps> = ({ settings, onUpd
 
     const LayerButton = ({ label, icon: Icon, active, onClick, colorClass }: any) => (
         <motion.button
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ x: 4, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onClick}
             title={label}
-            className={`flex items-center w-full p-2 rounded-lg transition-all duration-200 border ${active
-                ? `${isDark ? 'bg-slate-800/50 border-white/10' : 'bg-white/50 border-slate-200'} text-blue-400 shadow-sm`
-                : 'border-transparent text-slate-500 hover:bg-white/5'
+            className={`flex items-center w-full p-2.5 rounded-lg transition-all duration-200 border ${active
+                ? 'glass-panel-hover border-white/30 shadow-md'
+                : 'border-transparent hover:bg-white/20'
                 }`}
+            style={active ? { color: 'var(--enterprise-blue)' } : { color: '#64748b' }}
         >
-            <div className={`p-1.5 rounded-md ${active ? 'bg-slate-800/80 shadow-inner' : ''}`}>
-                <Icon size={16} className={active ? colorClass : 'grayscale opacity-50'} />
+            <div className={`p-1.5 rounded-md ${active ? 'glass-panel' : 'bg-white/10'}`}>
+                <Icon size={16} className={active ? colorClass : 'opacity-50'} />
             </div>
             <AnimatePresence mode="wait">
                 {isExpanded && (
@@ -42,7 +43,7 @@ const FloatingLayerPanel: React.FC<FloatingLayerPanelProps> = ({ settings, onUpd
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -10 }}
-                        className={`ml-3 text-[11px] font-semibold tracking-wide uppercase ${isDark ? 'text-slate-300' : 'text-slate-700'}`}
+                        className="ml-3 text-[11px] font-bold tracking-wide uppercase"
                     >
                         {label}
                     </motion.span>
@@ -61,12 +62,10 @@ const FloatingLayerPanel: React.FC<FloatingLayerPanelProps> = ({ settings, onUpd
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsExpanded(!isExpanded)}
-                className={`flex items-center justify-center w-10 h-10 rounded-xl glass shadow-lg transition-colors ${isDark
-                    ? 'hover:text-blue-400'
-                    : 'text-slate-600 hover:text-blue-500'
-                    }`}
+                className="btn-enterprise flex items-center justify-center w-10 h-10 rounded-xl shadow-lg"
+                style={{ color: isExpanded ? 'var(--enterprise-blue)' : '#64748b' }}
             >
-                <Layers size={20} className={isExpanded ? 'text-blue-400' : ''} />
+                <Layers size={20} />
             </motion.button>
 
             <AnimatePresence>
@@ -75,52 +74,52 @@ const FloatingLayerPanel: React.FC<FloatingLayerPanelProps> = ({ settings, onUpd
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        className="glass p-2.5 rounded-2xl w-44 flex flex-col gap-1.5 shadow-2xl origin-top-right"
+                        className="glass-card p-2.5 w-44 flex flex-col gap-1.5 shadow-2xl origin-top-right"
                     >
-                        <div className="px-2 py-1 mb-1 border-b border-white/5">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Camadas</span>
+                        <div className="px-2 py-1 mb-1 border-b border-white/20">
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">Camadas</span>
                         </div>
                         <LayerButton
                             label="Edifícios"
                             icon={Building2}
                             active={settings.layers.buildings}
                             onClick={() => toggleLayer('buildings')}
-                            colorClass="text-yellow-400"
+                            colorClass="text-yellow-500"
                         />
                         <LayerButton
                             label="Vias / Ruas"
                             icon={Car}
                             active={settings.layers.roads}
                             onClick={() => toggleLayer('roads')}
-                            colorClass="text-rose-400"
+                            colorClass="text-rose-500"
                         />
                         <LayerButton
                             label="Vegetação"
                             icon={TreeDeciduous}
                             active={settings.layers.nature}
                             onClick={() => toggleLayer('nature')}
-                            colorClass="text-emerald-400"
+                            colorClass="text-emerald-500"
                         />
                         <LayerButton
                             label="Terreno 3D"
                             icon={Mountain}
                             active={settings.layers.terrain}
                             onClick={() => toggleLayer('terrain')}
-                            colorClass="text-violet-400"
+                            colorClass="text-violet-500"
                         />
                         <LayerButton
                             label="Mobiliário"
                             icon={LampFloor}
                             active={settings.layers.furniture}
                             onClick={() => toggleLayer('furniture')}
-                            colorClass="text-amber-400"
+                            colorClass="text-amber-500"
                         />
                         <LayerButton
                             label="Rótulos"
                             icon={Type}
                             active={settings.layers.labels}
                             onClick={() => toggleLayer('labels')}
-                            colorClass="text-sky-400"
+                            colorClass="text-sky-500"
                         />
                     </motion.div>
                 )}

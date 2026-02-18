@@ -87,44 +87,58 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   const LayerToggle = ({ label, icon: Icon, active, onClick, colorClass }: any) => (
     <button
       onClick={onClick}
-      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${active
-        ? 'bg-slate-800 border-blue-500/50 text-white shadow-sm'
-        : 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800'
+      className={`flex items-center gap-3 p-3 rounded-lg border transition-all glass-panel-hover ${active
+        ? 'border-white/40 shadow-md'
+        : 'border-white/20 hover:border-white/30'
         }`}
+      style={active ? { color: 'var(--enterprise-blue)' } : { color: '#64748b' }}
     >
-      <div className={`p-2 rounded-md ${active ? colorClass : 'bg-slate-800'}`}>
+      <div className={`p-2 rounded-md ${active ? colorClass : 'bg-white/20'}`}>
         <Icon size={18} className={active ? 'text-white' : 'text-slate-500'} />
       </div>
-      <span className="text-sm font-medium">{label}</span>
-      <div className={`ml-auto w-3 h-3 rounded-full ${active ? 'bg-blue-500' : 'bg-slate-700'}`} />
+      <span className="text-sm font-semibold">{label}</span>
+      <div className={`ml-auto w-3 h-3 rounded-full ${active ? 'shadow-md' : 'bg-slate-400'}`} 
+        style={active ? { backgroundColor: 'var(--enterprise-blue)' } : {}} />
     </button>
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center glass-overlay p-4">
+      <div className="glass-card w-full max-w-lg shadow-2xl animate-in fade-in zoom-in duration-200 flex flex-col max-h-[90vh]">
 
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Cpu size={24} className="text-blue-500" />
+        <div className="flex items-center justify-between p-6 border-b border-white/20">
+          <h2 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--enterprise-blue)' }}>
+            <Cpu size={24} style={{ color: 'var(--enterprise-blue-light)' }} />
             Painel de Controle
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-slate-600 hover:text-slate-800 transition-colors">
             <X size={24} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-800">
+        <div className="flex border-b border-white/20">
           <button
             onClick={() => setActiveTab('general')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'general' ? 'text-blue-400 border-b-2 border-blue-400 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`flex-1 py-3 text-sm font-medium transition-all ${activeTab === 'general' 
+              ? 'border-b-2 glass-panel-hover' 
+              : 'text-slate-600 hover:text-slate-800 hover:bg-white/20'}`}
+            style={activeTab === 'general' ? { 
+              color: 'var(--enterprise-blue)', 
+              borderBottomColor: 'var(--enterprise-blue)' 
+            } : {}}
           >
             Geral & Exportação
           </button>
           <button
             onClick={() => setActiveTab('project')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'project' ? 'text-blue-400 border-b-2 border-blue-400 bg-slate-800/50' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`flex-1 py-3 text-sm font-medium transition-all ${activeTab === 'project' 
+              ? 'border-b-2 glass-panel-hover' 
+              : 'text-slate-600 hover:text-slate-800 hover:bg-white/20'}`}
+            style={activeTab === 'project' ? { 
+              color: 'var(--enterprise-blue)', 
+              borderBottomColor: 'var(--enterprise-blue)' 
+            } : {}}
           >
             Projeto & Metadados
           </button>
@@ -139,14 +153,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   onClick={onSaveProject}
                   disabled={!onSaveProject}
-                  className="flex items-center justify-center gap-2 p-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all disabled:opacity-50"
+                  className="btn-enterprise flex items-center justify-center gap-2 p-3 rounded-lg border border-white/30 text-slate-700 hover:text-slate-900 transition-all disabled:opacity-50"
                 >
                   <Save size={16} /> Salvar Projeto (.osmpro)
                 </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={!onLoadProject}
-                  className="flex items-center justify-center gap-2 p-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition-all disabled:opacity-50"
+                  className="btn-enterprise flex items-center justify-center gap-2 p-3 rounded-lg border border-white/30 text-slate-700 hover:text-slate-900 transition-all disabled:opacity-50"
                 >
                   <FolderOpen size={16} /> Carregar Projeto
                 </button>
@@ -159,49 +173,49 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </div>
 
-              <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-700/50">
-                <div className="flex items-center gap-2 mb-4 text-blue-400">
+              <div className="glass-panel p-4 rounded-lg border border-white/20">
+                <div className="flex items-center gap-2 mb-4" style={{ color: 'var(--enterprise-blue)' }}>
                   <Briefcase size={18} />
                   <h3 className="font-bold text-sm uppercase">Carimbo (Title Block)</h3>
                 </div>
-                <p className="text-xs text-slate-400 mb-4">Dados automáticos para o arquivo CAD.</p>
+                <p className="text-xs text-slate-600 mb-4">Dados automáticos para o arquivo CAD.</p>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="text-xs text-slate-500 block mb-1">Nome do Projeto</label>
+                    <label className="text-xs text-slate-600 block mb-1">Nome do Projeto</label>
                     <input
                       type="text"
                       value={settings.projectMetadata?.projectName || ''}
                       onChange={(e) => updateMetadata('projectName', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white focus:border-blue-500 outline-none"
+                      className="w-full glass-panel border border-white/30 rounded p-2 text-sm text-slate-800 focus:border-blue-400 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-500 block mb-1">Empresa</label>
+                    <label className="text-xs text-slate-600 block mb-1">Empresa</label>
                     <input
                       type="text"
                       value={settings.projectMetadata?.companyName || ''}
                       onChange={(e) => updateMetadata('companyName', e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white focus:border-blue-500 outline-none"
+                      className="w-full glass-panel border border-white/30 rounded p-2 text-sm text-slate-800 focus:border-blue-400 outline-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-slate-500 block mb-1">Responsável</label>
+                      <label className="text-xs text-slate-600 block mb-1">Responsável</label>
                       <input
                         type="text"
                         value={settings.projectMetadata?.engineerName || ''}
                         onChange={(e) => updateMetadata('engineerName', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white focus:border-blue-500 outline-none"
+                        className="w-full glass-panel border border-white/30 rounded p-2 text-sm text-slate-800 focus:border-blue-400 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-500 block mb-1">Data</label>
+                      <label className="text-xs text-slate-600 block mb-1">Data</label>
                       <input
                         type="text"
                         value={settings.projectMetadata?.date || ''}
                         onChange={(e) => updateMetadata('date', e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-white focus:border-blue-500 outline-none"
+                        className="w-full glass-panel border border-white/30 rounded p-2 text-sm text-slate-800 focus:border-blue-400 outline-none"
                       />
                     </div>
                   </div>
@@ -212,17 +226,17 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             <>
               {/* Appearance Section */}
               <div className="space-y-4">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Interface e Mapa</h3>
+                <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider">Interface e Mapa</h3>
 
                 {/* Theme Toggle */}
-                <div className="flex items-center justify-between bg-slate-800/30 p-3 rounded-lg">
-                  <span className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                    {settings.theme === 'dark' ? <Moon size={16} className="text-purple-400" /> : <Sun size={16} className="text-yellow-400" />}
+                <div className="flex items-center justify-between glass-panel p-3 rounded-lg">
+                  <span className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                    {settings.theme === 'dark' ? <Moon size={16} className="text-purple-500" /> : <Sun size={16} className="text-yellow-500" />}
                     Tema {settings.theme === 'dark' ? 'Escuro' : 'Claro'}
                   </span>
                   <button
                     onClick={toggleTheme}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${settings.theme === 'dark' ? 'bg-slate-700' : 'bg-yellow-500'}`}
+                    className={`w-12 h-6 rounded-full relative transition-colors ${settings.theme === 'dark' ? 'bg-slate-400' : 'bg-yellow-400'}`}
                   >
                     <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${settings.theme === 'dark' ? 'translate-x-6' : ''}`} />
                   </button>
@@ -232,9 +246,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setMapProvider('vector')}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-lg border text-sm font-medium transition-all ${settings.mapProvider === 'vector'
-                      ? 'bg-blue-600 border-blue-500 text-white shadow-md'
-                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'
+                    className={`btn-enterprise flex items-center justify-center gap-2 p-3 rounded-lg border text-sm font-semibold transition-all ${settings.mapProvider === 'vector'
+                      ? 'border-blue-400 text-blue-600 shadow-md bg-blue-50'
+                      : 'border-white/30 text-slate-600'
                       }`}
                   >
                     <MapIcon size={16} />
@@ -242,9 +256,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   </button>
                   <button
                     onClick={() => setMapProvider('satellite')}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-lg border text-sm font-medium transition-all ${settings.mapProvider === 'satellite'
-                      ? 'bg-blue-600 border-blue-500 text-white shadow-md'
-                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-750'
+                    className={`btn-enterprise flex items-center justify-center gap-2 p-3 rounded-lg border text-sm font-semibold transition-all ${settings.mapProvider === 'satellite'
+                      ? 'border-blue-400 text-blue-600 shadow-md bg-blue-50'
+                      : 'border-white/30 text-slate-600'
                       }`}
                   >
                     <Satellite size={16} />
@@ -253,7 +267,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
-              <div className="h-px bg-slate-800" />
+              <div className="h-px bg-white/20" />
 
               {/* Filters / Layers Section */}
               <div className="space-y-4">
@@ -461,11 +475,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         {/* Footer with Export Actions */}
-        <div className="p-6 border-t border-slate-800 bg-slate-900/80 rounded-b-xl space-y-3">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Exportar Resultados</h3>
+        <div className="p-6 border-t border-white/20 glass-panel rounded-b-xl space-y-3">
+          <h3 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Exportar Resultados</h3>
 
           {!hasData ? (
-            <div className="text-center p-3 bg-slate-800/50 rounded-lg text-sm text-slate-500 border border-slate-800 border-dashed">
+            <div className="text-center p-3 glass-panel rounded-lg text-sm text-slate-600 border border-white/30 border-dashed">
               Realize uma análise primeiro para habilitar a exportação.
             </div>
           ) : (
@@ -473,7 +487,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 onClick={onExportGeoJSON}
                 disabled={!onExportGeoJSON || isDownloading}
-                className="py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg flex items-center justify-center gap-2 font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="py-3 glass-panel-hover text-slate-700 rounded-lg flex items-center justify-center gap-2 font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed hover:shadow-xl"
               >
                 <FileJson size={18} />
                 GeoJSON
@@ -481,7 +495,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 onClick={onExportDxf}
                 disabled={!onExportDxf || isDownloading}
-                className="py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg flex items-center justify-center gap-2 font-bold shadow-lg shadow-green-900/20 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-lg flex items-center justify-center gap-2 font-bold shadow-lg shadow-emerald-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed hover:shadow-xl"
               >
                 {isDownloading ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
                 DXF (CAD)
