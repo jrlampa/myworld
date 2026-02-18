@@ -19,6 +19,7 @@ import {
 } from './services/cacheService.js';
 import { createDxfTask } from './services/cloudTasksService.js';
 import { createJob, getJob, updateJobStatus, completeJob, failJob } from './services/jobStatusService.js';
+import { scheduleDxfDeletion } from './services/dxfCleanupService.js';
 import { generateDxf } from './pythonBridge.js';
 import { logger } from './utils/logger.js';
 import { generalRateLimiter, dxfRateLimiter } from './middleware/rateLimiter.js';
@@ -181,6 +182,9 @@ app.post('/api/tasks/process-dxf', async (req: Request, res: Response) => {
 
             // Cache the filename
             setCachedFilename(cacheKey, filename);
+
+            // Schedule DXF file for deletion after 10 minutes
+            scheduleDxfDeletion(outputFile);
 
             // Mark job as completed
             completeJob(taskId, {

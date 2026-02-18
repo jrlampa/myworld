@@ -1,52 +1,82 @@
-# GitHub Actions & Deployment Configuration
+# 🚀 GitHub Actions Workflows
 
-Este diretório contém a configuração de CI/CD para deployment automático no Google Cloud Run.
+Workflows de CI/CD para deploy saudável e verificado da aplicação sisRUA.
 
-## 📁 Arquivos
+---
 
-### Workflows
-- **`workflows/deploy-cloud-run.yml`** - Workflow principal de deployment automático para Cloud Run
+## 📋 Workflows Disponíveis
 
-### Documentação
-- **`QUICK_SETUP.md`** - Guia rápido de configuração (comece por aqui! 👈)
-- **`DEPLOYMENT_SETUP.md`** - Documentação completa e detalhada
-- **`SECRETS_TEMPLATE.md`** - Template para configurar secrets no GitHub
+### 🔧 Pre-Deploy Checks
+**Status:** ✅ Ativo  
+**Quando:** Pull requests e antes de deploy  
+**O que faz:** Valida build, testes e Docker  
 
-## 🚀 Como Começar
+### 🚀 Deploy to Cloud Run
+**Status:** ✅ Ativo  
+**Quando:** Push para main/production/release  
+**O que faz:** Deploy automático no Cloud Run  
 
-1. Leia o **QUICK_SETUP.md** para uma visão geral rápida
-2. Configure os secrets seguindo o **SECRETS_TEMPLATE.md**
-3. Para detalhes completos, consulte **DEPLOYMENT_SETUP.md**
+### 🔍 Post-Deploy Verification
+**Status:** ✅ Novo  
+**Quando:** Após deploy bem-sucedido  
+**O que faz:** Verifica infraestrutura e configuração  
 
-## 🔑 Secrets Necessários
+### 🏥 Health Check
+**Status:** ✅ Novo  
+**Quando:** Após deploy + a cada 6 horas  
+**O que faz:** Testa todas as funcionalidades  
 
-Configure estes secrets no GitHub (Settings > Secrets and variables > Actions):
+---
 
-- `GCP_WIF_PROVIDER` - Workload Identity Provider
-- `GCP_SERVICE_ACCOUNT` - Service Account email
-- `GCP_PROJECT_ID` - Project ID (sisrua-producao)
-- `GROQ_API_KEY` - Groq API key
-- `GCP_PROJECT` - GCP project name
-- `CLOUD_RUN_BASE_URL` - Cloud Run service URL
+## 🎯 Quick Start
 
-## 🎯 Deployment
+### Executar Health Check Manualmente
+```bash
+# Via GitHub CLI
+gh workflow run health-check.yml
 
-### Automático
-- Push para branch `main` ou `production`
+# Via GitHub Web
+# Actions → Health Check → Run workflow
+```
 
-### Manual
-1. Vá para Actions no GitHub
-2. Selecione "Deploy to Cloud Run"
-3. Clique em "Run workflow"
+### Executar Script Localmente
+```bash
+node .github/scripts/health-check.js https://your-service-url.com
+```
 
-## 📋 Parâmetros do Deployment
+---
 
-- **Service**: sisrua-app
-- **Region**: southamerica-east1
-- **Memory**: 1024Mi
-- **Auth**: allow-unauthenticated
-- **Env Vars**: GROQ_API_KEY, GCP_PROJECT, CLOUD_TASKS_LOCATION, CLOUD_TASKS_QUEUE, CLOUD_RUN_BASE_URL
+## 📚 Documentação
 
-## ℹ️ Mais Informações
+- **[WORKFLOWS_IMPLEMENTADOS.md](../WORKFLOWS_IMPLEMENTADOS.md)** - Resumo executivo completo
+- **[MONITORING_WORKFLOWS.md](MONITORING_WORKFLOWS.md)** - Guia técnico detalhado
+- **[WORKFLOW_DIAGRAMA.md](WORKFLOW_DIAGRAMA.md)** - Diagramas visuais e fluxos
+- **[WORKFLOWS_RESUMO.md](WORKFLOWS_RESUMO.md)** - Referência rápida
 
-Para detalhes sobre configuração do Workload Identity Federation, permissões necessárias, e troubleshooting, consulte `DEPLOYMENT_SETUP.md`.
+---
+
+## ✅ Status de Implementação
+
+| Requisito | Status | Workflow |
+|-----------|--------|----------|
+| Monitorar workflow de deploy | ✅ | Post-Deploy Verification |
+| Verificar deploy no Cloud Run | ✅ | Post-Deploy Verification |
+| Checar URL do serviço | ✅ | Post-Deploy Verification |
+| Validar variáveis de ambiente | ✅ | Post-Deploy Verification |
+| Health check respondendo | ✅ | Health Check |
+| Frontend carregando | ✅ | Health Check |
+| Endpoints API respondendo | ✅ | Health Check |
+| Geração DXF funcionando | ✅ | Health Check |
+| Análise AI funcional | ✅ | Health Check |
+| Perfis de elevação carregando | ✅ | Health Check |
+| Cloud Tasks processando | ✅ | Health Check |
+| Cleanup de arquivos rodando | ✅ | Health Check |
+
+---
+
+## 🎉 Deploy Saudável e Verificado!
+
+Todos os requisitos foram implementados com sucesso.
+
+**Versão:** 1.0.0  
+**Data:** 18 de Fevereiro de 2026

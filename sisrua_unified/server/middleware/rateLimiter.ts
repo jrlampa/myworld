@@ -1,11 +1,22 @@
 import rateLimit from 'express-rate-limit';
+import { Request } from 'express';
 import { logger } from '../utils/logger.js';
+
+/**
+ * Custom key generator that uses the client IP address
+ * This respects X-Forwarded-For when trust proxy is enabled
+ * Fixes: ValidationError about Forwarded header being ignored
+ */
+const keyGenerator = (req: Request): string => {
+    return req.ip || 'unknown';
+};
 
 const dxfRateLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     limit: 10,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
+    keyGenerator,
     message: { error: 'Too many DXF requests, please try again later.' },
     handler: (req, res, _next, options) => {
         logger.warn('DXF rate limit exceeded', {
@@ -23,6 +34,7 @@ const generalRateLimiter = rateLimit({
     limit: 100,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
+    keyGenerator,
     message: { error: 'Too many requests, please try again later.' },
     handler: (req, res, _next, options) => {
         logger.warn('Rate limit exceeded', {

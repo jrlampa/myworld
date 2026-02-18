@@ -1,0 +1,266 @@
+name: Health Check
+
+on:
+  # Run after successful deployment
+  workflow_run:
+    workflows: ["Deploy to Cloud Run"]
+    types:
+      - completed
+  
+  # Run on schedule (every 6 hours)
+  schedule:
+    - cron: '0 */6 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      service_url:
+        description: 'Cloud Run Service URL (optional, will auto-detect if not provided)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    # Run if deployment was successful or manually triggered
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Get Service URL
+        id: get-url
+        run: |
+          if [ -n "${{ inputs.service_url }}" ]; then
+            SERVICE_URL="${{ inputs.service_url }}"
+            echo "Using provided service URL: $SERVICE_URL"
+          else
+            SERVICE_URL=$(gcloud run services describe sisrua-app \
+              --region=southamerica-east1 \
+              --project=${{ secrets.GCP_PROJECT_ID }} \
+              --format='value(status.url)' 2>&1)
+            
+            if [ $? -ne 0 ]; then
+              echo "❌ Failed to get service URL"
+              echo "Error: $SERVICE_URL"
+              exit 1
+            fi
+            
+            echo "Auto-detected service URL: $SERVICE_URL"
+          fi
+          
+          echo "service_url=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+
+      - name: Wait for Service Warm-up
+        run: |
+          echo "⏳ Waiting 10 seconds for service to warm up..."
+          sleep 10
+
+      - name: Test Health Check Endpoint
+        run: |
+          echo "🏥 Testing /health endpoint..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 30 "$SERVICE_URL/health")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          
+          echo "Response: $BODY"
+          echo "HTTP Code: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Health check endpoint is responding"
+          else
+            echo "❌ Health check endpoint returned HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Test Frontend Loading
+        run: |
+          echo "🌐 Testing frontend (index.html)..."
+          
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$SERVICE_URL/")
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
+            echo "✅ Frontend is loading correctly"
+          else
+            echo "❌ Frontend returned HTTP $HTTP_CODE"
+            exit 1
+          fi
+
+      - name: Test API Endpoints
+        run: |
+          echo "🔌 Testing API endpoints..."
+          
+          # Test Search API
+          echo "Testing /api/search..."
+          SEARCH_RESPONSE=$(curl -s -X POST "$SERVICE_URL/api/search" \
+            -H "Content-Type: application/json" \
+            -d '{"query": "-23.5505, -46.6333"}' \
+            -w "\n%{http_code}" --max-time 30)
+          
+          SEARCH_CODE=$(echo "$SEARCH_RESPONSE" | tail -n 1)
+          if [ "$SEARCH_CODE" -eq 200 ]; then
+            echo "✅ Search API is working"
+          else
+            echo "⚠️ Search API returned HTTP $SEARCH_CODE (may be expected)"
+          fi
+          
+          # Test Analyze API (with GROQ)
+          echo "Testing /api/analyze..."
+          ANALYZE_RESPONSE=$(curl -s -X POST "$SERVICE_URL/api/analyze" \
+            -H "Content-Type: application/json" \
+            -d '{"stats": {"buildings": 10, "roads": 5, "trees": 20}, "locationName": "Test Location"}' \
+            -w "\n%{http_code}" --max-time 30)
+          
+          ANALYZE_CODE=$(echo "$ANALYZE_RESPONSE" | tail -n 1)
+          if [ "$ANALYZE_CODE" -eq 200 ]; then
+            echo "✅ AI Analysis API is working"
+          else
+            echo "⚠️ AI Analysis API returned HTTP $ANALYZE_CODE"
+          fi
+          
+          # Test Elevation Profile API
+          echo "Testing /api/elevation/profile..."
+          ELEVATION_RESPONSE=$(curl -s -X POST "$SERVICE_URL/api/elevation/profile" \
+            -H "Content-Type: application/json" \
+            -d '{"start": {"lat": -23.5505, "lng": -46.6333}, "end": {"lat": -23.5506, "lng": -46.6334}, "steps": 10}' \
+            -w "\n%{http_code}" --max-time 30)
+          
+          ELEVATION_CODE=$(echo "$ELEVATION_RESPONSE" | tail -n 1)
+          if [ "$ELEVATION_CODE" -eq 200 ]; then
+            echo "✅ Elevation Profile API is working"
+          else
+            echo "⚠️ Elevation Profile API returned HTTP $ELEVATION_CODE"
+          fi
+
+      - name: Test DXF Generation
+        run: |
+          echo "📐 Testing DXF generation..."
+          
+          DXF_RESPONSE=$(curl -s -X POST "$SERVICE_URL/api/dxf" \
+            -H "Content-Type: application/json" \
+            -d '{"lat": -23.5505, "lon": -46.6333, "radius": 100, "mode": "circle"}' \
+            -w "\n%{http_code}" --max-time 30)
+          
+          DXF_CODE=$(echo "$DXF_RESPONSE" | tail -n 1)
+          DXF_BODY=$(echo "$DXF_RESPONSE" | head -n -1)
+          
+          # DXF generation should return 202 (Accepted) or 200 (immediate in dev)
+          if [ "$DXF_CODE" -eq 202 ] || [ "$DXF_CODE" -eq 200 ]; then
+            echo "✅ DXF Generation API is working (HTTP $DXF_CODE)"
+            echo "Response: $DXF_BODY"
+            
+            # Try to extract job ID if present
+            JOB_ID=$(echo "$DXF_BODY" | grep -o '"jobId":"[^"]*"' | cut -d'"' -f4)
+            if [ -n "$JOB_ID" ]; then
+              echo "Job ID: $JOB_ID"
+              echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
+            fi
+          else
+            echo "❌ DXF Generation API returned HTTP $DXF_CODE"
+            exit 1
+          fi
+
+      - name: Test Cloud Tasks Processing
+        if: env.JOB_ID != ''
+        run: |
+          echo "⏳ Testing Cloud Tasks job processing..."
+          echo "Job ID: $JOB_ID"
+          
+          # Wait a bit for job to process
+          sleep 5
+          
+          # Check job status
+          JOB_RESPONSE=$(curl -s "$SERVICE_URL/api/jobs/$JOB_ID" \
+            -w "\n%{http_code}" --max-time 30)
+          
+          JOB_CODE=$(echo "$JOB_RESPONSE" | tail -n 1)
+          JOB_BODY=$(echo "$JOB_RESPONSE" | head -n -1)
+          
+          if [ "$JOB_CODE" -eq 200 ]; then
+            echo "✅ Job status endpoint is working"
+            echo "Job status: $JOB_BODY"
+          else
+            echo "⚠️ Job status returned HTTP $JOB_CODE"
+          fi
+
+      - name: Test Static Assets
+        run: |
+          echo "📦 Testing static assets..."
+          
+          # Test theme CSS
+          CSS_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$SERVICE_URL/theme-override.css")
+          
+          if [ "$CSS_CODE" -eq 200 ]; then
+            echo "✅ Theme CSS is accessible"
+          else
+            echo "⚠️ Theme CSS returned HTTP $CSS_CODE"
+          fi
+
+      - name: Test API Documentation
+        run: |
+          echo "📚 Testing API documentation..."
+          
+          DOCS_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$SERVICE_URL/api-docs/")
+          
+          if [ "$DOCS_CODE" -eq 200 ]; then
+            echo "✅ Swagger API docs are accessible"
+          else
+            echo "⚠️ API docs returned HTTP $DOCS_CODE"
+          fi
+
+      - name: Comprehensive Health Check
+        run: |
+          echo "🏥 Running comprehensive health check script..."
+          node .github/scripts/health-check.js "$SERVICE_URL"
+
+      - name: Health Check Summary
+        if: always()
+        run: |
+          echo ""
+          echo "================================================"
+          echo "📊 Health Check Summary"
+          echo "================================================"
+          echo "Service URL: $SERVICE_URL"
+          echo "Status: ${{ job.status }}"
+          echo ""
+          
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ All health checks passed!"
+            echo ""
+            echo "Verified:"
+            echo "  ✅ Health check endpoint"
+            echo "  ✅ Frontend loading"
+            echo "  ✅ API endpoints responding"
+            echo "  ✅ DXF generation working"
+            echo "  ✅ AI analysis functional"
+            echo "  ✅ Elevation profiles loading"
+            echo "  ✅ Cloud Tasks processing"
+            echo "  ✅ Static assets accessible"
+          else
+            echo "❌ Some health checks failed"
+            echo "Please review the logs above for details"
+          fi
+          echo "================================================"

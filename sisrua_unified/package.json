@@ -88,11 +88,17 @@
     "testMatch": [
       "**/server/tests/**/*.test.ts"
     ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/server/tests/setup.ts"
+    ],
     "moduleFileExtensions": [
       "ts",
       "js",
       "json"
     ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
     "coverageDirectory": "./coverage/backend"
   }
 }

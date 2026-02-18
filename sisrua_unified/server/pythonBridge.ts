@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { logger } from './utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,7 +60,10 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
             args.push('--layers', JSON.stringify(options.layers));
         }
 
-        console.log(`[PythonBridge] Spawning: ${command} ${args.join(' ')}`);
+        logger.info('Spawning Python process for DXF generation', {
+            command,
+            args: args.join(' ')
+        });
 
         const pythonProcess = spawn(command, args);
 
@@ -68,18 +72,18 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
 
         pythonProcess.stdout.on('data', (data) => {
             const str = data.toString();
-            console.log(`[Python stdout] ${str}`);
+            logger.debug('Python stdout', { output: str });
             stdoutData += str;
         });
 
         pythonProcess.stderr.on('data', (data) => {
             const str = data.toString();
-            console.error(`[Python stderr] ${str}`);
+            logger.warn('Python stderr', { output: str });
             stderrData += str;
         });
 
         pythonProcess.on('close', (code) => {
-            console.log(`[PythonBridge] Process exited with code ${code}`);
+            logger.info('Python process exited', { exitCode: code });
             if (code === 0) {
                 resolve(stdoutData);
             } else {

@@ -197,7 +197,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
                 maxZoom={24}
                 style={{ height: '100%', width: '100%', minHeight: '400px' }}
                 whenReady={() => {
-                    console.log('Map ready!');
+                    // Map ready
                 }}
             >
                 <TileLayer
@@ -207,10 +207,10 @@ const MapSelector: React.FC<MapSelectorProps> = ({
                     maxNativeZoom={19}
                     eventHandlers={{
                         tileerror: (error: any) => {
-                            console.error('Tile load error:', error);
+                            // Tile load error (expected for some tiles)
                         },
                         tileload: () => {
-                            console.log('Tile loaded successfully');
+                            // Tile loaded successfully
                         }
                     }}
                 />
