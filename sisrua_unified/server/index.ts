@@ -157,9 +157,17 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '50mb' }));
+// Default body parser with reasonable 1MB limit for most endpoints
+// This prevents large payload attacks on endpoints that don't need big requests
+app.use(express.json({ limit: '1mb' }));
 app.use(generalRateLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+// Helper middleware for endpoints that need smaller body size limits
+const smallBodyParser = express.json({ limit: '100kb' });
+
+// Helper middleware for endpoints that need larger body size limits (used sparingly)
+const largeBodyParser = express.json({ limit: '5mb' });
 
 // DEBUG: Log environment variables on startup
 logger.info('Server starting with environment configuration', {
@@ -452,7 +460,8 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
 });
 
 // DXF Generation Endpoint (POST for large polygons)
-app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
+// Uses larger body limit (5mb) to support complex polygon geometries
+app.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, res: Response) => {
     try {
         const validation = dxfRequestSchema.safeParse(req.body);
         if (!validation.success) {
@@ -578,7 +587,8 @@ app.get('/api/jobs/:id', async (req: Request, res: Response) => {
 });
 
 // Coordinate Search Endpoint (Using GeocodingService)
-app.post('/api/search', async (req: Request, res: Response) => {
+// Uses smaller body limit (100kb) - only needs a query string
+app.post('/api/search', smallBodyParser, async (req: Request, res: Response) => {
     try {
         const { query } = req.body;
         if (!query) return res.status(400).json({ error: 'Query required' });
@@ -632,7 +642,8 @@ app.post('/api/elevation/profile', async (req: Request, res: Response) => {
 });
 
 // AI Analyze Endpoint (Delegating to AnalysisService)
-app.post('/api/analyze', async (req: Request, res: Response) => {
+// Uses smaller body limit (100kb) - only needs stats object and location name
+app.post('/api/analyze', smallBodyParser, async (req: Request, res: Response) => {
     try {
         const { stats, locationName } = req.body;
         const apiKey = process.env.GROQ_API_KEY || '';
