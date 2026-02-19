@@ -18,17 +18,17 @@ class TestInfra:
     def test_determine_layer_power_hv(self, dxf_gen):
         tags = {'power': 'line'}
         layer = dxf_gen.determine_layer(tags, None)
-        assert layer == 'sisRUA_INFRA_POWER_HV'
+        assert layer == 'INFRA_POWER_HV'
 
     def test_determine_layer_power_lv(self, dxf_gen):
         tags = {'power': 'pole'}
         layer = dxf_gen.determine_layer(tags, None)
-        assert layer == 'sisRUA_INFRA_POWER_LV'
+        assert layer == 'INFRA_POWER_LV'
 
     def test_determine_layer_telecom(self, dxf_gen):
         tags = {'telecom': 'line'}
         layer = dxf_gen.determine_layer(tags, None)
-        assert layer == 'sisRUA_INFRA_TELECOM'
+        assert layer == 'INFRA_TELECOM'
         
     def test_determine_layer_priority(self, dxf_gen):
         # Power should take precedence over implicit building if both present (unlikely but good to test)
@@ -41,5 +41,5 @@ class TestInfra:
         # if building -> EDIFICACAO
         # So power should win
         layer = dxf_gen.determine_layer(tags, None)
-        assert layer == 'sisRUA_INFRA_POWER_HV'
+        assert layer == 'INFRA_POWER_HV'
 
