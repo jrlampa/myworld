@@ -1,290 +1,152 @@
-"""
-Advanced contour generation with interpolation and multiple detail levels.
-Creates professional-grade topographic maps with precise elevation curves.
-"""
-
-import numpy as np
-from typing import List, Tuple, Dict
-from scipy.ndimage import zoom
-from scipy.interpolate import griddata
+from typing import List, Tuple, Dict, Optional
 import math
 
-
 class ContourGenerator:
-    """Generate sophisticated contour lines from elevation data."""
-    
+    """
+    Simple implementation of Marching Squares for generating contour lines from a 2D grid.
+    Designed to work without heavy dependencies like matplotlib or skimage.
+    """
+
     @staticmethod
-    def generate_contours_interpolated(
-        elevation_data: List[Tuple[float, float, float]],  # (x, y, elevation)
-        contour_interval: float = 5.0,  # meters between contours
-        smoothing: bool = True,
-        min_contours: int = 10,
-        max_contours: int = 50
-    ) -> Dict[float, List[List[Tuple[float, float]]]]:
+    def generate_contours(grid: list, 
+                          min_x: float, max_x: float, 
+                          min_y: float, max_y: float, 
+                          interval: float,
+                          levels: Optional[List[float]] = None) -> List[Tuple[float, float, float]]:
         """
-        Generate contour lines with automatic level selection.
-        
-        Returns:
-            Dictionary mapping elevation levels to lists of contour polylines
+        Generates contour segments for the given grid.
+        Returns a list of line segments: [((x1, y1, z), (x2, y2, z)), ...]
         """
-        if not elevation_data or len(elevation_data) < 4:
-            return {}
-        
-        try:
-            # Extract components
-            points = np.array([(p[0], p[1]) for p in elevation_data])
-            elevations = np.array([p[2] for p in elevation_data])
-            
-            # Create grid for interpolation
-            x_range = np.max(points[:, 0]) - np.min(points[:, 0])
-            y_range = np.max(points[:, 1]) - np.min(points[:, 1])
-            grid_size = max(50, int(np.sqrt(len(elevation_data)) * 2))
-            
-            x_grid = np.linspace(np.min(points[:, 0]), np.max(points[:, 0]), grid_size)
-            y_grid = np.linspace(np.min(points[:, 1]), np.max(points[:, 1]), grid_size)
-            xx, yy = np.meshgrid(x_grid, y_grid)
-            
-            # Interpolate using griddata (more sophisticated than IDW)
-            try:
-                zz = griddata(points, elevations, (xx, yy), method='cubic', fill_value=np.mean(elevations))
-            except:
-                zz = griddata(points, elevations, (xx, yy), method='linear', fill_value=np.mean(elevations))
-            
-            # Apply optional smoothing
-            if smoothing:
-                from scipy.ndimage import gaussian_filter
-                zz = gaussian_filter(zz, sigma=1.0)
-            
-            # Determine contour levels
-            min_elev = np.nanmin(zz)
-            max_elev = np.nanmax(zz)
-            elev_range = max_elev - min_elev
-            
-            # Adjust contour interval for data range
-            if elev_range / contour_interval > max_contours:
-                contour_interval = elev_range / max_contours
-            elif elev_range / contour_interval < min_contours:
-                contour_interval = elev_range / min_contours
-            
-            # Generate contours
-            levels = np.arange(
-                np.floor(min_elev / contour_interval) * contour_interval,
-                np.ceil(max_elev / contour_interval) * contour_interval + contour_interval,
-                contour_interval
-            )
-            
-            contours_dict = {}
-            
-            try:
-                import matplotlib
-                matplotlib.use('Agg')  # Non-display backend
-                from matplotlib import pyplot as plt
-                
-                fig, ax = plt.subplots(figsize=(10, 10))
-                cs = ax.contour(xx, yy, zz, levels=levels, colors='black')
-                
-                # cs.collections or cs.collections attribute depending on mpl version
-                collections = cs.collections if hasattr(cs, 'collections') else [cs]
-                
-                for idx, level in enumerate(cs.levels):
-                    if idx < len(collections):
-                        collection = collections[idx]
-                        paths = collection.get_paths() if hasattr(collection, 'get_paths') else []
-                        polylines = []
-                        
-                        for path in paths:
-                            vertices = path.vertices
-                            if len(vertices) >= 2:
-                                polylines.append([(float(v[0]), float(v[1])) for v in vertices])
-                        
-                        if polylines:
-                            contours_dict[float(level)] = polylines
-                
-                plt.close(fig)
-            except ImportError:
-                # Fallback without matplotlib
-                for level in levels:
-                    contours = ContourGenerator._marching_squares(xx, yy, zz, level)
-                    if contours:
-                        contours_dict[float(level)] = contours
-            
-            return contours_dict
-        
-        except Exception as e:
-            print(f"[Contours] Generation error: {e}")
-            return {}
-    
-    @staticmethod
-    def _marching_squares(
-        x: np.ndarray,
-        y: np.ndarray,
-        z: np.ndarray,
-        level: float
-    ) -> List[List[Tuple[float, float]]]:
-        """
-        Simplified marching squares algorithm for contour extraction.
-        """
-        contours = []
-        rows, cols = z.shape
-        
-        # Find all contour segments
-        segments = []
-        
-        for i in range(rows - 1):
-            for j in range(cols - 1):
-                # Four corners of cell
-                z00, z10 = z[i, j], z[i+1, j]
-                z01, z11 = z[i, j+1], z[i+1, j+1]
-                
-                # Check if contour crosses this cell
-                if not ((min(z00, z10, z01, z11) <= level <= max(z00, z10, z01, z11)) and
-                        (z00 <= level or z10 <= level or z01 <= level or z11 <= level)):
-                    continue
-                
-                # Interpolate contour intersections
-                x00, x10 = x[j, i], x[j, i+1]
-                x01, x11 = x[j+1, i], x[j+1, i+1]
-                y00, y10 = y[i, j], y[i+1, j]
-                y01, y11 = y[i, j+1], y[i+1, j+1]
-                
-                # Find edge intersections
-                edges = []
-                
-                # Bottom edge
-                if (z00 - level) * (z01 - level) <= 0:
-                    t = (level - z00) / (z01 - z00) if z01 != z00 else 0.5
-                    edges.append((x00 + t * (x01 - x00), y00))
-                
-                # Right edge
-                if (z01 - level) * (z11 - level) <= 0:
-                    t = (level - z01) / (z11 - z01) if z11 != z01 else 0.5
-                    edges.append((x01, y00 + t * (y10 - y00)))
-                
-                # Top edge
-                if (z10 - level) * (z11 - level) <= 0:
-                    t = (level - z10) / (z11 - z10) if z11 != z10 else 0.5
-                    edges.append((x10 + t * (x11 - x10), y10))
-                
-                # Left edge
-                if (z00 - level) * (z10 - level) <= 0:
-                    t = (level - z00) / (z10 - z00) if z10 != z00 else 0.5
-                    edges.append((x00, y00 + t * (y10 - y00)))
-                
-                # Create segments
-                if len(edges) == 2:
-                    segments.append((edges[0], edges[1]))
-        
-        # Connect segments into contours
-        if segments:
-            contours = ContourGenerator._connect_segments(segments)
-        
-        return contours
-    
-    @staticmethod
-    def _connect_segments(
-        segments: List[Tuple[Tuple[float, float], Tuple[float, float]]]
-    ) -> List[List[Tuple[float, float]]]:
-        """
-        Connect contour segments into continuous polylines.
-        """
-        if not segments:
+        if not grid or not grid[0]:
             return []
+
+        rows = len(grid)
+        cols = len(grid[0])
         
-        contours = []
-        remaining = list(segments)
-        
-        while remaining:
-            # Start new contour
-            current_seg = remaining.pop(0)
-            contour = [current_seg[0], current_seg[1]]
+        # Calculate cell size
+        dx = (max_x - min_x) / (cols - 1)
+        dy = (max_y - min_y) / (rows - 1)
+
+        # Determine levels
+        if levels is None:
+            min_val = min(min(row) for row in grid)
+            max_val = max(max(row) for row in grid)
+            start = math.ceil(min_val / interval) * interval
+            levels = []
+            curr = start
+            while curr <= max_val:
+                levels.append(curr)
+                curr += interval
+
+        segments = []
+
+        # Marching Squares Look-up Table
+        # Key: Binary state of corners (TL, TR, BR, BL)
+        # Value: List of edge pairs to connect. 
+        # Edges: 0=Top, 1=Right, 2=Bottom, 3=Left
+        case_map = {
+            0: [], 
+            1: [(3, 2)], 
+            2: [(2, 1)], 
+            3: [(3, 1)], 
+            4: [(1, 0)], 
+            5: [(1, 0), (3, 2)], # Ambiguous case, simple connect
+            6: [(2, 0)], 
+            7: [(3, 0)], 
+            8: [(0, 3)], 
+            9: [(0, 2)], 
+            10: [(0, 3), (2, 1)], # Ambiguous
+            11: [(0, 1)], 
+            12: [(1, 3)], 
+            13: [(1, 2)], 
+            14: [(2, 3)], 
+            15: []
+        }
+
+        for level in levels:
+            for r in range(rows - 1):
+                y_base = min_y + r * dy
+                for c in range(cols - 1):
+                    x_base = min_x + c * dx
+                    
+                    # Values at corners
+                    # TL___TR
+                    # |     |
+                    # BL___BR
+                    # Be careful with Y direction! usually grid[0] is top or bottom?
+                    # Typically grid[0][0] is min_x, min_y?
+                    # Let's assume grid orientation matches: r increases Y, c increases X?
+                    # Wait, usually r is Y (row), c is X (col). 
+                    # If grid[0][0] is min_x, min_y (bottom-left)
+                    # Then r+1 is "up".
+                    
+                    v_bl = grid[r][c]
+                    v_br = grid[r][c+1]
+                    v_tl = grid[r+1][c]
+                    v_tr = grid[r+1][c+1]
+                    
+                    # Binary index: 8*TL + 4*TR + 2*BR + 1*BL
+                    case_idx = 0
+                    if v_tl >= level: case_idx |= 8
+                    if v_tr >= level: case_idx |= 4
+                    if v_br >= level: case_idx |= 2
+                    if v_bl >= level: case_idx |= 1
+                    
+                    edge_pairs = case_map.get(case_idx, [])
+                    
+                    for e1, e2 in edge_pairs:
+                        p1 = ContourGenerator._get_edge_point(e1, x_base, y_base, dx, dy, v_bl, v_br, v_tr, v_tl, level)
+                        p2 = ContourGenerator._get_edge_point(e2, x_base, y_base, dx, dy, v_bl, v_br, v_tr, v_tl, level)
+                        segments.append((p1, p2))
+                        
+        # Merging Logic using Shapely
+        try:
+            from shapely.geometry import LineString
+            from shapely.ops import linemerge
             
-            # Extend contour
-            while True:
-                found = False
-                end_point = contour[-1]
+            # Group segments by level to merge strictly within same elevation
+            # Segments: list of ((x1, y1, z), (x2, y2, z))
+            by_level = {}
+            for p1, p2 in segments:
+                z = p1[2]
+                if z not in by_level:
+                    by_level[z] = []
+                by_level[z].append(LineString([p1, p2]))
+            
+            merged_polylines = []
+            
+            for z, lines in by_level.items():
+                merged = linemerge(lines)
                 
-                for i, seg in enumerate(remaining):
-                    # Check if segment connects
-                    if ContourGenerator._points_close(seg[0], end_point):
-                        contour.append(seg[1])
-                        remaining.pop(i)
-                        found = True
-                        break
-                    elif ContourGenerator._points_close(seg[1], end_point):
-                        contour.append(seg[0])
-                        remaining.pop(i)
-                        found = True
-                        break
-                
-                if not found:
-                    break
+                # linemerge returns LineString or MultiLineString
+                if merged.geom_type == 'LineString':
+                    # Extract coords. Shapely keeps Z if inputs have Z.
+                    coords = list(merged.coords)
+                    merged_polylines.append(coords)
+                elif merged.geom_type == 'MultiLineString':
+                    for geom in merged.geoms:
+                        coords = list(geom.coords)
+                        merged_polylines.append(coords)
+                        
+            return merged_polylines
             
-            if len(contour) >= 2:
-                contours.append(contour)
-        
-        return contours
-    
+        except ImportError:
+            # Fallback if shapely not found (though it should be)
+            print("Shapely not found, returning raw segments as separate polylines")
+            return [[p1, p2] for p1, p2 in segments]
     @staticmethod
-    def _points_close(p1: Tuple[float, float], p2: Tuple[float, float], threshold: float = 1e-4) -> bool:
-        """Check if two points are approximately equal."""
-        return (abs(p1[0] - p2[0]) < threshold and abs(p1[1] - p2[1]) < threshold)
-    
-    @staticmethod
-    def generate_filtered_contours(
-        contours: Dict[float, List[List[Tuple[float, float]]]],
-        min_length: float = 10.0  # minimum contour length in units
-    ) -> Dict[float, List[List[Tuple[float, float]]]]:
-        """
-        Filter contours to remove noise/short lines.
-        """
-        filtered = {}
-        
-        for level, polylines in contours.items():
-            valid_polylines = []
-            
-            for polyline in polylines:
-                # Calculate length
-                length = sum(
-                    math.sqrt((polyline[i+1][0] - polyline[i][0])**2 + 
-                             (polyline[i+1][1] - polyline[i][1])**2)
-                    for i in range(len(polyline)-1)
-                )
-                
-                if length >= min_length:
-                    valid_polylines.append(polyline)
-            
-            if valid_polylines:
-                filtered[level] = valid_polylines
-        
-        return filtered
-    
-    @staticmethod
-    def generate_major_minor_contours(
-        elevation_data: List[Tuple[float, float, float]],
-        contour_interval: float = 5.0,
-        major_interval_factor: int = 5  # Major every 5 contours
-    ) -> Tuple[Dict[float, List[List[Tuple[float, float]]]], 
-               Dict[float, List[List[Tuple[float, float]]]]]:
-        """
-        Generate separate major and minor contours for better visualization.
-        
-        Returns:
-            (major_contours, minor_contours)
-        """
-        all_contours = ContourGenerator.generate_contours_interpolated(
-            elevation_data,
-            contour_interval=contour_interval,
-            smoothing=True
-        )
-        
-        major = {}
-        minor = {}
-        major_interval = contour_interval * major_interval_factor
-        
-        for level, polylines in all_contours.items():
-            if abs(level % major_interval) < 0.01:
-                major[level] = polylines
-            else:
-                minor[level] = polylines
-        
-        return major, minor
+    def _get_edge_point(edge_idx, x, y, dx, dy, v_bl, v_br, v_tr, v_tl, level):
+        """Linearly interpolates position along an edge (0=top, 1=right, 2=bottom, 3=left)."""
+        if edge_idx == 0:  # Top (tl to tr)
+            t = (level - v_tl) / (v_tr - v_tl) if v_tr != v_tl else 0.5
+            return (x + t * dx, y + dy, level)
+        elif edge_idx == 1:  # Right (br to tr)
+            t = (level - v_br) / (v_tr - v_br) if v_tr != v_br else 0.5
+            return (x + dx, y + t * dy, level)
+        elif edge_idx == 2:  # Bottom (bl to br)
+            t = (level - v_bl) / (v_br - v_bl) if v_br != v_bl else 0.5
+            return (x + t * dx, y, level)
+        elif edge_idx == 3:  # Left (bl to tl)
+            t = (level - v_bl) / (v_tl - v_bl) if v_tl != v_bl else 0.5
+            return (x, y + t * dy, level)
+        return (x, y, level)

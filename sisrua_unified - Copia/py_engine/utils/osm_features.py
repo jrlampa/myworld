@@ -10,6 +10,7 @@ class OSMFeatureCollection:
     buildings: List[List[Tuple[float, float]]]
     roads: List[List[Tuple[float, float]]]  # With metadata: name, highway type
     trees: List[Tuple[float, float]]
+    forests: List[List[Tuple[float, float]]]  # Forest/Wood polygons
     parks: List[List[Tuple[float, float]]]  # Green areas/parks
     water: List[List[Tuple[float, float]]]  # Water bodies
     power_lines: List[List[Tuple[float, float]]]  # Power infrastructure
@@ -40,6 +41,11 @@ def fetch_osm_features(lat: float, lng: float, radius_m: float, timeout_seconds:
   node(around:{int(radius_m)},{lat},{lng})["highway"="bus_stop"];
   way(around:{int(radius_m)},{lat},{lng})["leisure"="sports_centre"];
   way(around:{int(radius_m)},{lat},{lng})["leisure"="playground"];
+  way(around:{int(radius_m)},{lat},{lng})["leisure"="playground"];
+  way(around:{int(radius_m)},{lat},{lng})["landuse"="forest"];
+  way(around:{int(radius_m)},{lat},{lng})["natural"="wood"];
+  relation(around:{int(radius_m)},{lat},{lng})["landuse"="forest"];
+  relation(around:{int(radius_m)},{lat},{lng})["natural"="wood"];
 );
 out geom;"""
 
@@ -56,12 +62,13 @@ out geom;"""
             if response.status_code in (429, 504):
                 wait_time = (2 ** attempt) * 2  # 2, 4, 8 seconds
                 if attempt < max_retries - 1:
-                    print(f"[OSM] Status {response.status_code}, retry in {wait_time}s...")
+                    import sys
+                    print(f"[OSM] Status {response.status_code}, retry in {wait_time}s...", file=sys.stderr)
                     time.sleep(wait_time)
                     continue
                 else:
                     return OSMFeatureCollection(
-                        buildings=[], roads=[], trees=[], parks=[], water=[],
+                        buildings=[], roads=[], trees=[], forests=[], parks=[], water=[],
                         power_lines=[], waterways=[], amenities=[], roads_with_names=[],
                         footways=[], bus_stops=[], leisure_areas=[]
                     )
@@ -78,14 +85,14 @@ out geom;"""
             else:
                 print(f"[OSM] Failed after {max_retries} retries: {e}")
                 return OSMFeatureCollection(
-                    buildings=[], roads=[], trees=[], parks=[], water=[],
+                    buildings=[], roads=[], trees=[], forests=[], parks=[], water=[],
                     power_lines=[], waterways=[], amenities=[], roads_with_names=[],
                     footways=[], bus_stops=[], leisure_areas=[]
                 )
         except Exception as e:
             print(f"[OSM] Unexpected error: {e}")
             return OSMFeatureCollection(
-                buildings=[], roads=[], trees=[], parks=[], water=[],
+                buildings=[], roads=[], trees=[], forests=[], parks=[], water=[],
                 power_lines=[], waterways=[], amenities=[], roads_with_names=[],
                 footways=[], bus_stops=[], leisure_areas=[]
             )
@@ -94,6 +101,7 @@ out geom;"""
     roads: List[List[Tuple[float, float]]] = []
     roads_with_names: List[Tuple[List[Tuple[float, float]], str]] = []
     trees: List[Tuple[float, float]] = []
+    forests: List[List[Tuple[float, float]]] = []
     parks: List[List[Tuple[float, float]]] = []
     water: List[List[Tuple[float, float]]] = []
     power_lines: List[List[Tuple[float, float]]] = []
@@ -177,11 +185,17 @@ out geom;"""
             elif tags.get("power") == "line":
                 # Power lines - keep as line
                 power_lines.append(coordinates)
+            elif tags.get("landuse") == "forest" or tags.get("natural") == "wood":
+                # Forest/Wood polygons
+                if coordinates[0] != coordinates[-1]:
+                    coordinates = coordinates + [coordinates[0]]
+                forests.append(coordinates)
 
     return OSMFeatureCollection(
         buildings=buildings, 
         roads=roads, 
-        trees=trees, 
+        trees=trees,
+        forests=forests,
         parks=parks,
         water=water,
         power_lines=power_lines,

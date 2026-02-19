@@ -117,7 +117,8 @@ class TerrainExporter:
             return True
         
         except Exception as e:
-            print(f"[STL] Export error: {e}")
+            import sys
+            print(f"[STL] Export error: {e}", file=sys.stderr)
             return False
     
     @staticmethod
@@ -145,7 +146,8 @@ class TerrainExporter:
             import rasterio
             from rasterio.transform import Affine
         except ImportError:
-            print("[GeoTIFF] rasterio not installed. Skipping GeoTIFF export.")
+            import sys
+            print("[GeoTIFF] rasterio not installed. Skipping GeoTIFF export.", file=sys.stderr)
             return False
         
         try:
@@ -176,7 +178,8 @@ class TerrainExporter:
             return True
         
         except Exception as e:
-            print(f"[GeoTIFF] Export error: {e}")
+            import sys
+            print(f"[GeoTIFF] Export error: {e}", file=sys.stderr)
             return False
     
     @staticmethod

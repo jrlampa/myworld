@@ -1,742 +1,290 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISRUA Advanced Topography Analyzer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    <title>SISRUA Master Topography</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Esri Leaflet (for Satellite Imagery) -->
+    <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+
+    <!-- Leaflet Draw -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <!-- Three.js -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
         }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        header {
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        }
-        
-        header h1 {
-            font-size: 2.5em;
-            margin-bottom: 5px;
-        }
-        
-        header p {
-            font-size: 0.95em;
-            opacity: 0.9;
-        }
-        
-        .container {
-            display: flex;
-            flex: 1;
-            gap: 20px;
-            padding: 20px;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        
-        .panel {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .panel-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        
-        .panel-content {
-            padding: 20px;
-            flex: 1;
-            overflow-y: auto;
-        }
-        
-        .left-panel {
-            flex: 0 0 350px;
-        }
-        
-        .main-panel {
-            flex: 1;
-            min-width: 300px;
-        }
-        
-        .right-panel {
-            flex: 0 0 300px;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #333;
-        }
-        
-        input[type="number"],
-        select,
-        button {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.95em;
-        }
-        
-        input[type="number"]:focus,
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .status {
-            padding: 12px;
-            border-radius: 6px;
-            margin: 10px 0;
-            font-size: 0.9em;
-            display: none;
-        }
-        
-        .status.show {
-            display: block;
-        }
-        
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        #three-canvas {
-            width: 100%;
-            height: 100%;
-            background: #f0f4f8;
-            min-height: 400px;
-        }
-        
-        .metric {
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .metric-label {
-            font-weight: 500;
-            color: #666;
-            font-size: 0.85em;
-            text-transform: uppercase;
-        }
-        
-        .metric-value {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #667eea;
-            margin-top: 5px;
-        }
-        
-        .preset-buttons {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        
-        .preset-btn {
-            padding: 8px;
-            font-size: 0.9em;
-            background: #f0f0f0;
-            color: #333;
-            border: 1px solid #ddd;
-            cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
-        
-        .preset-btn:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .tabs {
-            display: flex;
-            gap: 0;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 15px;
-        }
-        
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: #f9f9f9;
-            border: none;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            color: #666;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        
-        .tab-btn.active {
-            background: white;
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .export-options {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
-        }
-        
-        .export-option {
-            padding: 10px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
-        
-        .export-option:hover {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .spinner {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        footer {
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 0.85em;
-            margin-top: auto;
-        }
-    </style>
+      }
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Feather Icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
+
     <header>
-        <h1>🗻 SISRUA Topography Analyzer</h1>
-        <p>Advanced satellite-based terrain analysis and 3D visualization</p>
+        <div class="brand">
+            <i data-feather="map"></i> SISRUA Master
+        </div>
+        <div class="header-status">
+            <span id="connection-status" class="status-dot success"></span> Connected
+        </div>
     </header>
-    
-    <div class="container">
-        <!-- Left Panel: Controls -->
-        <div class="panel left-panel">
-            <div class="panel-header">⚙️ Configuration</div>
-            <div class="panel-content">
-                <h3 style="margin-bottom: 15px; color: #333;">Quick Presets</h3>
-                <div class="preset-buttons">
-                    <button class="preset-btn" data-lat="-22.15011" data-lng="-42.92182">Rio de Janeiro</button>
-                    <button class="preset-btn" data-lat="-21.36450" data-lng="-42.21794">Ubatuba</button>
-                    <button class="preset-btn" data-lat="-23.5505" data-lng="-46.6333">São Paulo</button>
-                    <button class="preset-btn" data-lat="-25.4283" data-lng="-49.2733">Curitiba</button>
+
+    <div class="main-container">
+
+        <!-- Map Analysis Panel -->
+        <div class="floating-panel">
+            <div class="panel-section">
+                <div class="panel-title">Location Target</div>
+                <div class="row">
+                    <input type="number" id="lat" placeholder="Latitude (-22.15)" step="0.0001">
+                    <input type="number" id="lng" placeholder="Longitude (-42.92)" step="0.0001">
                 </div>
-                
-                <hr style="margin: 15px 0; border: none; border-top: 1px solid #eee;">
-                
-                <div class="form-group">
-                    <label for="latitude">Latitude</label>
-                    <input type="number" id="latitude" step="0.0001" value="-22.15011" placeholder="Latitude">
+                <div
+                    style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; display: flex; align-items: center; gap: 6px;">
+                    <i data-feather="crosshair" style="width: 12px;"></i> Click map to update target
                 </div>
-                
-                <div class="form-group">
-                    <label for="longitude">Longitude</label>
-                    <input type="number" id="longitude" step="0.0001" value="-42.92182" placeholder="Longitude">
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">Analysis Parameters</div>
+                <div class="input-group">
+                    <label for="radius-slider"
+                        style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-muted);">Radius
+                        (meters)</label>
+                    <input type="range" id="radius-slider" min="100" max="2500" step="50" value="500"
+                        title="Analysis Radius" style="width: 100%; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                        <span id="radius-val">500m</span>
+                        <span style="color: var(--warning); font-size: 0.75rem;" id="radius-warning"></span>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="radius">Radius (meters)</label>
-                    <input type="number" id="radius" value="500" min="100" max="5000" step="50">
-                </div>
-                
-                <div class="form-group">
-                    <label for="quality">Quality Mode</label>
+
+                <div class="input-group">
+                    <label
+                        style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-muted);">Quality
+                        Mode</label>
                     <select id="quality">
-                        <option value="balanced">Balanced (faster)</option>
-                        <option value="high" selected>High (recommended)</option>
-                        <option value="ultra">Ultra (slowest)</option>
+                        <option value="balanced">Balanced (Fast)</option>
+                        <option value="high" selected>High Detail (Recommended)</option>
+                        <option value="ultra">Ultra (Topography Master)</option>
                     </select>
                 </div>
-                
-                <button onclick="generateAnalysis()" style="margin-bottom: 10px;">
-                    📊 Generate Analysis
+            </div>
+
+            <div class="panel-section">
+                <button class="btn btn-primary" id="btn-generate">
+                    <span id="btn-text">Generate 3D Model</span>
+                    <div class="loader" id="btn-loader" style="display: none;"></div>
                 </button>
-                
-                <button onclick="generateDXF()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                    📁 Export DXF
-                </button>
-                
-                <div id="status" class="status"></div>
-                <div id="loading" class="loading">
-                    <div class="spinner"></div>
-                    <p>Processing terrain data...</p>
+            </div>
+
+            <div class="panel-section results-section" id="results-section">
+                <div class="panel-title">Export & Stats</div>
+                <div class="export-row">
+                    <button class="btn btn-secondary">
+                        <i data-feather="download"></i> DXF
+                    </button>
+                    <button class="btn btn-secondary">
+                        <i data-feather="box"></i> STL
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <label>DXF Scale</label>
+                    <select id="dxf-preset">
+                        <option value="1:500">1:500 (High Detail)</option>
+                        <option value="1:1000" selected>1:1000 (Standard)</option>
+                        <option value="1:2000">1:2000 (Large Area)</option>
+                    </select>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-min">0m</div>
+                        <div class="stat-label">Min Elev</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-max">0m</div>
+                        <div class="stat-label">Max Elev</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-faces">-</div>
+                        <div class="stat-label">TIN Faces</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-slope">0°</div>
+                        <div class="stat-label">Mean Slope</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-solar">0%</div>
+                        <div class="stat-label">Solar Pot.</div>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Main Panel: Visualization -->
-        <div class="panel main-panel">
-            <div class="panel-header">🌍 3D Terrain Visualization</div>
-            <div style="flex: 1; position: relative;">
-                <div style="position: absolute; top: 10px; left: 10px; z-index: 2;">
-                    <button id="btn-solar" onclick="toggleOverlay('solar')" style="margin-right: 6px;">☀️ Solar Exposure</button>
-                    <button id="btn-viewshed" onclick="toggleOverlay('viewshed')">👁️ Viewshed</button>
+
+        <!-- Left: Map -->
+        <div id="map-container"></div>
+
+        <!-- Right: 3D Viewer (Hidden initially) -->
+        <div id="viewer-container">
+            <div class="viewer-controls">
+                <button class="icon-btn active" id="view-mesh">
+                    <i data-feather="layers"></i>
+                    <div class="tooltip">Terrain Mesh</div>
+                </button>
+                <button class="icon-btn active" id="view-hydro">
+                    <i data-feather="droplet"></i>
+                    <div class="tooltip">Hydrology</div>
+                </button>
+                <button class="icon-btn active" id="view-forest">
+                    <i data-feather="tree"></i>
+                    <div class="tooltip">Forests</div>
+                </button>
+                <button class="icon-btn" id="btn-flow-anim">
+                    <i data-feather="play"></i>
+                    <div class="tooltip">Animação de Fluxo</div>
+                </button>
+                <button class="layer-btn active">Terreno</button>
+                <button class="layer-btn">Satélite</button>
+                <div class="layer-check">
+                    <input type="checkbox" id="check-hydro">
+                    <label for="check-hydro">Hidrologia</label>
                 </div>
-                <div id="three-canvas"></div>
-                <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; padding: 10px; border-radius: 6px; font-size: 0.85em;">
-                    Use mouse to rotate • Scroll to zoom • Right-click to pan
-                </div>
+                <button class="icon-btn" id="view-contours">
+                    <i data-feather="hash"></i>
+                    <div class="tooltip">Contour Lines</div>
+                </button>
+                <div class="divider"></div>
+                <!-- Vis Modes -->
+                <button class="icon-btn active" id="mode-natural">
+                    <i data-feather="image"></i>
+                    <div class="tooltip">Natural</div>
+                </button>
+                <button class="icon-btn" id="mode-elevation">
+                    <i data-feather="trending-up"></i>
+                    <div class="tooltip">Elevation Height</div>
+                </button>
+                <button class="icon-btn" id="mode-slope">
+                    <i data-feather="activity"></i>
+                    <div class="tooltip">Slope Steepness</div>
+                </button>
+                <button class="icon-btn" id="mode-solar">
+                    <i data-feather="sun"></i>
+                    <div class="tooltip">Solar Exposure</div>
+                </button>
+                <button class="icon-btn" id="mode-aspect">
+                    <i data-feather="compass"></i>
+                    <div class="tooltip">Aspect (Orientation)</div>
+                </button>
+                <button class="icon-btn" id="mode-watershed">
+                    <i data-feather="grid"></i>
+                    <div class="tooltip">Bacias (Watersheds)</div>
+                </button>
+                <button class="icon-btn" id="mode-tpi">
+                    <i data-feather="maximize"></i>
+                    <div class="tooltip">TPI (Ridges/Valleys)</div>
+                </button>
+                <button class="icon-btn" id="mode-tri">
+                    <i data-feather="box"></i>
+                    <div class="tooltip">TRI (Ruggedness)</div>
+                </button>
+                <button class="icon-btn" id="mode-landform">
+                    <i data-feather="map"></i>
+                    <div class="tooltip">Landforms</div>
+                </button>
+                <button class="icon-btn" id="mode-cutfill">
+                    <i data-feather="move"></i>
+                    <div class="tooltip">Terraplanagem (Cut/Fill)</div>
+                </button>
+                <div class="divider"></div>
+                <button class="icon-btn">
+                    <i data-feather="maximize"></i>
+                    <div class="tooltip">Toggle Fullscreen</div>
+                </button>
+                <div class="divider"></div>
+                <button class="icon-btn" id="btn-sim">
+                    <i data-feather="sun"></i>
+                    <div class="tooltip">Simulações</div>
+                </button>
+                <button class="icon-btn" id="btn-ruler">
+                    <i data-feather="maximize-2"></i>
+                    <div class="tooltip">Perfil de Elevação</div>
+                </button>
             </div>
+
+            <!-- Simulation Panel -->
         </div>
-        
-        <!-- Right Panel: Analysis & Export -->
-        <div class="panel right-panel">
-            <div class="panel-header">📈 Analysis Results</div>
-            <div class="panel-content">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('terrain')">Terrain</button>
-                    <button class="tab-btn" onclick="switchTab('export')">Export</button>
-                </div>
-                
-                <!-- Terrain Tab -->
-                <div id="terrain" class="tab-content active">
-                    <div class="metric">
-                        <div class="metric-label">Elevation Range</div>
-                        <div class="metric-value" id="elevation-range">-</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">Mean Elevation</div>
-                        <div class="metric-value" id="mean-elevation">-</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">Mean Slope</div>
-                        <div class="metric-value" id="mean-slope">-</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">Max Slope</div>
-                        <div class="metric-value" id="max-slope">-</div>
-                    </div>
-                    
-                    <div class="metric">
-                        <div class="metric-label">Terrain Roughness</div>
-                        <div class="metric-value" id="terrain-roughness">-</div>
-                    </div>
-                    
-                    <div style="background: #e8f4f8; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 0.85em; color: #0c5460;">
-                        <strong>💡 Tip:</strong> Rotate 3D view with left mouse button to explore terrain relief.
-                    </div>
-                </div>
-                
-                <!-- Export Tab -->
-                <div id="export" class="tab-content">
-                    <h4 style="margin-bottom: 12px; color: #333;">Export Formats</h4>
-                    <div class="export-options">
-                        <div class="export-option" onclick="exportFormat('dxf')">
-                            📄 DXF<br><small>CAD Format</small>
-                        </div>
-                        <div class="export-option" onclick="exportFormat('stl')">
-                            🖨️ STL<br><small>3D Print</small>
-                        </div>
-                        <div class="export-option" onclick="exportFormat('geotiff')">
-                            🗺️ GeoTIFF<br><small>Georeferenced</small>
-                        </div>
-                        <div class="export-option" onclick="exportFormat('json')">
-                            📊 JSON<br><small>Analysis Data</small>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #fff3cd; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 0.85em; color: #856404;">
-                        <strong>📌 Info:</strong> Exports include spatial metadata and analysis metrics. Perfect for GIS and CAD tools.
-                    </div>
-                </div>
+    </div>
+
+    <!-- Earthworks Panel (Phase 11) -->
+    <div class="simulation-panel" id="earthworks-panel" style="top: 150px; display: none;">
+        <div class="panel-title">Platô & Terraplanagem</div>
+        <div class="slider-control">
+            <div class="slider-label">
+                <span>Cota Alvo (Z)</span>
+                <span id="target-z-val">0.00m</span>
+            </div>
+            <input type="range" id="target-z-slider" min="0" max="1000" step="0.5" value="0">
+        </div>
+        <div class="volume-stats">
+            <div class="stat-row">
+                <span>Corte:</span>
+                <span id="vol-cut">0.00 m³</span>
+            </div>
+            <div class="stat-row">
+                <span>Aterro:</span>
+                <span id="vol-fill">0.00 m³</span>
+            </div>
+            <div class="stat-row highlight">
+                <span>Saldo Líquido:</span>
+                <span id="vol-net">0.00 m³</span>
             </div>
         </div>
     </div>
-    
-    <footer>
-        <p>SISRUA v2.0 | Advanced Topography via Satellite | © 2024</p>
-    </footer>
-    
-    <!-- Three.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/js/controls/OrbitControls.min.js"></script>
-    <script>
-        // Preset button handlers
-        document.querySelectorAll('.preset-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.getElementById('latitude').value = btn.dataset.lat;
-                document.getElementById('longitude').value = btn.dataset.lng;
-            });
-        });
-        
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            
-            document.getElementById(tabName).classList.add('active');
-            event.target.classList.add('active');
-        }
-        
-        function showStatus(message, type = 'info') {
-            const status = document.getElementById('status');
-            status.textContent = message;
-            status.className = `status show ${type}`;
-            setTimeout(() => status.classList.remove('show'), 5000);
-        }
-        
-        function showLoading(show = true) {
-            document.getElementById('loading').style.display =show ? 'block' : 'none';
-        }
-        
-        function updateMetrics(data) {
-            document.getElementById('elevation-range').textContent = 
-                data.elevation_range ? `${Math.round(data.elevation_range[0])} - ${Math.round(data.elevation_range[1])} m` : '-';
-            document.getElementById('mean-elevation').textContent = 
-                data.mean_elevation ? `${Math.round(data.mean_elevation)} m` : '-';
-            document.getElementById('mean-slope').textContent = 
-                data.mean_slope ? `${data.mean_slope.toFixed(1)}°` : '-';
-            document.getElementById('max-slope').textContent = 
-                data.max_slope ? `${data.max_slope.toFixed(1)}°` : '-';
-            document.getElementById('terrain-roughness').textContent = 
-                data.terrain_ruggedness ? `${data.terrain_ruggedness.toFixed(1)}` : '-';
-        }
-        
-        // Overlay state
-        let lastGrid = null, lastGridSize = 0, lastSolar = null, lastViewshed = null, lastOverlay = null;
-        async function generateAnalysis() {
-            const lat = parseFloat(document.getElementById('latitude').value);
-            const lng = parseFloat(document.getElementById('longitude').value);
-            const radius = parseFloat(document.getElementById('radius').value);
-            const quality = document.getElementById('quality').value;
-            if (!lat || !lng || !radius) {
-                showStatus('Please fill in all fields', 'error');
-                return;
-            }
-            showLoading(true);
-            showStatus('Analyzing terrain...', 'info');
-            try {
-                const response = await fetch('/api/topography/analysis', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat, lng, radius, qualityMode: quality })
-                });
-                const data = await response.json();
-                if (data.ok) {
-                    updateMetrics(data.analysis.output);
-                    showStatus(`Analysis complete! ${data.analysis.output.stats.total_objects} objects detected.`, 'success');
-                    // Store overlays
-                    lastGrid = data.analysis.output.elevation_grid;
-                    lastGridSize = data.analysis.output.grid_size;
-                    lastSolar = data.analysis.output.solar_exposure;
-                    lastViewshed = data.analysis.output.viewshed;
-                    lastOverlay = null;
-                    if (lastGrid && lastGridSize && lastGridSize > 1) {
-                        renderTerrainMesh(lastGrid, lastGridSize);
-                    }
-                } else {
-                    showStatus('Analysis failed: ' + data.error, 'error');
-                }
-            } catch (error) {
-                showStatus('Error: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-                // Render the 3D terrain mesh using Three.js
-                function renderTerrainMesh(elevationGrid, gridSize, overlayType = null) {
-                    if (!window.terrainMesh || !window.scene) return;
-                    window.scene.remove(window.terrainMesh);
-                    const geometry = new THREE.PlaneGeometry(2, 2, gridSize - 1, gridSize - 1);
-                    let min = Infinity, max = -Infinity;
-                    for (let i = 0; i < gridSize; i++) {
-                        for (let j = 0; j < gridSize; j++) {
-                            const z = elevationGrid[i][j];
-                            if (z < min) min = z;
-                            if (z > max) max = z;
-                        }
-                    }
-                    for (let i = 0; i < geometry.attributes.position.count; i++) {
-                        const ix = i % gridSize;
-                        const iy = Math.floor(i / gridSize);
-                        let z = elevationGrid[iy][ix];
-                        z = (z - min) / (max - min + 1e-6) * 0.5;
-                        geometry.attributes.position.setZ(i, z);
-                    }
-                    geometry.computeVertexNormals();
-                    // Overlay coloring
-                    const colors = [];
-                    let overlay = null;
-                    if (overlayType === 'solar' && lastSolar) overlay = lastSolar;
-                    if (overlayType === 'viewshed' && lastViewshed) overlay = lastViewshed;
-                    for (let i = 0; i < geometry.attributes.position.count; i++) {
-                        const ix = i % gridSize;
-                        const iy = Math.floor(i / gridSize);
-                        let color;
-                        if (overlay) {
-                            let v = overlay[iy][ix];
-                            if (overlayType === 'solar') {
-                                // Blue (low) to yellow (high)
-                                color = new THREE.Color().setHSL(0.15 + 0.25 * v, 0.8, 0.5 + 0.2 * v);
-                            } else if (overlayType === 'viewshed') {
-                                // Green if visible, gray if not
-                                color = v > 0.5 ? new THREE.Color(0x7ed957) : new THREE.Color(0xcccccc);
-                            }
-                        } else {
-                            // Default: elevation coloring
-                            const z = geometry.attributes.position.getZ(i);
-                            if (z < 0.15) color = new THREE.Color(0x4a90e2);
-                            else if (z < 0.35) color = new THREE.Color(0x7ed957);
-                            else color = new THREE.Color(0xb97a56);
-                        }
-                        colors.push(color.r, color.g, color.b);
-                    }
-                    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-                    const material = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: false, side: THREE.DoubleSide });
-                    window.terrainMesh = new THREE.Mesh(geometry, material);
-                    window.terrainMesh.rotation.x = -Math.PI / 2;
-                    window.scene.add(window.terrainMesh);
-                }
 
-                function toggleOverlay(type) {
-                    if (!lastGrid || !lastGridSize) return;
-                    if (lastOverlay === type) {
-                        lastOverlay = null;
-                        renderTerrainMesh(lastGrid, lastGridSize, null);
-                        document.getElementById('btn-solar').style.opacity = 1;
-                        document.getElementById('btn-viewshed').style.opacity = 1;
-                    } else {
-                        lastOverlay = type;
-                        renderTerrainMesh(lastGrid, lastGridSize, type);
-                        document.getElementById('btn-solar').style.opacity = (type === 'solar') ? 0.6 : 1;
-                        document.getElementById('btn-viewshed').style.opacity = (type === 'viewshed') ? 0.6 : 1;
-                    }
-                }
-        
-        async function generateDXF() {
-            const lat = parseFloat(document.getElementById('latitude').value);
-            const lng = parseFloat(document.getElementById('longitude').value);
-            const radius = parseFloat(document.getElementById('radius').value);
-            const quality = document.getElementById('quality').value;
-            
-            showLoading(true);
-            showStatus('Generating DXF...', 'info');
-            
-            try {
-                const response = await fetch('/api/topography/dxf', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat, lng, radius, qualityMode: quality })
-                });
-                
-                const data = await response.json();
-                
-                if (data.ok) {
-                    showStatus('DXF generated successfully!', 'success');
-                    if(data.result && data.result.filename) {
-                        alert(`File saved: ${data.result.filename}`);
-                    }
-                } else {
-                    showStatus('Generation failed: ' + data.error, 'error');
-                }
-            } catch (error) {
-                showStatus('Error: ' + error.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-        
+    <!-- Profile Panel -->
+    <div class="profile-container" id="profile-panel">
+        <div class="panel-title" style="margin-bottom: 5px; display: flex; justify-content: space-between;">
+            <span>Elevation Profile</span>
+            <i data-feather="x" style="cursor: pointer; width: 14px;"></i>
+        </div>
+        <canvas id="profile-canvas"></canvas>
+    </div>
+    </div>
 
-        async function exportFormat(format) {
-            // Only allow after analysis has been run
-            const lat = parseFloat(document.getElementById('latitude').value);
-            const lng = parseFloat(document.getElementById('longitude').value);
-            const radius = parseFloat(document.getElementById('radius').value);
-            const quality = document.getElementById('quality').value;
-            showLoading(true);
-            showStatus(`Exporting as ${format.toUpperCase()}...`, 'info');
-            try {
-                // First, get a jobId by running analysis if not already present
-                // For simplicity, re-run analysis and use returned data
-                const response = await fetch('/api/topography/analysis', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat, lng, radius, qualityMode: quality })
-                });
-                const data = await response.json();
-                if (!data.ok) throw new Error('Analysis failed');
-                // Use a hash of lat/lng/radius/quality as jobId (or backend should return jobId)
-                // For now, simulate jobId as 'export_job'
-                const jobId = 'export_job';
-                // Request export
-                const exportResp = await fetch('/api/topography/export', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ jobId, format })
-                });
-                if (exportResp.ok) {
-                    // Download file
-                    const blob = await exportResp.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${format}_export.${format === 'geotiff' ? 'tif' : (format === 'ascii' ? 'asc' : (format === 'json' ? 'json' : 'stl'))}`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    window.URL.revokeObjectURL(url);
-                    showStatus(`Exported as ${format.toUpperCase()}!`, 'success');
-                } else {
-                    showStatus('Export failed', 'error');
-                }
-            } catch (err) {
-                showStatus('Export error: ' + err.message, 'error');
-            } finally {
-                showLoading(false);
-            }
-        }
-        
-        // Three.js 3D Terrain Visualization
-        let renderer, scene, camera, controls, terrainMesh;
-        function initThree() {
-            const container = document.getElementById('three-canvas');
-            // Remove previous renderer if any
-            if (renderer) {
-                renderer.dispose && renderer.dispose();
-                container.innerHTML = '';
-            }
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(width, height);
-            container.appendChild(renderer.domElement);
-            window.scene = new THREE.Scene();
-            window.scene.background = new THREE.Color(0xf0f4f8);
-            window.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
-            window.camera.position.set(0, -2, 2.5);
-            window.controls = new THREE.OrbitControls(window.camera, renderer.domElement);
-            window.controls.target.set(0, 0, 0);
-            window.controls.update();
-            // Lighting
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(1, 1, 2);
-            window.scene.add(light);
-            window.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-            // Placeholder mesh (flat)
-            const geometry = new THREE.PlaneGeometry(2, 2, 32, 32);
-            const material = new THREE.MeshStandardMaterial({ color: 0x667eea, wireframe: true });
-            window.terrainMesh = new THREE.Mesh(geometry, material);
-            window.terrainMesh.rotation.x = -Math.PI / 2;
-            window.scene.add(window.terrainMesh);
-            animate();
-            window.addEventListener('resize', onWindowResize);
-        }
-        function onWindowResize() {
-            const container = document.getElementById('three-canvas');
-            if (!renderer || !camera) return;
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-            renderer.setSize(width, height);
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-        }
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-        window.addEventListener('load', initThree);
-    </script>
+    <!-- Status Toast -->
+    <div class="status-toast" id="toast">
+        <span class="status-dot" id="toast-dot"></span>
+        <span id="toast-msg">System Ready</span>
+    </div>
+
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+
+    <!-- Main Module -->
+    <script type="module" src="js/main.js"></script>
 </body>
+
 </html>
