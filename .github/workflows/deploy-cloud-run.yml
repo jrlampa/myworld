@@ -41,6 +41,16 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Enable Required APIs
+        run: |
+          echo "Enabling required Google Cloud APIs..."
+          gcloud services enable \
+            cloudresourcemanager.googleapis.com \
+            cloudtasks.googleapis.com \
+            run.googleapis.com \
+            --project=${{ secrets.GCP_PROJECT_ID }}
+          echo "Required APIs enabled successfully."
+
       - name: Ensure Cloud Tasks Queue Exists
         run: |
           # Check if queue exists
