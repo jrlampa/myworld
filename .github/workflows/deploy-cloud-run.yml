@@ -44,11 +44,10 @@ jobs:
       - name: Enable Required APIs
         run: |
           echo "Enabling required Google Cloud APIs..."
-          gcloud services enable cloudresourcemanager.googleapis.com \
-            --project=${{ secrets.GCP_PROJECT_ID }}
-          gcloud services enable cloudtasks.googleapis.com \
-            --project=${{ secrets.GCP_PROJECT_ID }}
-          gcloud services enable run.googleapis.com \
+          gcloud services enable \
+            cloudresourcemanager.googleapis.com \
+            cloudtasks.googleapis.com \
+            run.googleapis.com \
             --project=${{ secrets.GCP_PROJECT_ID }}
           echo "Required APIs enabled successfully."
 
