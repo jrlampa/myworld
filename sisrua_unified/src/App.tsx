@@ -12,6 +12,7 @@ import ElevationProfile from './components/ElevationProfile';
 import BatchUpload from './components/BatchUpload';
 import Toast, { ToastType } from './components/Toast';
 import ProgressIndicator from './components/ProgressIndicator';
+import LandingPage from './components/LandingPage';
 import { useUndoRedo } from './hooks/useUndoRedo';
 import { useOsmEngine } from './hooks/useOsmEngine';
 import { useSearch } from './hooks/useSearch';
@@ -22,6 +23,8 @@ import { useElevationProfile } from './hooks/useElevationProfile';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function App() {
+  // Landing page state
+  const [showLanding, setShowLanding] = useState(true);
   // Global State with Undo/Redo
   const {
     state: appState,
@@ -223,6 +226,11 @@ function App() {
   const dxfProgressLabel = jobStatus === 'queued' || jobStatus === 'waiting'
     ? 'A gerar DXF: na fila...'
     : `A gerar DXF: ${dxfProgressValue}%...`;
+
+  // Show landing page if not yet entered
+  if (showLanding) {
+    return <LandingPage onEnter={() => setShowLanding(false)} />;
+  }
 
   return (
     <div className={`flex flex-col h-screen w-full font-sans transition-colors duration-500 overflow-hidden ${isDark ? 'bg-[#020617] text-slate-200' : 'bg-slate-50 text-slate-900'}`}>
