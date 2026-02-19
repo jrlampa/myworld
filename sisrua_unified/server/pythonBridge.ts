@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import { logger } from './utils/logger.js';
 
 /**
@@ -64,7 +65,21 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
         // This works in both Docker containers and native development environments
         // Use process.cwd() for consistent path resolution in both dev and prod
         // Dev: cwd = project_root, Prod: cwd = /app (WORKDIR in Dockerfile)
+        // Note: This assumes the application is always started from the project root,
+        // which is enforced by npm scripts (dev) and WORKDIR (prod)
         const scriptPath = path.join(process.cwd(), 'py_engine/main.py');
+        
+        // Validate that the Python script exists
+        if (!existsSync(scriptPath)) {
+            const error = new Error(`Python script not found at: ${scriptPath}`);
+            logger.error('Python script path validation failed', {
+                scriptPath,
+                cwd: process.cwd(),
+                error: error.message
+            });
+            reject(error);
+            return;
+        }
         
         // Allow customization via environment variable (useful for different Python versions)
         const pythonCommand = process.env.PYTHON_COMMAND || 'python3';
