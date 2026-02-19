@@ -401,6 +401,41 @@ git push origin main
 - [ ] Métricas normais (CPU, memória)
 - [ ] DNS atualizado (se necessário)
 - [ ] Atualizar CLOUD_RUN_BASE_URL secret
+- [ ] **Opcional**: Configurar domínio personalizado (ver [CUSTOM_DOMAIN_SETUP.md](CUSTOM_DOMAIN_SETUP.md))
+
+---
+
+## 🌐 Domínio Personalizado (Opcional)
+
+Não gosta do URL padrão do Cloud Run? 
+
+Você pode configurar um **domínio personalizado** (ex: `sisrua.app.br`) **SEM CUSTOS ADICIONAIS**:
+
+- ✅ SSL/TLS **GRÁTIS** (certificado gerenciado pelo Google)
+- ✅ Mapeamento de domínio **GRÁTIS** no Cloud Run
+- ✅ Configuração simples e rápida
+- 💰 Único custo: ~R$ 40-60/ano (apenas registro do domínio)
+
+**📖 Guia completo**: Ver [CUSTOM_DOMAIN_SETUP.md](CUSTOM_DOMAIN_SETUP.md)
+
+**Exemplo rápido**:
+```bash
+# 1. Verificar propriedade do domínio
+gcloud domains verify sisrua.app.br
+
+# 2. Mapear no Cloud Run
+gcloud run domain-mappings create \
+  --service=sisrua-app \
+  --domain=sisrua.app.br \
+  --region=southamerica-east1
+
+# 3. Configurar DNS no seu provedor
+# Adicionar registros A fornecidos pelo Google
+# Aguardar propagação (1-2h)
+
+# 4. Pronto! HTTPS automático 🎉
+curl https://sisrua.app.br/health
+```
 
 ---
 
@@ -411,6 +446,13 @@ git push origin main
 - [Cloud Run Docs](https://cloud.google.com/run/docs)
 - [GitHub Actions](https://docs.github.com/en/actions)
 - [Workload Identity Federation](https://cloud.google.com/iam/docs/workload-identity-federation)
+- [Cloud Run Custom Domains](https://cloud.google.com/run/docs/mapping-custom-domains) - Configurar domínio personalizado
+
+### Guias do Projeto
+
+- **[CUSTOM_DOMAIN_SETUP.md](CUSTOM_DOMAIN_SETUP.md)** - Configurar domínio personalizado (ex: `sisrua.app.br`)
+- **[SECURITY_DEPLOYMENT_AUDIT.md](SECURITY_DEPLOYMENT_AUDIT.md)** - Auditoria de segurança
+- **[WORK_COMPLETED.md](WORK_COMPLETED.md)** - Histórico de implementações
 
 ### Scripts Úteis
 

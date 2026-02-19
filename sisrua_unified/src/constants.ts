@@ -4,6 +4,8 @@ export const DEFAULT_LOCATION = {
   label: "São Paulo, Brazil"
 };
 
+export const APP_VERSION = "1.0.0";
+
 export const MIN_RADIUS = 10;
 export const MAX_RADIUS = 2000;
 
