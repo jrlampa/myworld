@@ -53,11 +53,16 @@ Script automático de diagnóstico que verifica:
 
 ## Como Usar
 
-### Execute o Diagnóstico Automático
+### Script de Diagnóstico Automático
 ```bash
 cd sisrua_unified
+
+# Linux/Mac:
 chmod +x diagnose_dxf.sh
 ./diagnose_dxf.sh
+
+# Windows:
+bash diagnose_dxf.sh
 ```
 
 O script identificará automaticamente o problema e fornecerá recomendações.
@@ -83,12 +88,16 @@ O script identificará automaticamente o problema e fornecerá recomendações.
 
 2. **Tentar com raio menor** (< 100m para evitar timeout)
    ```bash
+   # Linux/Mac:
    python3 py_engine/main.py \
      --lat -22.15018 \
      --lon -42.92189 \
      --radius 50 \
-     --output /tmp/test.dxf \
+     --output ./test.dxf \
      --no-preview
+   
+   # Windows:
+   python py_engine\main.py --lat -22.15018 --lon -42.92189 --radius 50 --output test.dxf --no-preview
    ```
 
 3. **Usar Docker** para ambiente consistente

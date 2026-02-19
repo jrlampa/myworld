@@ -168,7 +168,7 @@ if [ $ISSUES_FOUND -eq 0 ]; then
     echo "  3. Server-side configuration in production"
     echo ""
     echo "Try a test generation:"
-    echo "  python3 py_engine/main.py --lat -22.15018 --lon -42.92189 --radius 50 --output /tmp/test.dxf --no-preview"
+    echo "  python3 py_engine/main.py --lat -22.15018 --lon -42.92189 --radius 50 --output ./test.dxf --no-preview"
 else
     echo -e "${RED}✗ Found $ISSUES_FOUND issue(s)${NC}"
     echo ""
