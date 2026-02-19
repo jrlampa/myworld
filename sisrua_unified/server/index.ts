@@ -462,6 +462,14 @@ app.post('/api/tasks/process-dxf',
         });
 
         try {
+            // Ensure the output directory exists before generating DXF
+            // (Cloud Run instances may start fresh without the directory)
+            const outputDir = path.dirname(outputFile);
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+                logger.info('DXF output directory created in webhook', { outputDir });
+            }
+
             // Generate DXF using Python bridge
             await generateDxf({
                 lat,
