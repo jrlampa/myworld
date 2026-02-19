@@ -739,10 +739,13 @@ app.post('/api/analyze', smallBodyParser, async (req: Request, res: Response) =>
         }
 
         const { stats, locationName } = validation.data;
-        const apiKey = process.env.GROQ_API_KEY || '';
+        const apiKey = process.env.GROQ_API_KEY;
+        
+        // Provide default location name if not provided
+        const location = locationName || 'Área Selecionada';
         
         logger.info('GROQ API analysis requested', {
-            locationName,
+            locationName: location,
             hasApiKey: !!apiKey,
             timestamp: new Date().toISOString()
         });
@@ -756,9 +759,10 @@ app.post('/api/analyze', smallBodyParser, async (req: Request, res: Response) =>
             });
         }
 
-        logger.info('Processing AI analysis request', { locationName, hasStats: !!stats });
-        const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
-        logger.info('AI analysis completed successfully', { locationName });
+        logger.info('Processing AI analysis request', { locationName: location, hasStats: !!stats });
+        // apiKey is guaranteed to be defined due to the check above
+        const result = await AnalysisService.analyzeArea(stats, location, apiKey!);
+        logger.info('AI analysis completed successfully', { locationName: location });
         return res.json(result);
     } catch (error: any) {
         logger.error('Analysis error', { 

@@ -426,4 +426,5 @@ export function stopFirestoreMonitoring(): void {
     }
 }
 
-export { FirestoreService, QuotaUsage, CircuitBreakerStatus, QUOTAS, CIRCUIT_BREAKER_THRESHOLD, CLEANUP_THRESHOLD };
+export { FirestoreService, QUOTAS, CIRCUIT_BREAKER_THRESHOLD, CLEANUP_THRESHOLD };
+export type { QuotaUsage, CircuitBreakerStatus };
