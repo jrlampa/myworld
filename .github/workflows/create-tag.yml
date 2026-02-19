@@ -1,6 +1,9 @@
 name: Create Tag 'funcionando'
 
 on:
+  push:
+    branches:
+      - copilot/add-funcionando-tag
   workflow_dispatch:
     inputs:
       sha:
