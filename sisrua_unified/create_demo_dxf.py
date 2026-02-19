@@ -211,6 +211,10 @@ def create_demo_dxf(output_file):
     
     # Save the DXF file
     print(f"  Saving to {output_file}...")
+    # Ensure output directory exists before saving
+    output_path = Path(output_file)
+    if output_path.parent != Path('.'):
+        output_path.parent.mkdir(parents=True, exist_ok=True)
     doc.saveas(output_file)
     
     # Audit the file

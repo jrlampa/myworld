@@ -18,6 +18,8 @@ htmlcov/
 # Test artifacts and metadata files
 *metadata.csv
 test_*.csv
+test_*.dxf
+test_output/
 test_output.txt
 pytest_*.txt
 bandit_report.txt

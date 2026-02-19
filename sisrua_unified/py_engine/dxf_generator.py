@@ -699,6 +699,10 @@ class DXFGenerator:
                 client=self.project_info.get('client', 'CLIENTE PADRÃO'),
                 project=self.project_info.get('project', 'EXTRACAO ESPACIAL OSM')
             )
+            # Ensure output directory exists before saving
+            output_dir = os.path.dirname(self.filename)
+            if output_dir and output_dir != '.':
+                os.makedirs(output_dir, exist_ok=True)
             self.doc.saveas(self.filename)
             Logger.info(f"DXF saved successfully: {os.path.basename(self.filename)}")
         except Exception as e:
