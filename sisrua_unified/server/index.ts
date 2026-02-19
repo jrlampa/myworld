@@ -24,9 +24,17 @@ import { scheduleDxfDeletion } from './services/dxfCleanupService.js';
 import { generateDxf } from './pythonBridge.js';
 import { logger } from './utils/logger.js';
 import { generalRateLimiter, dxfRateLimiter } from './middleware/rateLimiter.js';
+import { verifyCloudTasksToken, webhookRateLimiter } from './middleware/auth.js';
 import { dxfRequestSchema } from './schemas/dxfRequest.js';
+import { 
+    searchSchema, 
+    elevationProfileSchema, 
+    analysisSchema,
+    batchRowSchema 
+} from './schemas/apiSchemas.js';
 import { parseBatchCsv, RawBatchRow } from './services/batchService.js';
 import { specs } from './swagger.js';
+import { startFirestoreMonitoring, stopFirestoreMonitoring, getFirestoreService } from './services/firestoreService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,13 +102,8 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-const batchRowSchema = z.object({
-    name: z.string().min(1),
-    lat: z.coerce.number().min(-90).max(90),
-    lon: z.coerce.number().min(-180).max(180),
-    radius: z.coerce.number().min(10).max(5000),
-    mode: z.enum(['circle', 'polygon', 'bbox'])
-});
+// Batch row schema is now imported from apiSchemas.ts
+// (removed local duplicate definition)
 
 // Configuração
 app.set('trust proxy', true);
@@ -156,9 +159,17 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '50mb' }));
+// Default body parser with reasonable 1MB limit for most endpoints
+// This prevents large payload attacks on endpoints that don't need big requests
+app.use(express.json({ limit: '1mb' }));
 app.use(generalRateLimiter);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+// Helper middleware for endpoints that need smaller body size limits
+const smallBodyParser = express.json({ limit: '100kb' });
+
+// Helper middleware for endpoints that need larger body size limits (used sparingly)
+const largeBodyParser = express.json({ limit: '5mb' });
 
 // DEBUG: Log environment variables on startup
 logger.info('Server starting with environment configuration', {
@@ -166,8 +177,7 @@ logger.info('Server starting with environment configuration', {
     port: process.env.PORT,
     dockerEnv: process.env.DOCKER_ENV,
     hasGroqApiKey: !!process.env.GROQ_API_KEY,
-    groqKeyLength: process.env.GROQ_API_KEY?.length || 0,
-    groqKeyPrefix: process.env.GROQ_API_KEY?.substring(0, 7) || 'NOT_SET',
+    // Removed groqKeyLength and groqKeyPrefix for security
     gcpProject: process.env.GCP_PROJECT || 'not-set',
     cloudRunBaseUrl: process.env.CLOUD_RUN_BASE_URL || 'not-set'
 });
@@ -227,9 +237,9 @@ app.get('/health', async (_req: Request, res: Response) => {
             dockerized: process.env.DOCKER_ENV === 'true',
             // Include GROQ API key status for debugging
             groqApiKey: {
-                configured: !!process.env.GROQ_API_KEY,
-                length: process.env.GROQ_API_KEY?.length || 0,
-                prefix: process.env.GROQ_API_KEY?.substring(0, 7) || 'NOT_SET'
+                configured: !!process.env.GROQ_API_KEY
+                // Removed 'prefix' and 'length' fields for security
+                // API key details should not be exposed in public endpoints
             }
         });
     } catch (error) {
@@ -243,17 +253,92 @@ app.get('/health', async (_req: Request, res: Response) => {
     }
 });
 
+// Firestore Status and Circuit Breaker Endpoint
+app.get('/api/firestore/status', async (_req: Request, res: Response) => {
+    try {
+        const useFirestore = process.env.NODE_ENV === 'production' || process.env.USE_FIRESTORE === 'true';
+        
+        if (!useFirestore) {
+            return res.json({
+                enabled: false,
+                mode: 'memory',
+                message: 'Firestore is disabled (development mode)'
+            });
+        }
+
+        const firestoreService = getFirestoreService();
+        const circuitBreaker = firestoreService.getCircuitBreakerStatus();
+        const quotaUsage = await firestoreService.getCurrentUsage();
+
+        const quotaPercentages = {
+            reads: (quotaUsage.reads / 50000 * 100).toFixed(2),
+            writes: (quotaUsage.writes / 20000 * 100).toFixed(2),
+            deletes: (quotaUsage.deletes / 20000 * 100).toFixed(2),
+            storage: (quotaUsage.storageBytes / (1024 * 1024 * 1024) * 100).toFixed(2)
+        };
+
+        res.json({
+            enabled: true,
+            mode: 'firestore',
+            circuitBreaker: {
+                status: circuitBreaker.isOpen ? 'OPEN' : 'CLOSED',
+                operation: circuitBreaker.operation || 'none',
+                message: circuitBreaker.isOpen 
+                    ? `Circuit breaker opened for ${circuitBreaker.operation} (${circuitBreaker.usage}/${circuitBreaker.limit})`
+                    : 'All operations allowed'
+            },
+            quotas: {
+                date: quotaUsage.date,
+                reads: {
+                    current: quotaUsage.reads,
+                    limit: 50000,
+                    percentage: `${quotaPercentages.reads}%`,
+                    available: 50000 - quotaUsage.reads
+                },
+                writes: {
+                    current: quotaUsage.writes,
+                    limit: 20000,
+                    percentage: `${quotaPercentages.writes}%`,
+                    available: 20000 - quotaUsage.writes
+                },
+                deletes: {
+                    current: quotaUsage.deletes,
+                    limit: 20000,
+                    percentage: `${quotaPercentages.deletes}%`,
+                    available: 20000 - quotaUsage.deletes
+                },
+                storage: {
+                    current: `${(quotaUsage.storageBytes / 1024 / 1024).toFixed(2)} MB`,
+                    limit: '1024 MB',
+                    percentage: `${quotaPercentages.storage}%`,
+                    bytes: quotaUsage.storageBytes
+                }
+            },
+            lastUpdated: quotaUsage.lastUpdated
+        });
+    } catch (error: any) {
+        logger.error('Firestore status check failed', { error });
+        res.status(500).json({
+            enabled: true,
+            error: error.message,
+            message: 'Failed to retrieve Firestore status'
+        });
+    }
+});
+
 // Serve generated files
 app.use('/downloads', express.static(dxfDirectory));
 
 // Cloud Tasks Webhook - Process DXF Generation
-app.post('/api/tasks/process-dxf', async (req: Request, res: Response) => {
+// Protected by OIDC token validation and rate limiting
+app.post('/api/tasks/process-dxf', 
+    webhookRateLimiter,
+    verifyCloudTasksToken,
+    async (req: Request, res: Response) => {
     try {
-        // In production, verify OIDC token here
-        // For now, we'll accept requests but log them
-        const authHeader = req.headers.authorization;
-        logger.info('DXF task webhook called', {
-            hasAuth: !!authHeader,
+        // OIDC token has been verified by middleware
+        // Request is authenticated and authorized
+        logger.info('DXF task webhook processing authenticated request', {
             taskId: req.body.taskId
         });
 
@@ -449,7 +534,8 @@ app.post('/api/batch/dxf', upload.single('file'), async (req: Request, res: Resp
 });
 
 // DXF Generation Endpoint (POST for large polygons)
-app.post('/api/dxf', dxfRateLimiter, async (req: Request, res: Response) => {
+// Uses larger body limit (5mb) to support complex polygon geometries
+app.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, res: Response) => {
     try {
         const validation = dxfRequestSchema.safeParse(req.body);
         if (!validation.success) {
@@ -575,11 +661,23 @@ app.get('/api/jobs/:id', async (req: Request, res: Response) => {
 });
 
 // Coordinate Search Endpoint (Using GeocodingService)
-app.post('/api/search', async (req: Request, res: Response) => {
+// Uses smaller body limit (100kb) - only needs a query string
+app.post('/api/search', smallBodyParser, async (req: Request, res: Response) => {
     try {
-        const { query } = req.body;
-        if (!query) return res.status(400).json({ error: 'Query required' });
+        // Validate request with Zod schema
+        const validation = searchSchema.safeParse(req.body);
+        if (!validation.success) {
+            logger.warn('Search validation failed', {
+                issues: validation.error.issues,
+                ip: req.ip
+            });
+            return res.status(400).json({ 
+                error: 'Invalid request',
+                details: validation.error.issues.map(i => i.message).join(', ')
+            });
+        }
 
+        const { query } = validation.data;
         const location = await GeocodingService.resolveLocation(query);
 
         if (location) {
@@ -596,61 +694,61 @@ app.post('/api/search', async (req: Request, res: Response) => {
 // Elevation Profile Endpoint (Delegating to ElevationService)
 app.post('/api/elevation/profile', async (req: Request, res: Response) => {
     try {
-        const { start, end, steps = 25 } = req.body;
-        
-        // Better validation for coordinate objects
-        if (!start || typeof start !== 'object' || !('lat' in start) || !('lng' in start)) {
-            logger.warn('Invalid start coordinate in elevation request', { start, body: req.body });
-            return res.status(400).json({ 
-                error: 'Invalid start coordinate',
-                details: 'Start coordinate must be an object with lat and lng properties'
+        // Validate request with Zod schema
+        const validation = elevationProfileSchema.safeParse(req.body);
+        if (!validation.success) {
+            logger.warn('Elevation profile validation failed', {
+                issues: validation.error.issues,
+                ip: req.ip
             });
-        }
-        
-        if (!end || typeof end !== 'object' || !('lat' in end) || !('lng' in end)) {
-            logger.warn('Invalid end coordinate in elevation request', { end, body: req.body });
             return res.status(400).json({ 
-                error: 'Invalid end coordinate',
-                details: 'End coordinate must be an object with lat and lng properties'
+                error: 'Invalid request',
+                details: validation.error.issues.map(i => i.message).join(', ')
             });
         }
 
+        const { start, end, steps } = validation.data;
         logger.info('Fetching elevation profile', { start, end, steps });
+        
         const profile = await ElevationService.getElevationProfile(start, end, steps);
         return res.json({ profile });
     } catch (error: any) {
         logger.error('Elevation profile error', { 
             error: error.message,
-            stack: error.stack,
-            body: req.body
+            stack: error.stack
         });
         return res.status(500).json({ error: error.message });
     }
 });
 
 // AI Analyze Endpoint (Delegating to AnalysisService)
-app.post('/api/analyze', async (req: Request, res: Response) => {
+// Uses smaller body limit (100kb) - only needs stats object and location name
+app.post('/api/analyze', smallBodyParser, async (req: Request, res: Response) => {
     try {
-        const { stats, locationName } = req.body;
-        const apiKey = process.env.GROQ_API_KEY || '';
-        
-        // DEBUG: Log GROQ_API_KEY status at request time
-        logger.info('GROQ API analysis requested', {
-            locationName,
-            hasApiKey: !!apiKey,
-            apiKeyLength: apiKey.length,
-            apiKeyPrefix: apiKey.substring(0, 7) || 'EMPTY',
-            timestamp: new Date().toISOString()
-        });
-        
-        // Validate request body
-        if (!stats) {
-            logger.warn('Analysis requested without stats');
+        // Validate request with Zod schema
+        const validation = analysisSchema.safeParse(req.body);
+        if (!validation.success) {
+            logger.warn('Analysis validation failed', {
+                issues: validation.error.issues,
+                ip: req.ip
+            });
             return res.status(400).json({ 
-                error: 'Stats required',
-                details: 'Request body must include stats object'
+                error: 'Invalid request',
+                details: validation.error.issues.map(i => i.message).join(', ')
             });
         }
+
+        const { stats, locationName } = validation.data;
+        const apiKey = process.env.GROQ_API_KEY;
+        
+        // Provide default location name if not provided
+        const location = locationName || 'Área Selecionada';
+        
+        logger.info('GROQ API analysis requested', {
+            locationName: location,
+            hasApiKey: !!apiKey,
+            timestamp: new Date().toISOString()
+        });
         
         if (!apiKey) {
             logger.warn('Analysis requested but GROQ_API_KEY not configured');
@@ -661,9 +759,10 @@ app.post('/api/analyze', async (req: Request, res: Response) => {
             });
         }
 
-        logger.info('Processing AI analysis request', { locationName, hasStats: !!stats });
-        const result = await AnalysisService.analyzeArea(stats, locationName, apiKey);
-        logger.info('AI analysis completed successfully', { locationName });
+        logger.info('Processing AI analysis request', { locationName: location, hasStats: !!stats });
+        // apiKey is guaranteed to be defined due to the check above
+        const result = await AnalysisService.analyzeArea(stats, location, apiKey!);
+        logger.info('AI analysis completed successfully', { locationName: location });
         return res.json(result);
     } catch (error: any) {
         logger.error('Analysis error', { 
@@ -732,7 +831,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     return res.status(err.status || 500).send('Internal Server Error');
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
     const baseUrl = getBaseUrl();
     logger.info('Backend online', {
         service: 'sisRUA Unified Backend',
@@ -740,4 +839,29 @@ app.listen(port, () => {
         url: baseUrl,
         port: port
     });
+
+    // Start Firestore monitoring if in production or if USE_FIRESTORE is enabled
+    if (process.env.NODE_ENV === 'production' || process.env.USE_FIRESTORE === 'true') {
+        try {
+            await startFirestoreMonitoring();
+            logger.info('Firestore monitoring started');
+        } catch (error) {
+            logger.error('Failed to start Firestore monitoring', { error });
+        }
+    } else {
+        logger.info('Firestore disabled (development mode)');
+    }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, shutting down gracefully');
+    stopFirestoreMonitoring();
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    logger.info('SIGINT received, shutting down gracefully');
+    stopFirestoreMonitoring();
+    process.exit(0);
 });
