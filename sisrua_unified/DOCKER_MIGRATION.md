@@ -67,7 +67,7 @@ if (isProduction || fs.existsSync(devExePath)) {
 **Agora** (~8 linhas, sempre Python):
 ```typescript
 // DOCKER-FIRST: Sempre usa Python diretamente
-const scriptPath = path.join(__dirname, '../py_engine/main.py');
+const scriptPath = path.join(process.cwd(), 'py_engine/main.py');
 const pythonCommand = process.env.PYTHON_COMMAND || 'python3';
 
 const command = pythonCommand;
