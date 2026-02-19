@@ -182,6 +182,7 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
                            `See .github/IAM_SETUP_REQUIRED.md for detailed instructions.`;
             logger.error('Cloud Tasks permission denied', { 
                 queue: parent,
+                expectedServiceAccountFormat: '{PROJECT_NUMBER}-compute@developer.gserviceaccount.com',
                 suggestion: errorMsg 
             });
             throw new Error(errorMsg);
