@@ -1,27 +1,26 @@
 # MyWorld - Cloud Deployment Documentation
 
-This repository contains comprehensive documentation and scripts for deploying the SIS RUA application to Google Cloud Run.
+This repository contains the SIS RUA application — a system for converting OpenStreetMap data into DXF CAD files — deployed on Google Cloud Run.
 
-## 📚 Documentation Index
+## 📚 Documentation
 
-### Quick Links
+All documentation is organized in the [`docs/`](./docs/) directory:
 
-| Document | Purpose | When to Use |
-|----------|---------|-------------|
-| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Complete step-by-step deployment guide | First-time deployment or comprehensive reference |
-| [AUTO_HEALING_DEPLOYMENT.md](./AUTO_HEALING_DEPLOYMENT.md) | Auto-healing deployment system documentation | Understanding self-healing features and troubleshooting |
-| [IAM_DEPLOYMENT_TROUBLESHOOTING.md](./IAM_DEPLOYMENT_TROUBLESHOOTING.md) | Troubleshooting IAM and deployment issues | When encountering permission or deployment errors |
-| [DEPLOYMENT_VERIFICATION_CHECKLIST.md](./DEPLOYMENT_VERIFICATION_CHECKLIST.md) | Verification checklist for deployments | After deployment to verify everything works |
-| [sisrua_unified/README.md](./sisrua_unified/README.md) | Application documentation | Understanding the application structure |
+| Section | Description |
+|---------|-------------|
+| [docs/deployment/](./docs/deployment/) | Deployment guides, auto-healing, custom domains, CI/CD, checklists |
+| [docs/cloud/](./docs/cloud/) | Cloud Run, Cloud Tasks, IAM & permissions, Firestore |
+| [docs/dxf/](./docs/dxf/) | DXF generation guide and troubleshooting |
+| [docs/groq/](./docs/groq/) | GROQ AI integration |
+| [docs/docker/](./docs/docker/) | Docker setup and usage |
+| [docs/security/](./docs/security/) | Security audit, vulnerabilities, antivirus |
+| [docs/architecture/](./docs/architecture/) | Technical architecture and analysis |
+| [docs/audit/](./docs/audit/) | Complete technical audit report |
+| [docs/reference/](./docs/reference/) | Quick reference card |
+| [docs/testing/](./docs/testing/) | Test results |
+| [docs/CHANGELOG.md](./docs/CHANGELOG.md) | Version history |
 
-### Existing Documentation
-
-This repository also contains extensive historical documentation about the project. Key documents include:
-
-- **Cloud Run & Cloud Tasks**: `CLOUD_RUN_DEPLOYMENT_FIX.md`, `CLOUD_TASKS_QUEUE_FIX_SUMMARY.md`
-- **Service Accounts**: `SERVICE_ACCOUNT_CORRECTION.md`
-- **Deployment**: `GUIA_DEPLOY.md`, `DEPLOY_DO_ZERO.md`
-- **Security**: `SECURITY_DEPLOYMENT_AUDIT.md`
+👉 **[Start here: docs/README.md](./docs/README.md)**
 
 ## 🚀 Quick Start
 
