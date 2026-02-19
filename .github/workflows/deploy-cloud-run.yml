@@ -70,7 +70,7 @@ jobs:
 
       - name: Grant Cloud Tasks Permissions
         run: |
-          SERVICE_ACCOUNT="${{ secrets.GCP_PROJECT_ID }}@appspot.gserviceaccount.com"
+          SERVICE_ACCOUNT="${{ secrets.GCP_SERVICE_ACCOUNT }}"
           
           echo "Granting Cloud Tasks enqueuer role to ${SERVICE_ACCOUNT}..."
           gcloud projects add-iam-policy-binding ${{ secrets.GCP_PROJECT_ID }} \
@@ -116,7 +116,7 @@ jobs:
 
       - name: Grant Cloud Run Invoker Permission
         run: |
-          SERVICE_ACCOUNT="${{ secrets.GCP_PROJECT_ID }}@appspot.gserviceaccount.com"
+          SERVICE_ACCOUNT="${{ secrets.GCP_SERVICE_ACCOUNT }}"
           
           echo "Granting Cloud Run invoker role to ${SERVICE_ACCOUNT}..."
           gcloud run services add-iam-policy-binding sisrua-app \
