@@ -62,7 +62,9 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
 
         // DOCKER-FIRST: Always use Python directly (no .exe binaries)
         // This works in both Docker containers and native development environments
-        const scriptPath = path.join(__dirname, '../py_engine/main.py');
+        // Use process.cwd() for consistent path resolution in both dev and prod
+        // Dev: cwd = project_root, Prod: cwd = /app (WORKDIR in Dockerfile)
+        const scriptPath = path.join(process.cwd(), 'py_engine/main.py');
         
         // Allow customization via environment variable (useful for different Python versions)
         const pythonCommand = process.env.PYTHON_COMMAND || 'python3';
