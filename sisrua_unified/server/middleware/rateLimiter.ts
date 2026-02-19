@@ -1,5 +1,5 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -8,7 +8,7 @@ import { logger } from '../utils/logger.js';
  * Uses ipKeyGenerator to properly handle both IPv4 and IPv6 addresses
  * Fixes: ValidationError about Forwarded header being ignored
  */
-const keyGenerator = (req: Request): string => {
+const keyGenerator = (req: Request, _res: Response): string => {
     // Extract IP from Forwarded header if present (standardized header)
     const forwardedHeader = req.headers.forwarded as string | undefined;
     if (forwardedHeader) {
