@@ -58,7 +58,8 @@ jobs:
           [ -n "$GCP_PROJECT_ID" ] || (echo "Missing secret: GCP_PROJECT_ID" && exit 1)
           [ -n "$GROQ_API_KEY" ] || (echo "Missing secret: GROQ_API_KEY" && exit 1)
           [ -n "$GCP_PROJECT" ] || (echo "Missing secret: GCP_PROJECT" && exit 1)
-          [ -n "$CLOUD_RUN_BASE_URL" ] || (echo "Missing secret: CLOUD_RUN_BASE_URL" && exit 1)
+          # CLOUD_RUN_BASE_URL is optional - it's set automatically on first deploy
+          [ -n "$CLOUD_RUN_BASE_URL" ] || echo "Note: CLOUD_RUN_BASE_URL not set yet (will be set on first deploy)"
 
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
