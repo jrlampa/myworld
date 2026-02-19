@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Map, Layers, Download, Globe, ChevronRight } from 'lucide-react';
+import { Map, Layers, Download, Globe, ChevronRight, Container, Sparkles, FileStack, Zap } from 'lucide-react';
 
 interface LandingPageProps {
   onEnter: () => void;
@@ -60,9 +60,20 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
               SIS RUA
               <span className="block text-blue-400 mt-2">UNIFIED</span>
             </h1>
-            <p className="text-xl md:text-2xl text-slate-400 font-light">
-              Sistema de Exportação OSM para DXF 2.5D
+            <p className="text-xl md:text-2xl text-slate-400 font-light mb-3">
+              Sistema Avançado de Exportação OSM para DXF 2.5D
             </p>
+            <div className="flex items-center justify-center gap-4 text-sm text-slate-500">
+              <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">v1.0.0</span>
+              <span className="flex items-center gap-1.5">
+                <Container size={14} />
+                Docker Ready
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Zap size={14} />
+                Cloud Run
+              </span>
+            </div>
           </motion.div>
         </div>
 
@@ -71,18 +82,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12"
         >
           {[
-            { icon: Map, title: 'Análise Espacial', desc: 'Dados do OpenStreetMap com IA' },
-            { icon: Globe, title: 'Coordenadas UTM', desc: 'Precisão absoluta para AutoCAD' },
-            { icon: Download, title: 'Exportação DXF', desc: 'Arquivos 2.5D prontos para uso' }
+            { icon: Sparkles, title: 'IA Integrada', desc: 'Busca inteligente com GROQ AI e geocoding automático' },
+            { icon: Globe, title: 'Coordenadas UTM', desc: 'Projeção absoluta e relativa para AutoCAD' },
+            { icon: Download, title: 'Exportação DXF 2.5D', desc: 'Arquivos CAD com elevação e camadas organizadas' },
+            { icon: FileStack, title: 'Processamento em Lote', desc: 'Upload CSV e processamento assíncrono (Cloud Tasks)' },
+            { icon: Layers, title: 'Camadas Avançadas', desc: 'Edifícios, vias, curvas de nível, vegetação e mais' },
+            { icon: Map, title: 'Análise Espacial', desc: 'Perfis de elevação, seleção de polígonos e KML import' },
+            { icon: Container, title: 'Docker First', desc: 'Zero dependências, isolamento completo, multiplataforma' },
+            { icon: Zap, title: 'Cloud Native', desc: 'Deploy automatizado no Google Cloud Run' }
           ].map((feature, index) => (
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 + index * 0.1 }}
+              transition={{ delay: 0.8 + index * 0.05 }}
               className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all"
             >
               <feature.icon className="mx-auto mb-4 text-blue-400" size={32} />
@@ -110,14 +126,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
         </motion.div>
 
         {/* Footer */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
-          className="text-slate-500 text-sm mt-12"
+          className="text-slate-500 text-sm mt-12 space-y-3"
         >
-          Sistema completo de extração e análise geoespacial
-        </motion.p>
+          <p className="text-base font-medium text-slate-400">
+            Plataforma completa de extração e análise geoespacial
+          </p>
+          <div className="flex items-center justify-center gap-6 text-xs">
+            <span>React + TypeScript</span>
+            <span>•</span>
+            <span>Python + OSMnx</span>
+            <span>•</span>
+            <span>Docker + Cloud Run</span>
+          </div>
+          <p className="text-xs text-slate-600">
+            OpenStreetMap → Análise AI → DXF 2.5D para AutoCAD
+          </p>
+        </motion.div>
       </motion.div>
     </div>
   );
