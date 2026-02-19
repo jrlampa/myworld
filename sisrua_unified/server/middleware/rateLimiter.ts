@@ -19,16 +19,16 @@ const keyGenerator = (req: Request): string => {
             // Remove quotes and brackets, extract just the IP
             let ip = forMatch[1].replace(/["'\[\]]/g, '');
             
-            // Skip obfuscated identifiers (e.g., "_hidden", "_secret")
-            if (ip.startsWith('_')) {
-                // Fall through to use req.ip instead
-            } else {
+            // Skip obfuscated identifiers (e.g., "_hidden", "_secret") and fall back to req.ip
+            if (!ip.startsWith('_')) {
                 // Remove port number if present (e.g., "192.0.2.60:47011" -> "192.0.2.60")
-                const colonIndex = ip.lastIndexOf(':');
-                // Only strip port for IPv4 (IPv6 has multiple colons)
-                if (colonIndex > 0 && ip.indexOf(':') === colonIndex) {
-                    ip = ip.substring(0, colonIndex);
+                // For IPv4: count colons - if exactly 1, it's likely an IPv4:port
+                const colonCount = (ip.match(/:/g) || []).length;
+                if (colonCount === 1) {
+                    // IPv4 with port - strip the port
+                    ip = ip.substring(0, ip.indexOf(':'));
                 }
+                // For IPv6: multiple colons, keep as-is (ipKeyGenerator will handle it)
                 return ipKeyGenerator(ip);
             }
         }
