@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISRUA Advanced Topography Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+        
+        header p {
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .panel-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .panel-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .left-panel {
+            flex: 0 0 350px;
+        }
+        
+        .main-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .right-panel {
+            flex: 0 0 300px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input[type="number"],
+        select,
+        button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            display: none;
+        }
+        
+        .status.show {
+            display: block;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            background: #f0f4f8;
+        }
+        
+        .metric {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .metric-label {
+            font-weight: 500;
+            color: #666;
+            font-size: 0.85em;
+            text-transform: uppercase;
+        }
+        
+        .metric-value {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 5px;
+        }
+        
+        .preset-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .preset-btn {
+            padding: 8px;
+            font-size: 0.9em;
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: #f9f9f9;
+            border: none;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: #666;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .export-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        
+        .export-option {
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .export-option:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.85em;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🗻 SISRUA Topography Analyzer</h1>
+        <p>Advanced satellite-based terrain analysis and 3D visualization</p>
+    </header>
+    
+    <div class="container">
+        <!-- Left Panel: Controls -->
+        <div class="panel left-panel">
+            <div class="panel-header">⚙️ Configuration</div>
+            <div class="panel-content">
+                <h3 style="margin-bottom: 15px; color: #333;">Quick Presets</h3>
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-lat="-22.15011" data-lng="-42.92182">Rio de Janeiro</button>
+                    <button class="preset-btn" data-lat="-21.36450" data-lng="-42.21794">Ubatuba</button>
+                    <button class="preset-btn" data-lat="-23.5505" data-lng="-46.6333">São Paulo</button>
+                    <button class="preset-btn" data-lat="-25.4283" data-lng="-49.2733">Curitiba</button>
+                </div>
+                
+                <hr style="margin: 15px 0; border: none; border-top: 1px solid #eee;">
+                
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="number" id="latitude" step="0.0001" value="-22.15011" placeholder="Latitude">
+                </div>
+                
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="number" id="longitude" step="0.0001" value="-42.92182" placeholder="Longitude">
+                </div>
+                
+                <div class="form-group">
+                    <label for="radius">Radius (meters)</label>
+                    <input type="number" id="radius" value="500" min="100" max="5000" step="50">
+                </div>
+                
+                <div class="form-group">
+                    <label for="quality">Quality Mode</label>
+                    <select id="quality">
+                        <option value="balanced">Balanced (faster)</option>
+                        <option value="high" selected>High (recommended)</option>
+                        <option value="ultra">Ultra (slowest)</option>
+                    </select>
+                </div>
+                
+                <button onclick="generateAnalysis()" style="margin-bottom: 10px;">
+                    📊 Generate Analysis
+                </button>
+                
+                <button onclick="generateDXF()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    📁 Export DXF
+                </button>
+                
+                <div id="status" class="status"></div>
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Processing terrain data...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Panel: Visualization -->
+        <div class="panel main-panel">
+            <div class="panel-header">🌍 3D Terrain Visualization</div>
+            <div style="flex: 1; position: relative;">
+                <canvas id="canvas"></canvas>
+                <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; padding: 10px; border-radius: 6px; font-size: 0.85em;">
+                    Use mouse to rotate • Scroll to zoom • Right-click to pan
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Panel: Analysis & Export -->
+        <div class="panel right-panel">
+            <div class="panel-header">📈 Analysis Results</div>
+            <div class="panel-content">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('terrain')">Terrain</button>
+                    <button class="tab-btn" onclick="switchTab('export')">Export</button>
+                </div>
+                
+                <!-- Terrain Tab -->
+                <div id="terrain" class="tab-content active">
+                    <div class="metric">
+                        <div class="metric-label">Elevation Range</div>
+                        <div class="metric-value" id="elevation-range">-</div>
+                    </div>
+                    
+                    <div class="metric">
+                        <div class="metric-label">Mean Elevation</div>
+                        <div class="metric-value" id="mean-elevation">-</div>
+                    </div>
+                    
+                    <div class="metric">
+                        <div class="metric-label">Mean Slope</div>
+                        <div class="metric-value" id="mean-slope">-</div>
+                    </div>
+                    
+                    <div class="metric">
+                        <div class="metric-label">Max Slope</div>
+                        <div class="metric-value" id="max-slope">-</div>
+                    </div>
+                    
+                    <div class="metric">
+                        <div class="metric-label">Terrain Roughness</div>
+                        <div class="metric-value" id="terrain-roughness">-</div>
+                    </div>
+                    
+                    <div style="background: #e8f4f8; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 0.85em; color: #0c5460;">
+                        <strong>💡 Tip:</strong> Rotate 3D view with left mouse button to explore terrain relief.
+                    </div>
+                </div>
+                
+                <!-- Export Tab -->
+                <div id="export" class="tab-content">
+                    <h4 style="margin-bottom: 12px; color: #333;">Export Formats</h4>
+                    <div class="export-options">
+                        <div class="export-option" onclick="exportFormat('dxf')">
+                            📄 DXF<br><small>CAD Format</small>
+                        </div>
+                        <div class="export-option" onclick="exportFormat('stl')">
+                            🖨️ STL<br><small>3D Print</small>
+                        </div>
+                        <div class="export-option" onclick="exportFormat('geotiff')">
+                            🗺️ GeoTIFF<br><small>Georeferenced</small>
+                        </div>
+                        <div class="export-option" onclick="exportFormat('json')">
+                            📊 JSON<br><small>Analysis Data</small>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #fff3cd; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 0.85em; color: #856404;">
+                        <strong>📌 Info:</strong> Exports include spatial metadata and analysis metrics. Perfect for GIS and CAD tools.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>SISRUA v2.0 | Advanced Topography via Satellite | © 2024</p>
+    </footer>
+    
+    <script>
+        // Preset button handlers
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('latitude').value = btn.dataset.lat;
+                document.getElementById('longitude').value = btn.dataset.lng;
+            });
+        });
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status show ${type}`;
+            setTimeout(() => status.classList.remove('show'), 5000);
+        }
+        
+        function showLoading(show = true) {
+            document.getElementById('loading').style.display =show ? 'block' : 'none';
+        }
+        
+        function updateMetrics(data) {
+            document.getElementById('elevation-range').textContent = 
+                data.elevation_range ? `${Math.round(data.elevation_range[0])} - ${Math.round(data.elevation_range[1])} m` : '-';
+            document.getElementById('mean-elevation').textContent = 
+                data.mean_elevation ? `${Math.round(data.mean_elevation)} m` : '-';
+            document.getElementById('mean-slope').textContent = 
+                data.mean_slope ? `${data.mean_slope.toFixed(1)}°` : '-';
+            document.getElementById('max-slope').textContent = 
+                data.max_slope ? `${data.max_slope.toFixed(1)}°` : '-';
+            document.getElementById('terrain-roughness').textContent = 
+                data.terrain_ruggedness ? `${data.terrain_ruggedness.toFixed(1)}` : '-';
+        }
+        
+        async function generateAnalysis() {
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+            const radius = parseFloat(document.getElementById('radius').value);
+            const quality = document.getElementById('quality').value;
+            
+            if (!lat || !lng || !radius) {
+                showStatus('Please fill in all fields', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            showStatus('Analyzing terrain...', 'info');
+            
+            try {
+                const response = await fetch('/api/topography/analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat, lng, radius, qualityMode: quality })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    updateMetrics(data.analysis.output);
+                    showStatus(`Analysis complete! ${data.analysis.output.stats.total_objects} objects detected.`, 'success');
+                } else {
+                    showStatus('Analysis failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function generateDXF() {
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+            const radius = parseFloat(document.getElementById('radius').value);
+            const quality = document.getElementById('quality').value;
+            
+            showLoading(true);
+            showStatus('Generating DXF...', 'info');
+            
+            try {
+                const response = await fetch('/api/topography/dxf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat, lng, radius, qualityMode: quality })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    showStatus('DXF generated successfully!', 'success');
+                    if(data.result && data.result.filename) {
+                        alert(`File saved: ${data.result.filename}`);
+                    }
+                } else {
+                    showStatus('Generation failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function exportFormat(format) {
+            showStatus(`Export as ${format.toUpperCase()} - Feature coming soon!`, 'info');
+        }
+        
+        // Simple 3D visualization placeholder
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Draw placeholder
+            ctx.fillStyle = '#f0f4f8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#667eea';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('3D Visualization - Click "Generate Analysis" to load terrain', canvas.width / 2, canvas.height / 2);
+        });
+    </script>
+</body>
+</html>

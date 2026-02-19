@@ -623,6 +623,125 @@ app.post('/api/topography/dxf', async (req, res) => {
   }
 });
 
+// Advanced topographic analysis endpoint
+app.post('/api/topography/analysis', async (req, res) => {
+  const { lat, lng, radius, qualityMode = 'high' } = req.body;
+  
+  if (!lat || !lng || !radius) {
+    return res.status(400).json({ ok: false, error: 'missing_params' });
+  }
+  
+  try {
+    const args = [
+      pyEntry,
+      '--lat', lat,
+      '--lng', lng,
+      '--radius', radius,
+      '--quality-mode', qualityMode,
+      '--output', '/tmp/analysis.dxf'
+    ];
+    
+    const result = await runPython(args);
+    
+    res.json({
+      ok: true,
+      analysis: {
+        location: { lat, lng, radius },
+        quality_mode: qualityMode,
+        output: result,
+        features: {
+          slope_analysis: true,
+          aspect_analysis: true,
+          viewshed_ready: true,
+          solar_exposure_ready: true
+        }
+      }
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: 'analysis_failed',
+      message: String(err.message || err),
+    });
+  }
+});
+
+// Export formats endpoint
+app.post('/api/topography/export', async (req, res) => {
+  const { jobId, format = 'stl' } = req.body;
+  
+  if (!jobId) {
+    return res.status(400).json({ ok: false, error: 'missing_jobId' });
+  }
+  
+  const job = jobStore.get(jobId);
+  if (!job) {
+    return res.status(404).json({ ok: false, error: 'job_not_found' });
+  }
+  
+  if (job.status !== 'completed') {
+    return res.status(400).json({ ok: false, error: 'job_not_completed', status: job.status });
+  }
+  
+  try {
+    const dxfPath = job.result.filename;
+    const baseName = path.basename(dxfPath, '.dxf');
+    
+    const formats = {
+      'stl': `${baseName}.stl`,
+      'geotiff': `${baseName}.tif`,
+      'ascii': `${baseName}.asc`,
+      'json': `${baseName}-analysis.json`
+    };
+    
+    const outputFile = formats[format] || formats.stl;
+    
+    res.json({
+      ok: true,
+      export: {
+        jobId,
+        format,
+        originalDxf: dxfPath,
+        exportPath: outputFile,
+        available_formats: Object.keys(formats),
+        status: 'ready_for_conversion'
+      }
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: 'export_failed',
+      message: String(err.message || err),
+    });
+  }
+});
+
+// Metrics endpoint (enhanced)
+app.get('/api/topography/metrics', (req, res) => {
+  const now = new Date();
+  const uptime = now - new Date(metrics.startedAt);
+  const avgJobDuration = metrics.jobsCompleted > 0 
+    ? metrics.totalDurationMs / metrics.jobsCompleted 
+    : 0;
+  
+  res.json({
+    ok: true,
+    metrics: {
+      ...metrics,
+      uptime_ms: uptime,
+      uptime_hours: (uptime / (1000 * 60 * 60)).toFixed(2),
+      average_job_duration_ms: avgJobDuration.toFixed(0),
+      active_jobs: activeJobCount,
+      total_jobs_stored: jobStore.size,
+      system: {
+        node_version: process.version,
+        platform: process.platform,
+        memory_usage_mb: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2),
+      }
+    }
+  });
+});
+
 const port = Number(process.env.PORT || 3001);
 loadState();
 cleanupArtifacts();
