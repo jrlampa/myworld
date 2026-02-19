@@ -1,0 +1,36 @@
+name: Create Tag 'funcionando'
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Commit SHA to tag (defaults to HEAD of copilot/add-funcionando-tag)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    name: Create 'funcionando' tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: copilot/add-funcionando-tag
+          fetch-depth: 0
+
+      - name: Create tag 'funcionando'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA="${{ inputs.sha }}"
+          if [ -z "$SHA" ]; then
+            SHA=$(git rev-parse HEAD)
+          fi
+          echo "Creating tag 'funcionando' on commit $SHA"
+          git tag funcionando "$SHA" || git tag -f funcionando "$SHA"
+          git push origin funcionando || git push -f origin funcionando
+          echo "✅ Tag 'funcionando' created successfully on $SHA"
