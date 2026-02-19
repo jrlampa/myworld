@@ -115,6 +115,8 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
     const url = `${CLOUD_RUN_BASE_URL}/api/tasks/process-dxf`;
     
     // Prepare the task
+    // Note: We omit serviceAccountEmail to use the Cloud Run service's default compute service account
+    // This is the recommended approach and avoids hardcoding service account emails
     const task = {
         httpRequest: {
             httpMethod: 'POST' as const,
@@ -124,7 +126,8 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
             },
             body: Buffer.from(JSON.stringify(fullPayload)).toString('base64'),
             oidcToken: {
-                serviceAccountEmail: `${GCP_PROJECT}@appspot.gserviceaccount.com`,
+                // Omit serviceAccountEmail to use the default service account that Cloud Run uses
+                // This will be the compute service account: {PROJECT_NUMBER}-compute@developer.gserviceaccount.com
             },
         },
     };
@@ -164,17 +167,22 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
         
         // Check for permission denied errors (check code first for efficiency)
         if (error.code === GRPC_PERMISSION_DENIED_CODE || error.message?.includes('PERMISSION_DENIED')) {
-            const serviceAccount = `${GCP_PROJECT}@appspot.gserviceaccount.com`;
+            // Cloud Run uses the default compute service account
+            // Format: {PROJECT_NUMBER}-compute@developer.gserviceaccount.com
             const errorMsg = `Permission denied to access Cloud Tasks queue '${CLOUD_TASKS_QUEUE}'. ` +
-                           `The service account '${serviceAccount}' needs the following roles:\n` +
+                           `The Cloud Run service account (default compute service account) needs the following roles:\n` +
                            `1. roles/cloudtasks.enqueuer - To create tasks in the queue\n` +
                            `2. roles/run.invoker - To invoke the Cloud Run webhook\n\n` +
+                           `To find your service account:\n` +
+                           `gcloud projects describe ${GCP_PROJECT} --format="value(projectNumber)"\n\n` +
+                           `The service account format is: {PROJECT_NUMBER}-compute@developer.gserviceaccount.com\n\n` +
                            `Grant permissions using:\n` +
-                           `gcloud projects add-iam-policy-binding ${GCP_PROJECT} --member="serviceAccount:${serviceAccount}" --role="roles/cloudtasks.enqueuer"\n` +
-                           `gcloud run services add-iam-policy-binding sisrua-app --region=${CLOUD_TASKS_LOCATION} --member="serviceAccount:${serviceAccount}" --role="roles/run.invoker"`;
+                           `gcloud projects add-iam-policy-binding ${GCP_PROJECT} --member="serviceAccount:{PROJECT_NUMBER}-compute@developer.gserviceaccount.com" --role="roles/cloudtasks.enqueuer"\n` +
+                           `gcloud run services add-iam-policy-binding sisrua-app --region=${CLOUD_TASKS_LOCATION} --member="serviceAccount:{PROJECT_NUMBER}-compute@developer.gserviceaccount.com" --role="roles/run.invoker"\n\n` +
+                           `See .github/IAM_SETUP_REQUIRED.md for detailed instructions.`;
             logger.error('Cloud Tasks permission denied', { 
                 queue: parent,
-                serviceAccount,
+                expectedServiceAccountFormat: '{PROJECT_NUMBER}-compute@developer.gserviceaccount.com',
                 suggestion: errorMsg 
             });
             throw new Error(errorMsg);

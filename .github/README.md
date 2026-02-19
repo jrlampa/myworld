@@ -48,6 +48,8 @@ node .github/scripts/health-check.js https://your-service-url.com
 
 ## 📚 Documentação
 
+- **[IAM_SETUP_REQUIRED.md](IAM_SETUP_REQUIRED.md)** - ⚠️ Configuração obrigatória de permissões IAM
+- **[DEPLOYMENT_SETUP.md](DEPLOYMENT_SETUP.md)** - Guia de configuração do deployment
 - **[WORKFLOWS_IMPLEMENTADOS.md](../WORKFLOWS_IMPLEMENTADOS.md)** - Resumo executivo completo
 - **[MONITORING_WORKFLOWS.md](MONITORING_WORKFLOWS.md)** - Guia técnico detalhado
 - **[WORKFLOW_DIAGRAMA.md](WORKFLOW_DIAGRAMA.md)** - Diagramas visuais e fluxos
