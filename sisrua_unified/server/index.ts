@@ -26,6 +26,12 @@ import { logger } from './utils/logger.js';
 import { generalRateLimiter, dxfRateLimiter } from './middleware/rateLimiter.js';
 import { verifyCloudTasksToken, webhookRateLimiter } from './middleware/auth.js';
 import { dxfRequestSchema } from './schemas/dxfRequest.js';
+import { 
+    searchSchema, 
+    elevationProfileSchema, 
+    analysisSchema,
+    batchRowSchema 
+} from './schemas/apiSchemas.js';
 import { parseBatchCsv, RawBatchRow } from './services/batchService.js';
 import { specs } from './swagger.js';
 
@@ -95,13 +101,8 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-const batchRowSchema = z.object({
-    name: z.string().min(1),
-    lat: z.coerce.number().min(-90).max(90),
-    lon: z.coerce.number().min(-180).max(180),
-    radius: z.coerce.number().min(10).max(5000),
-    mode: z.enum(['circle', 'polygon', 'bbox'])
-});
+// Batch row schema is now imported from apiSchemas.ts
+// (removed local duplicate definition)
 
 // Configuração
 app.set('trust proxy', true);
@@ -175,8 +176,7 @@ logger.info('Server starting with environment configuration', {
     port: process.env.PORT,
     dockerEnv: process.env.DOCKER_ENV,
     hasGroqApiKey: !!process.env.GROQ_API_KEY,
-    groqKeyLength: process.env.GROQ_API_KEY?.length || 0,
-    groqKeyPrefix: process.env.GROQ_API_KEY?.substring(0, 7) || 'NOT_SET',
+    // Removed groqKeyLength and groqKeyPrefix for security
     gcpProject: process.env.GCP_PROJECT || 'not-set',
     cloudRunBaseUrl: process.env.CLOUD_RUN_BASE_URL || 'not-set'
 });
@@ -590,9 +590,20 @@ app.get('/api/jobs/:id', async (req: Request, res: Response) => {
 // Uses smaller body limit (100kb) - only needs a query string
 app.post('/api/search', smallBodyParser, async (req: Request, res: Response) => {
     try {
-        const { query } = req.body;
-        if (!query) return res.status(400).json({ error: 'Query required' });
+        // Validate request with Zod schema
+        const validation = searchSchema.safeParse(req.body);
+        if (!validation.success) {
+            logger.warn('Search validation failed', {
+                issues: validation.error.issues,
+                ip: req.ip
+            });
+            return res.status(400).json({ 
+                error: 'Invalid request',
+                details: validation.error.issues.map(i => i.message).join(', ')
+            });
+        }
 
+        const { query } = validation.data;
         const location = await GeocodingService.resolveLocation(query);
 
         if (location) {
@@ -609,33 +620,28 @@ app.post('/api/search', smallBodyParser, async (req: Request, res: Response) => 
 // Elevation Profile Endpoint (Delegating to ElevationService)
 app.post('/api/elevation/profile', async (req: Request, res: Response) => {
     try {
-        const { start, end, steps = 25 } = req.body;
-        
-        // Better validation for coordinate objects
-        if (!start || typeof start !== 'object' || !('lat' in start) || !('lng' in start)) {
-            logger.warn('Invalid start coordinate in elevation request', { start, body: req.body });
-            return res.status(400).json({ 
-                error: 'Invalid start coordinate',
-                details: 'Start coordinate must be an object with lat and lng properties'
+        // Validate request with Zod schema
+        const validation = elevationProfileSchema.safeParse(req.body);
+        if (!validation.success) {
+            logger.warn('Elevation profile validation failed', {
+                issues: validation.error.issues,
+                ip: req.ip
             });
-        }
-        
-        if (!end || typeof end !== 'object' || !('lat' in end) || !('lng' in end)) {
-            logger.warn('Invalid end coordinate in elevation request', { end, body: req.body });
             return res.status(400).json({ 
-                error: 'Invalid end coordinate',
-                details: 'End coordinate must be an object with lat and lng properties'
+                error: 'Invalid request',
+                details: validation.error.issues.map(i => i.message).join(', ')
             });
         }
 
+        const { start, end, steps } = validation.data;
         logger.info('Fetching elevation profile', { start, end, steps });
+        
         const profile = await ElevationService.getElevationProfile(start, end, steps);
         return res.json({ profile });
     } catch (error: any) {
         logger.error('Elevation profile error', { 
             error: error.message,
-            stack: error.stack,
-            body: req.body
+            stack: error.stack
         });
         return res.status(500).json({ error: error.message });
     }
@@ -645,26 +651,27 @@ app.post('/api/elevation/profile', async (req: Request, res: Response) => {
 // Uses smaller body limit (100kb) - only needs stats object and location name
 app.post('/api/analyze', smallBodyParser, async (req: Request, res: Response) => {
     try {
-        const { stats, locationName } = req.body;
+        // Validate request with Zod schema
+        const validation = analysisSchema.safeParse(req.body);
+        if (!validation.success) {
+            logger.warn('Analysis validation failed', {
+                issues: validation.error.issues,
+                ip: req.ip
+            });
+            return res.status(400).json({ 
+                error: 'Invalid request',
+                details: validation.error.issues.map(i => i.message).join(', ')
+            });
+        }
+
+        const { stats, locationName } = validation.data;
         const apiKey = process.env.GROQ_API_KEY || '';
         
-        // DEBUG: Log GROQ_API_KEY status at request time
         logger.info('GROQ API analysis requested', {
             locationName,
             hasApiKey: !!apiKey,
-            apiKeyLength: apiKey.length,
-            apiKeyPrefix: apiKey.substring(0, 7) || 'EMPTY',
             timestamp: new Date().toISOString()
         });
-        
-        // Validate request body
-        if (!stats) {
-            logger.warn('Analysis requested without stats');
-            return res.status(400).json({ 
-                error: 'Stats required',
-                details: 'Request body must include stats object'
-            });
-        }
         
         if (!apiKey) {
             logger.warn('Analysis requested but GROQ_API_KEY not configured');
