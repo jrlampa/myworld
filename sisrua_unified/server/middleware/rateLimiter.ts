@@ -9,7 +9,20 @@ import { logger } from '../utils/logger.js';
  * Fixes: ValidationError about Forwarded header being ignored
  */
 const keyGenerator = (req: Request): string => {
-    return ipKeyGenerator(req);
+    // Extract IP from Forwarded header if present (standardized header)
+    const forwardedHeader = req.headers.forwarded as string | undefined;
+    if (forwardedHeader) {
+        // Parse Forwarded header: "for=192.0.2.60;proto=http;by=203.0.113.43"
+        const forMatch = forwardedHeader.match(/for=([^;,\s]+)/);
+        if (forMatch) {
+            // Remove quotes and "for=" prefix, extract just the IP
+            const ip = forMatch[1].replace(/["\[\]]/g, '');
+            return ipKeyGenerator(ip);
+        }
+    }
+    
+    // Fall back to req.ip (which handles X-Forwarded-For when trust proxy is enabled)
+    return ipKeyGenerator(req.ip || 'unknown');
 };
 
 const dxfRateLimiter = rateLimit({
