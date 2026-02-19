@@ -24,6 +24,7 @@ import { scheduleDxfDeletion } from './services/dxfCleanupService.js';
 import { generateDxf } from './pythonBridge.js';
 import { logger } from './utils/logger.js';
 import { generalRateLimiter, dxfRateLimiter } from './middleware/rateLimiter.js';
+import { verifyCloudTasksToken, webhookRateLimiter } from './middleware/auth.js';
 import { dxfRequestSchema } from './schemas/dxfRequest.js';
 import { parseBatchCsv, RawBatchRow } from './services/batchService.js';
 import { specs } from './swagger.js';
@@ -247,13 +248,15 @@ app.get('/health', async (_req: Request, res: Response) => {
 app.use('/downloads', express.static(dxfDirectory));
 
 // Cloud Tasks Webhook - Process DXF Generation
-app.post('/api/tasks/process-dxf', async (req: Request, res: Response) => {
+// Protected by OIDC token validation and rate limiting
+app.post('/api/tasks/process-dxf', 
+    webhookRateLimiter,
+    verifyCloudTasksToken,
+    async (req: Request, res: Response) => {
     try {
-        // In production, verify OIDC token here
-        // For now, we'll accept requests but log them
-        const authHeader = req.headers.authorization;
-        logger.info('DXF task webhook called', {
-            hasAuth: !!authHeader,
+        // OIDC token has been verified by middleware
+        // Request is authenticated and authorized
+        logger.info('DXF task webhook processing authenticated request', {
             taskId: req.body.taskId
         });
 
