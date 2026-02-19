@@ -127,6 +127,9 @@ jobs:
     needs: detect-failure
     runs-on: ubuntu-latest
     if: needs.detect-failure.outputs.should_heal == 'true'
+    outputs:
+      fix_applied: ${{ steps.fix.outputs.fix_applied }}
+      fix_description: ${{ steps.fix.outputs.fix_description }}
 
     steps:
       - name: Checkout
@@ -348,7 +351,12 @@ jobs:
   notify-failure:
     needs: [detect-failure, analyze-and-fix, retry-deployment]
     runs-on: ubuntu-latest
-    if: always() && (needs.retry-deployment.result == 'failure' || needs.analyze-and-fix.outputs.fix_applied != 'true')
+    if: |
+      always() &&
+      needs.detect-failure.outputs.should_heal == 'true' &&
+      (needs.analyze-and-fix.result == 'failure' ||
+       needs.analyze-and-fix.outputs.fix_applied != 'true' ||
+       needs.retry-deployment.result == 'failure')
 
     steps:
       - name: Checkout
