@@ -2,6 +2,13 @@
 
 Este documento explica como configurar o deployment automático para o Google Cloud Run usando GitHub Actions.
 
+## ⚠️ Pré-requisito: Configuração de Permissões IAM
+
+**IMPORTANTE**: Antes de executar o primeiro deployment, você deve configurar as permissões IAM necessárias. Consulte:
+- **[IAM_SETUP_REQUIRED.md](IAM_SETUP_REQUIRED.md)** - Guia completo de configuração de permissões IAM
+
+Estas permissões são necessárias para que o Cloud Run possa usar Cloud Tasks para processar arquivos DXF de forma assíncrona.
+
 ## Workflow Criado
 
 O workflow `.github/workflows/deploy-cloud-run.yml` foi configurado para fazer deployment automático do aplicativo `sisrua-app` no Google Cloud Run.
