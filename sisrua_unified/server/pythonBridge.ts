@@ -31,6 +31,7 @@ const __dirname = path.dirname(__filename);
 // Retry configuration
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000; // 2 seconds between retries
+const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes timeout for DXF generation
 
 interface DxfOptions {
     lat: number;
@@ -198,16 +199,12 @@ const generateDxfInternal = (options: DxfOptions): Promise<string> => {
 
         const pythonProcess = spawn(command, args);
         
-        // Timeout configuration (5 minutes for DXF generation)
-        const TIMEOUT_MS = 5 * 60 * 1000;
-        let timeoutId: NodeJS.Timeout | null = null;
         let isTimedOut = false;
-
         let stdoutData = '';
         let stderrData = '';
 
-        // Set up timeout
-        timeoutId = setTimeout(() => {
+        // Set up timeout for Python process execution
+        const timeoutId = setTimeout(() => {
             isTimedOut = true;
             logger.error('Python process timeout', {
                 timeoutMs: TIMEOUT_MS,
@@ -237,9 +234,7 @@ const generateDxfInternal = (options: DxfOptions): Promise<string> => {
         });
 
         pythonProcess.on('close', (code) => {
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-            }
+            clearTimeout(timeoutId);
             
             if (isTimedOut) {
                 reject(new Error(`Python process timed out after ${TIMEOUT_MS / 1000} seconds`));
@@ -255,9 +250,7 @@ const generateDxfInternal = (options: DxfOptions): Promise<string> => {
         });
 
         pythonProcess.on('error', (err) => {
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-            }
+            clearTimeout(timeoutId);
             reject(new Error(`Failed to spawn python process: ${err.message}`));
         });
     });
