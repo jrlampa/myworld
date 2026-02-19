@@ -13,11 +13,13 @@ Este guia fornece instruções completas para deploy da aplicação SIS RUA Unif
 ### 1. Conta Google Cloud Platform
 
 - Projeto GCP criado: `sisrua-producao` (ou seu nome preferido)
-- APIs habilitadas:
+- APIs habilitadas automaticamente durante deploy:
+  - Cloud Resource Manager API (necessária para IAM operations)
   - Cloud Run API
+  - Cloud Tasks API
+- APIs que podem precisar de habilitação manual:
   - Cloud Build API
   - Container Registry API
-  - Cloud Tasks API
   - Workload Identity Federation
 
 ### 2. Configuração do GitHub
