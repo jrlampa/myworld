@@ -13,11 +13,24 @@ const keyGenerator = (req: Request): string => {
     const forwardedHeader = req.headers.forwarded as string | undefined;
     if (forwardedHeader) {
         // Parse Forwarded header: "for=192.0.2.60;proto=http;by=203.0.113.43"
+        // Can also be: "for=\"192.0.2.60:47011\"" (with port) or "for=_hidden" (obfuscated)
         const forMatch = forwardedHeader.match(/for=([^;,\s]+)/);
         if (forMatch) {
-            // Remove quotes and "for=" prefix, extract just the IP
-            const ip = forMatch[1].replace(/["\[\]]/g, '');
-            return ipKeyGenerator(ip);
+            // Remove quotes and brackets, extract just the IP
+            let ip = forMatch[1].replace(/["'\[\]]/g, '');
+            
+            // Skip obfuscated identifiers (e.g., "_hidden", "_secret")
+            if (ip.startsWith('_')) {
+                // Fall through to use req.ip instead
+            } else {
+                // Remove port number if present (e.g., "192.0.2.60:47011" -> "192.0.2.60")
+                const colonIndex = ip.lastIndexOf(':');
+                // Only strip port for IPv4 (IPv6 has multiple colons)
+                if (colonIndex > 0 && ip.indexOf(':') === colonIndex) {
+                    ip = ip.substring(0, colonIndex);
+                }
+                return ipKeyGenerator(ip);
+            }
         }
     }
     
