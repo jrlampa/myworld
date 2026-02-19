@@ -4,12 +4,12 @@ import { logger } from '../utils/logger.js';
 
 /**
  * Custom key generator that uses the client IP address
- * This respects X-Forwarded-For when trust proxy is enabled
+ * This respects X-Forwarded-For and Forwarded headers when trust proxy is enabled
  * Uses ipKeyGenerator to properly handle both IPv4 and IPv6 addresses
- * Fixes: ValidationError about IPv6 addresses bypassing rate limits
+ * Fixes: ValidationError about Forwarded header being ignored
  */
 const keyGenerator = (req: Request): string => {
-    return ipKeyGenerator(req.ip || 'unknown');
+    return ipKeyGenerator(req);
 };
 
 const dxfRateLimiter = rateLimit({
