@@ -58,23 +58,45 @@ This comprehensive guide explains:
 
 ⚠️ **IMPORTANT**: Before the next deployment, you must configure the required IAM permissions manually. This is a **one-time setup**.
 
-### Quick Setup (for project `sisrua-producao`)
+### Step 1: Find Your Service Account
+
+Cloud Run uses the **default compute service account**, not the App Engine service account.
+
+```bash
+# Get your project number (needed for the service account)
+gcloud projects describe sisrua-producao --format="value(projectNumber)"
+# Expected output: 244319582382
+
+# Verify the service account exists
+gcloud iam service-accounts list \
+  --project=sisrua-producao \
+  --filter="email:compute@developer.gserviceaccount.com"
+```
+
+The service account format is: `{PROJECT_NUMBER}-compute@developer.gserviceaccount.com`
+
+For `sisrua-producao` (project number `244319582382`), the service account is:
+`244319582382-compute@developer.gserviceaccount.com`
+
+### Step 2: Grant Required Permissions
 
 Run these commands using an account with Owner or Project IAM Admin permissions:
 
 ```bash
 # 1. Grant Cloud Tasks enqueuer role
 gcloud projects add-iam-policy-binding sisrua-producao \
-  --member="serviceAccount:sisrua-producao@appspot.gserviceaccount.com" \
+  --member="serviceAccount:244319582382-compute@developer.gserviceaccount.com" \
   --role="roles/cloudtasks.enqueuer"
 
 # 2. Grant Cloud Run invoker role
 gcloud run services add-iam-policy-binding sisrua-app \
   --region=southamerica-east1 \
-  --member="serviceAccount:sisrua-producao@appspot.gserviceaccount.com" \
+  --member="serviceAccount:244319582382-compute@developer.gserviceaccount.com" \
   --role="roles/run.invoker" \
   --project=sisrua-producao
 ```
+
+> **⚠️ Important**: Do NOT use `sisrua-producao@appspot.gserviceaccount.com` - that service account doesn't exist for Cloud Run. Cloud Run uses the compute service account format shown above.
 
 ### Full Documentation
 
@@ -99,7 +121,7 @@ After granting the permissions, verify they are correctly configured:
 # Check Cloud Tasks enqueuer permission
 gcloud projects get-iam-policy sisrua-producao \
   --flatten="bindings[].members" \
-  --filter="bindings.role:roles/cloudtasks.enqueuer AND bindings.members:serviceAccount:sisrua-producao@appspot.gserviceaccount.com"
+  --filter="bindings.role:roles/cloudtasks.enqueuer AND bindings.members:serviceAccount:244319582382-compute@developer.gserviceaccount.com"
 
 # Check Cloud Run invoker permission
 gcloud run services get-iam-policy sisrua-app \
@@ -113,6 +135,22 @@ Or use the verification script:
 ```bash
 cd sisrua_unified
 ./scripts/verify-cloud-tasks-permissions.sh sisrua-producao
+```
+
+## Rollback
+
+If you need to remove these permissions:
+
+```bash
+gcloud projects remove-iam-policy-binding sisrua-producao \
+  --member="serviceAccount:244319582382-compute@developer.gserviceaccount.com" \
+  --role="roles/cloudtasks.enqueuer"
+
+gcloud run services remove-iam-policy-binding sisrua-app \
+  --region=southamerica-east1 \
+  --member="serviceAccount:244319582382-compute@developer.gserviceaccount.com" \
+  --role="roles/run.invoker" \
+  --project=sisrua-producao
 ```
 
 ## Next Steps
