@@ -707,3 +707,4 @@ class DXFGenerator:
             Logger.info(f"DXF saved successfully: {os.path.basename(self.filename)}")
         except Exception as e:
             Logger.error(f"DXF Save Error: {e}")
+            raise

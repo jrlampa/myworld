@@ -38,15 +38,13 @@ class OSMController:
         # 1. Prepare Layers
         tags = self._build_tags()
         if not tags:
-            Logger.error("No infrastructure layers selected!")
-            return
+            raise ValueError("No infrastructure layers selected!")
 
         # 2. Fetch Features
         Logger.info("Step 1/5: Fetching OSM features...", progress=10)
         gdf = self._fetch_features(tags)
         if gdf is None or gdf.empty:
-            Logger.info("No architectural features found in radius.", "warning")
-            return
+            raise ValueError("No architectural features found in the specified area.")
 
         # 3. Spatial GIS Audit (Authoritative Logic)
         Logger.info("Step 2/5: Running spatial audit...", progress=30)
