@@ -28,6 +28,10 @@ import { logger } from './utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000; // 2 seconds between retries
+
 interface DxfOptions {
     lat: number;
     lon: number;
@@ -39,7 +43,74 @@ interface DxfOptions {
     projection?: string;
 }
 
-export const generateDxf = (options: DxfOptions): Promise<string> => {
+/**
+ * Sleep for a specified number of milliseconds
+ */
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Generate DXF with retry logic
+ * Retries up to MAX_RETRIES times on timeout or failure
+ */
+export const generateDxf = async (options: DxfOptions): Promise<string> => {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            logger.info('Attempting DXF generation', { 
+                attempt, 
+                maxRetries: MAX_RETRIES,
+                outputFile: options.outputFile 
+            });
+            
+            const result = await generateDxfInternal(options);
+            
+            if (attempt > 1) {
+                logger.info('DXF generation succeeded after retry', { 
+                    attempt, 
+                    outputFile: options.outputFile 
+                });
+            }
+            
+            return result;
+        } catch (error: any) {
+            lastError = error;
+            
+            logger.warn('DXF generation attempt failed', {
+                attempt,
+                maxRetries: MAX_RETRIES,
+                error: error.message,
+                outputFile: options.outputFile
+            });
+            
+            // If this was the last attempt, don't wait
+            if (attempt < MAX_RETRIES) {
+                logger.info('Retrying DXF generation after delay', {
+                    attempt,
+                    nextAttempt: attempt + 1,
+                    delayMs: RETRY_DELAY_MS
+                });
+                await sleep(RETRY_DELAY_MS);
+            }
+        }
+    }
+    
+    // All retries failed
+    const errorMessage = `DXF generation failed after ${MAX_RETRIES} attempts: ${lastError?.message || 'Unknown error'}`;
+    logger.error('DXF generation failed after all retries', {
+        attempts: MAX_RETRIES,
+        lastError: lastError?.message,
+        outputFile: options.outputFile
+    });
+    
+    throw new Error(errorMessage);
+};
+
+/**
+ * Internal DXF generation function (single attempt)
+ * This is the original generateDxf logic without retry
+ */
+const generateDxfInternal = (options: DxfOptions): Promise<string> => {
     return new Promise((resolve, reject) => {
         // Input validation for security
         if (!options.lat || !options.lon || !options.radius) {
@@ -126,9 +197,32 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
         });
 
         const pythonProcess = spawn(command, args);
+        
+        // Timeout configuration (5 minutes for DXF generation)
+        const TIMEOUT_MS = 5 * 60 * 1000;
+        let timeoutId: NodeJS.Timeout | null = null;
+        let isTimedOut = false;
 
         let stdoutData = '';
         let stderrData = '';
+
+        // Set up timeout
+        timeoutId = setTimeout(() => {
+            isTimedOut = true;
+            logger.error('Python process timeout', {
+                timeoutMs: TIMEOUT_MS,
+                outputFile: options.outputFile
+            });
+            pythonProcess.kill('SIGTERM');
+            
+            // Force kill if still running after 5 seconds
+            setTimeout(() => {
+                if (!pythonProcess.killed) {
+                    logger.warn('Force killing Python process after SIGTERM timeout');
+                    pythonProcess.kill('SIGKILL');
+                }
+            }, 5000);
+        }, TIMEOUT_MS);
 
         pythonProcess.stdout.on('data', (data) => {
             const str = data.toString();
@@ -143,6 +237,15 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
         });
 
         pythonProcess.on('close', (code) => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            
+            if (isTimedOut) {
+                reject(new Error(`Python process timed out after ${TIMEOUT_MS / 1000} seconds`));
+                return;
+            }
+            
             logger.info('Python process exited', { exitCode: code });
             if (code === 0) {
                 resolve(stdoutData);
@@ -152,6 +255,9 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
         });
 
         pythonProcess.on('error', (err) => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
             reject(new Error(`Failed to spawn python process: ${err.message}`));
         });
     });
