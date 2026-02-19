@@ -33,6 +33,7 @@
     "postinstall": "echo '\n✅ Setup complete!\n\n🐳 RECOMMENDED: Use Docker for the best experience:\n   npm run docker:dev\n\n💻 Or install Python dependencies manually:\n   pip install -r py_engine/requirements.txt\n'"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^8.3.0",
     "@google-cloud/tasks": "^6.2.1",
     "@types/multer": "^2.0.0",
     "@types/proj4": "^2.5.6",

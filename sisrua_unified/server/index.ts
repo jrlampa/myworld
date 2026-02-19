@@ -34,6 +34,7 @@ import {
 } from './schemas/apiSchemas.js';
 import { parseBatchCsv, RawBatchRow } from './services/batchService.js';
 import { specs } from './swagger.js';
+import { startFirestoreMonitoring, stopFirestoreMonitoring, getFirestoreService } from './services/firestoreService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -248,6 +249,79 @@ app.get('/health', async (_req: Request, res: Response) => {
             service: 'sisRUA Unified Backend',
             version: '1.2.0',
             error: 'Health check encountered an error'
+        });
+    }
+});
+
+// Firestore Status and Circuit Breaker Endpoint
+app.get('/api/firestore/status', async (_req: Request, res: Response) => {
+    try {
+        const useFirestore = process.env.NODE_ENV === 'production' || process.env.USE_FIRESTORE === 'true';
+        
+        if (!useFirestore) {
+            return res.json({
+                enabled: false,
+                mode: 'memory',
+                message: 'Firestore is disabled (development mode)'
+            });
+        }
+
+        const firestoreService = getFirestoreService();
+        const circuitBreaker = firestoreService.getCircuitBreakerStatus();
+        const quotaUsage = await firestoreService.getCurrentUsage();
+
+        const quotaPercentages = {
+            reads: (quotaUsage.reads / 50000 * 100).toFixed(2),
+            writes: (quotaUsage.writes / 20000 * 100).toFixed(2),
+            deletes: (quotaUsage.deletes / 20000 * 100).toFixed(2),
+            storage: (quotaUsage.storageBytes / (1024 * 1024 * 1024) * 100).toFixed(2)
+        };
+
+        res.json({
+            enabled: true,
+            mode: 'firestore',
+            circuitBreaker: {
+                status: circuitBreaker.isOpen ? 'OPEN' : 'CLOSED',
+                operation: circuitBreaker.operation || 'none',
+                message: circuitBreaker.isOpen 
+                    ? `Circuit breaker opened for ${circuitBreaker.operation} (${circuitBreaker.usage}/${circuitBreaker.limit})`
+                    : 'All operations allowed'
+            },
+            quotas: {
+                date: quotaUsage.date,
+                reads: {
+                    current: quotaUsage.reads,
+                    limit: 50000,
+                    percentage: `${quotaPercentages.reads}%`,
+                    available: 50000 - quotaUsage.reads
+                },
+                writes: {
+                    current: quotaUsage.writes,
+                    limit: 20000,
+                    percentage: `${quotaPercentages.writes}%`,
+                    available: 20000 - quotaUsage.writes
+                },
+                deletes: {
+                    current: quotaUsage.deletes,
+                    limit: 20000,
+                    percentage: `${quotaPercentages.deletes}%`,
+                    available: 20000 - quotaUsage.deletes
+                },
+                storage: {
+                    current: `${(quotaUsage.storageBytes / 1024 / 1024).toFixed(2)} MB`,
+                    limit: '1024 MB',
+                    percentage: `${quotaPercentages.storage}%`,
+                    bytes: quotaUsage.storageBytes
+                }
+            },
+            lastUpdated: quotaUsage.lastUpdated
+        });
+    } catch (error: any) {
+        logger.error('Firestore status check failed', { error });
+        res.status(500).json({
+            enabled: true,
+            error: error.message,
+            message: 'Failed to retrieve Firestore status'
         });
     }
 });
@@ -753,7 +827,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     return res.status(err.status || 500).send('Internal Server Error');
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
     const baseUrl = getBaseUrl();
     logger.info('Backend online', {
         service: 'sisRUA Unified Backend',
@@ -761,4 +835,29 @@ app.listen(port, () => {
         url: baseUrl,
         port: port
     });
+
+    // Start Firestore monitoring if in production or if USE_FIRESTORE is enabled
+    if (process.env.NODE_ENV === 'production' || process.env.USE_FIRESTORE === 'true') {
+        try {
+            await startFirestoreMonitoring();
+            logger.info('Firestore monitoring started');
+        } catch (error) {
+            logger.error('Failed to start Firestore monitoring', { error });
+        }
+    } else {
+        logger.info('Firestore disabled (development mode)');
+    }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    logger.info('SIGTERM received, shutting down gracefully');
+    stopFirestoreMonitoring();
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    logger.info('SIGINT received, shutting down gracefully');
+    stopFirestoreMonitoring();
+    process.exit(0);
 });
