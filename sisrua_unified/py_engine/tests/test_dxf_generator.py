@@ -18,9 +18,9 @@ def dxf_gen(tmp_path):
 
 def test_layer_creation(dxf_gen):
     """Test if standard layers are created."""
-    assert 'sisRUA_EDIFICACAO' in dxf_gen.doc.layers
-    assert 'sisRUA_VIAS_PRIMARY' in dxf_gen.doc.layers or 'sisRUA_VIAS' in dxf_gen.doc.layers
-    assert 'sisRUA_VEGETACAO' in dxf_gen.doc.layers
+    assert 'EDIFICACAO' in dxf_gen.doc.layers
+    assert 'VIAS' in dxf_gen.doc.layers
+    assert 'VEGETACAO' in dxf_gen.doc.layers
 
 def test_block_creation(dxf_gen):
     """Test if blocks are created."""
