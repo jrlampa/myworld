@@ -8,6 +8,11 @@ except (ImportError, ValueError):
     from .utils.logger import Logger
     from .constants import MAX_FETCH_RADIUS_METERS
 
+OSMNX_TIMEOUT_SECONDS = 180
+
+# Configure osmnx timeout to handle large areas and slow network conditions
+ox.settings.timeout = OSMNX_TIMEOUT_SECONDS
+
 def fetch_osm_data(lat, lon, radius, tags, crs='auto', polygon=None):
     """
     Fetches features from OpenStreetMap within a radius or a custom polygon.

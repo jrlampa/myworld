@@ -188,7 +188,14 @@ class OSMController:
             tags['landuse'] = ['forest', 'grass', 'park']
         if self.layers_config.get('furniture', False):
             tags['amenity'] = ['bench', 'waste_basket', 'bicycle_parking', 'fountain', 'bus_station']
-            tags['highway'] = ['street_lamp']
+            # Only add street_lamp if not already fetching all highway types (True fetches everything)
+            if tags.get('highway') is True:
+                pass  # All highway features (including street_lamp) are already included
+            elif isinstance(tags.get('highway'), list):
+                if 'street_lamp' not in tags['highway']:
+                    tags['highway'].append('street_lamp')
+            else:
+                tags['highway'] = ['street_lamp']
         return tags
 
     def _send_geojson_preview(self, gdf, analysis_gdf=None):
