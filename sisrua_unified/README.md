@@ -25,6 +25,25 @@ docker compose up
 
 📖 **Guia completo**: [DOCKER_USAGE.md](./DOCKER_USAGE.md)
 
+## ☁️ Deploy para Produção
+
+Para deploy no Google Cloud Run:
+
+1. **Guia Completo de Deploy**: [../DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md)
+2. **Resolução de Problemas IAM**: [../IAM_DEPLOYMENT_TROUBLESHOOTING.md](../IAM_DEPLOYMENT_TROUBLESHOOTING.md)
+3. **Setup IAM Automatizado**: `./scripts/setup-iam-permissions.sh`
+
+### Quick Deploy
+
+```bash
+# 1. Setup de permissões IAM (uma vez)
+./scripts/setup-iam-permissions.sh sisrua-producao
+
+# 2. Deploy
+cd sisrua_unified
+gcloud run deploy sisrua-app --source=. --region=southamerica-east1 --project=sisrua-producao
+```
+
 ## 🔒 Segurança
 
 **Com Docker (Recomendado)**: Antivírus NÃO é problema! Python roda em container isolado.
