@@ -12,6 +12,10 @@ const CLOUD_TASKS_QUEUE = process.env.CLOUD_TASKS_QUEUE || 'sisrua-queue';
 const CLOUD_RUN_BASE_URL = process.env.CLOUD_RUN_BASE_URL || 'http://localhost:3001';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_DEVELOPMENT = NODE_ENV === 'development' || !GCP_PROJECT;
+const CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL = 
+    process.env.CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL || 
+    process.env.CLOUD_RUN_SERVICE_ACCOUNT || 
+    (GCP_PROJECT ? `${GCP_PROJECT}@appspot.gserviceaccount.com` : '');
 
 // gRPC error codes
 const GRPC_NOT_FOUND_CODE = 5;
@@ -109,6 +113,12 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
     }
 
     // Production mode: Use Cloud Tasks
+    if (!CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL) {
+        const errorMsg = 'service_account_email must be set. Configure CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL or CLOUD_RUN_SERVICE_ACCOUNT, or ensure GCP_PROJECT is defined to use the default App Engine service account.';
+        logger.error('Missing Cloud Tasks service account email', { error: errorMsg });
+        throw new Error(errorMsg);
+    }
+
     const parent = tasksClient.queuePath(GCP_PROJECT, CLOUD_TASKS_LOCATION, CLOUD_TASKS_QUEUE);
     
     // Construct the webhook URL
@@ -126,8 +136,7 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
             },
             body: Buffer.from(JSON.stringify(fullPayload)).toString('base64'),
             oidcToken: {
-                // Omit serviceAccountEmail to use the default service account that Cloud Run uses
-                // This will be the compute service account: {PROJECT_NUMBER}-compute@developer.gserviceaccount.com
+                serviceAccountEmail: CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL
             },
         },
     };
