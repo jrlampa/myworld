@@ -1,0 +1,127 @@
+{
+  "runtimeConfig": {
+    "providerMode": "premium-first",
+    "qualityMode": "high",
+    "autoDiagnostics": true
+  },
+  "metrics": {
+    "startedAt": "2026-02-19T11:59:48.999Z",
+    "jobsCreated": 4,
+    "jobsCompleted": 1,
+    "jobsFailed": 1,
+    "requestCount": 1,
+    "totalDurationMs": 10902,
+    "providerUsage": {
+      "mapbox": 0,
+      "opentopodata": 1,
+      "open-elevation": 0,
+      "fallback-zero": 1
+    },
+    "qualityUsage": {
+      "balanced": 1,
+      "high": 0,
+      "ultra": 0
+    }
+  },
+  "jobs": [
+    {
+      "id": "job_1771502401652_d1bfe5",
+      "status": "completed",
+      "payload": {
+        "lat": -22.324554,
+        "lng": -41.753739,
+        "radius": 80,
+        "qualityMode": "balanced",
+        "strict": false
+      },
+      "outputPath": "c:\\myworld\\sisrua_unified - Copia\\topography_job_1771502401652_d1bfe5.dxf",
+      "createdAt": "2026-02-19T12:00:01.653Z",
+      "startedAt": "2026-02-19T12:00:01.655Z",
+      "finishedAt": "2026-02-19T12:00:12.557Z",
+      "elapsedMs": 10902,
+      "result": {
+        "success": true,
+        "filename": "c:\\myworld\\sisrua_unified - Copia\\topography_job_1771502401652_d1bfe5.dxf",
+        "metadata": {
+          "lat": -22.324554,
+          "lng": -41.753739,
+          "radius": 80,
+          "road_type": "all",
+          "quality_mode": "balanced",
+          "providers_used": [
+            "fallback-zero",
+            "opentopodata"
+          ]
+        },
+        "stats": {
+          "total_objects": 11,
+          "buildings": 1,
+          "roads": 1,
+          "trees": 1,
+          "failed_samples": 1,
+          "sample_count": 9
+        }
+      },
+      "error": null,
+      "downloadUrl": "/api/topography/download/job_1771502401652_d1bfe5"
+    },
+    {
+      "id": "job_1771502770722_e4608e",
+      "status": "failed",
+      "payload": {
+        "lat": -22.324554,
+        "lng": -41.753739,
+        "radius": 120,
+        "qualityMode": "ultra",
+        "strict": true
+      },
+      "outputPath": "C:\\myworld\\sisrua_unified - Copia\\topography_job_1771502770722_e4608e.dxf",
+      "createdAt": "2026-02-19T12:06:10.722Z",
+      "startedAt": "2026-02-19T12:06:10.723Z",
+      "finishedAt": "2026-02-19T12:06:17.786Z",
+      "elapsedMs": null,
+      "result": null,
+      "error": "Traceback (most recent call last):\r\n  File \"C:\\myworld\\sisrua_unified - Copia\\py_engine\\main.py\", line 55, in _safe_sample\r\n    return sample_elevation_with_fallback(lat, lng)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\myworld\\sisrua_unified - Copia\\py_engine\\utils\\satellite_topography.py\", line 171, in sample_elevation_with_fallback\r\n    raise RuntimeError(f\"All providers failed. Last error: {last_error}\")\r\nRuntimeError: All providers failed. Last error: Request failed after 1 attempts: HTTPSConnectionPool(host='api.open-elevation.com', port=443): Max retries exceeded with url: /api/v1/lookup?locations=-22.323951941531337%2C-41.752770541761514 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.open-elevation.com', port=443) at 0x2458488c320>, 'Connection to api.open-elevation.com timed out. (connect timeout=3)'))\r\n\r\nThe above exception was the direct cause of the following exception:\r\n\r\nTraceback (most recent call last):\r\n  File \"C:\\myworld\\sisrua_unified - Copia\\py_engine\\main.py\", line 185, in <module>\r\n    raise SystemExit(main())\r\n                     ^^^^^^\r\n  File \"C:\\myworld\\sisrua_unified - Copia\\py_engine\\main.py\", line 172, in main\r\n    result = generate_dxf_from_coordinates(\r\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\myworld\\sisrua_unified - Copia\\py_engine\\main.py\", line 89, in generate_dxf_from_coordinates\r\n    sample = _safe_sample(point_lat, point_lng, strict_mode=strict_mode)\r\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\myworld\\sisrua_unified - Copia\\py_engine\\main.py\", line 58, in _safe_sample\r\n    raise RuntimeError(f\"Elevation sampling failed for ({lat}, {lng}): {exc}\") from exc\r\nRuntimeError: Elevation sampling failed for (-22.323951941531337, -41.752770541761514): All providers failed. Last error: Request failed after 1 attempts: HTTPSConnectionPool(host='api.open-elevation.com', port=443): Max retries exceeded with url: /api/v1/lookup?locations=-22.323951941531337%2C-41.752770541761514 (Caused by ConnectTimeoutError(<HTTPSConnection(host='api.open-elevation.com', port=443) at 0x2458488c320>, 'Connection to api.open-elevation.com timed out. (connect timeout=3)'))\r\n",
+      "downloadUrl": null
+    },
+    {
+      "id": "job_1771502770788_0a9fd8",
+      "status": "cancelled",
+      "payload": {
+        "lat": -22.3245,
+        "lng": -41.7537,
+        "radius": 100,
+        "qualityMode": "high",
+        "strict": true
+      },
+      "outputPath": "C:\\myworld\\sisrua_unified - Copia\\topography_job_1771502770788_0a9fd8.dxf",
+      "createdAt": "2026-02-19T12:06:10.788Z",
+      "startedAt": null,
+      "finishedAt": "2026-02-19T12:06:11.305Z",
+      "elapsedMs": null,
+      "result": null,
+      "error": "Cancelled by user",
+      "downloadUrl": null
+    },
+    {
+      "id": "job_1771502785902_faba4b",
+      "status": "cancelled",
+      "payload": {
+        "lat": -22.324554,
+        "lng": -41.753739,
+        "radius": 120,
+        "qualityMode": "ultra",
+        "strict": false
+      },
+      "outputPath": "C:\\myworld\\sisrua_unified - Copia\\topography_job_1771502785902_faba4b.dxf",
+      "createdAt": "2026-02-19T12:06:25.902Z",
+      "startedAt": "2026-02-19T12:06:25.902Z",
+      "finishedAt": "2026-02-19T12:06:26.571Z",
+      "elapsedMs": null,
+      "result": null,
+      "error": "Cancelled by user",
+      "downloadUrl": null
+    }
+  ],
+  "persistedAt": "2026-02-19T12:06:26.571Z"
+}

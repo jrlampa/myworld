@@ -1,0 +1,469 @@
+import argparse
+import json
+import math
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence, Tuple
+
+import ezdxf
+from pyproj import Geod, Transformer
+from shapely.geometry import LineString
+
+try:
+    from py_engine.utils.satellite_topography import ElevationSample, get_provider_status, sample_elevation_with_fallback
+    from py_engine.utils.osm_features import fetch_osm_features
+except ModuleNotFoundError:
+    from utils.satellite_topography import ElevationSample, get_provider_status, sample_elevation_with_fallback
+    from utils.osm_features import fetch_osm_features
+
+
+GEOD = Geod(ellps="WGS84")
+
+
+def _utm_epsg_for_lat_lng(lat: float, lng: float) -> int:
+    zone = int((lng + 180.0) // 6.0) + 1
+    if lat < 0:
+        return 32700 + zone
+    return 32600 + zone
+
+
+def _build_local_projector(lat: float, lng: float):
+    epsg = _utm_epsg_for_lat_lng(lat, lng)
+    transformer = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)
+    center_x, center_y = transformer.transform(lng, lat)
+
+    def to_local_xy(point_lat: float, point_lng: float) -> Tuple[float, float]:
+        x, y = transformer.transform(point_lng, point_lat)
+        return x - center_x, y - center_y
+
+    return to_local_xy
+
+
+def _get_road_width(highway_type: str) -> float:
+    """Get visual width in meters for different road types."""
+    width_map = {
+        "motorway": 20.0,
+        "trunk": 15.0,
+        "primary": 12.0,
+        "secondary": 10.0,
+        "tertiary": 8.0,
+        "residential": 5.0,
+        "service": 4.0,
+        "pedestrian": 3.0,
+        "footway": 2.0,
+        "path": 1.5,
+        "cycleway": 2.5,
+        "track": 3.0,
+        "unclassified": 6.0,
+    }
+    return width_map.get(highway_type, 5.0)
+
+
+def _draw_road_with_offsets(msp, road_coords: List[Tuple[float, float]], highway_type: str = "residential"):
+    """Draw road centerline and offset curbs using Shapely."""
+    if len(road_coords) < 2:
+        return
+    
+    try:
+        # Create LineString from coordinates
+        line = LineString(road_coords)
+        
+        if line.is_empty:
+            return
+        
+        # Draw main centerline
+        msp.add_lwpolyline(road_coords, close=False, dxfattribs={"layer": "ROADS", "color": 3})
+        
+        # Get width for offset
+        width = _get_road_width(highway_type) / 2.0  # Half-width for offset
+        
+        if width > 0.1:
+            try:
+                # Try Shapely 2.0+ method first
+                if hasattr(line, 'offset_curve'):
+                    left_offset = line.offset_curve(width, join_style=2)
+                    right_offset = line.offset_curve(-width, join_style=2)
+                else:
+                    # Fallback to older Shapely API
+                    left_offset = line.parallel_offset(width, 'left', join_style=2)
+                    right_offset = line.parallel_offset(width, 'right', join_style=2)
+                
+                # Draw left curb
+                if not left_offset.is_empty:
+                    if hasattr(left_offset, 'coords'):  # LineString
+                        offset_coords = list(left_offset.coords)
+                        msp.add_lwpolyline(offset_coords, close=False, dxfattribs={"layer": "ROADS", "color": 251})
+                
+                # Draw right curb
+                if not right_offset.is_empty:
+                    if hasattr(right_offset, 'coords'):  # LineString
+                        offset_coords = list(right_offset.coords)
+                        msp.add_lwpolyline(offset_coords, close=False, dxfattribs={"layer": "ROADS", "color": 251})
+            except Exception as offset_err:
+                # Silently skip offset if it fails, but keep centerline
+                pass
+    except Exception as e:
+        # If something goes wrong, just draw the centerline
+        msp.add_lwpolyline(road_coords, close=False, dxfattribs={"layer": "ROADS", "color": 3})
+
+
+def _generate_contour_lines(samples: List[ElevationSample], to_local_xy, radius: float) -> List[List[Tuple[float, float]]]:
+    """Generate contour lines from elevation samples using simple interpolation."""
+    if len(samples) < 3:
+        return []
+    
+    try:
+        # Group samples by elevation bands (every N meters)
+        elevations = [s.elevation_m for s in samples if s.elevation_m is not None]
+        if not elevations:
+            return []
+        
+        min_elev = min(elevations)
+        max_elev = max(elevations)
+        elev_range = max_elev - min_elev
+        
+        if elev_range < 1.0:  # Not enough variation
+            return []
+        
+        # Create 4-5 contour levels
+        contour_count = max(2, min(5, int(elev_range / 5.0)))
+        contour_levels = [min_elev + (elev_range * i) / contour_count for i in range(1, contour_count)]
+        
+        contours: List[List[Tuple[float, float]]] = []
+        
+        # For each contour level, create a simplified ring
+        for level in contour_levels:
+            # Find samples close to this level and create ring
+            matching = [s for s in samples if abs(s.elevation_m - level) < elev_range / 10.0]
+            if len(matching) >= 3:
+                # Create ring from matched points
+                ring_pts = []
+                for s in matching:
+                    x, y = to_local_xy(s.lat, s.lng)
+                    ring_pts.append((x, y))
+                
+                if len(ring_pts) >= 3:
+                    contours.append(ring_pts)
+        
+        return contours
+    except Exception:
+        return []
+
+
+def _meters_to_lat_lon_offsets(center_lat: float, radius_m: float, samples: int = 16) -> List[Tuple[float, float]]:
+    offsets: List[Tuple[float, float]] = []
+    meters_per_deg_lat = 111_320.0
+    meters_per_deg_lng = max(1.0, 111_320.0 * math.cos(math.radians(center_lat)))
+
+    for idx in range(samples):
+        angle = (2.0 * math.pi * idx) / samples
+        dy_m = math.sin(angle) * radius_m
+        dx_m = math.cos(angle) * radius_m
+        offsets.append((dy_m / meters_per_deg_lat, dx_m / meters_per_deg_lng))
+
+    offsets.append((0.0, 0.0))
+    return offsets
+
+
+def _geodesic_ring_points(center_lat: float, center_lng: float, radius_m: float, samples: int) -> List[Tuple[float, float]]:
+    points: List[Tuple[float, float]] = []
+    for idx in range(samples):
+        azimuth = (360.0 * idx) / samples
+        dest_lng, dest_lat, _ = GEOD.fwd(center_lng, center_lat, azimuth, radius_m)
+        points.append((dest_lat, dest_lng))
+    points.append((center_lat, center_lng))
+    return points
+
+
+def _quality_to_samples(quality_mode: str) -> int:
+    quality = (quality_mode or "high").lower().strip()
+    if quality == "ultra":
+        return 32
+    if quality == "high":
+        return 16
+    return 8
+
+
+def _safe_sample(lat: float, lng: float, strict_mode: bool = False) -> ElevationSample:
+    try:
+        return sample_elevation_with_fallback(lat, lng)
+    except Exception as exc:
+        if strict_mode:
+            raise RuntimeError(f"Elevation sampling failed for ({lat}, {lng}): {exc}") from exc
+        return ElevationSample(lat=lat, lng=lng, elevation_m=0.0, provider="fallback-zero")
+
+
+def generate_dxf_from_coordinates(
+    lat: float,
+    lng: float,
+    radius: float,
+    output_filename: str,
+    road_type: str = "all",
+    include_terrain: bool = True,
+    include_buildings: bool = True,
+    include_trees: bool = True,
+    include_labels: bool = False,
+    quality_mode: str = "high",
+    strict_mode: bool = False,
+    settings: Optional[Dict] = None,
+) -> Dict:
+    settings = settings or {}
+    output_path = Path(output_filename)
+    to_local_xy = _build_local_projector(lat, lng)
+
+    doc = ezdxf.new("R2018")
+    msp = doc.modelspace()
+
+    layer_specs = {
+        "AOI": 6,
+        "TERRAIN": 8,
+        "ELEVATION": 9,
+        "BUILDINGS": 1,
+        "ROADS": 3,
+        "TREES": 2,
+        "LABELS": 7,
+    }
+    for layer_name, color in layer_specs.items():
+        if layer_name not in doc.layers:
+            doc.layers.new(name=layer_name, dxfattribs={"color": color})
+
+    msp.add_circle((0.0, 0.0), radius, dxfattribs={"layer": "AOI"})
+
+    sample_count = _quality_to_samples(quality_mode)
+    geodesic_points = _geodesic_ring_points(center_lat=lat, center_lng=lng, radius_m=radius, samples=sample_count)
+    samples: List[ElevationSample] = []
+    failed_samples = 0
+    for point_lat, point_lng in geodesic_points:
+        sample = _safe_sample(point_lat, point_lng, strict_mode=strict_mode)
+        if sample.provider == "fallback-zero":
+            failed_samples += 1
+        samples.append(sample)
+
+    for sample in samples:
+        point_x, point_y = to_local_xy(sample.lat, sample.lng)
+        msp.add_point((point_x, point_y, sample.elevation_m), dxfattribs={"layer": "ELEVATION"})
+
+    if include_terrain:
+        msp.add_lwpolyline([to_local_xy(s.lat, s.lng) for s in samples], close=True, dxfattribs={"layer": "TERRAIN"})
+
+    # Draw contour lines (elevation curves)
+    contours = _generate_contour_lines(samples, to_local_xy, radius)
+    for contour in contours:
+        if len(contour) >= 2:
+            msp.add_lwpolyline(contour, close=True, dxfattribs={"layer": "CONTOURS", "color": 42})
+
+    osm_buildings = 0
+    osm_roads = 0
+    osm_trees = 0
+    osm_parks = 0
+    osm_water = 0
+    osm_waterways = 0
+    osm_power_lines = 0
+    osm_amenities = 0
+    try:
+        features = fetch_osm_features(lat=lat, lng=lng, radius_m=radius)
+
+        if include_buildings:
+            for building in features.buildings:
+                local_points = [to_local_xy(point_lat, point_lng) for point_lat, point_lng in building]
+                msp.add_lwpolyline(local_points, close=True, dxfattribs={"layer": "BUILDINGS"})
+                osm_buildings += 1
+
+        if road_type != "none":
+            for road in features.roads:
+                local_points = [to_local_xy(point_lat, point_lng) for point_lat, point_lng in road]
+                # Draw with offsets for visual clarity
+                highway_type = "residential"  # Default, could be enhanced with OSM tags
+                _draw_road_with_offsets(msp, local_points, highway_type)
+                osm_roads += 1
+
+        if include_trees:
+            tree_radius = max(0.5, radius / 350.0)
+            for tree_lat, tree_lng in features.trees:
+                tree_x, tree_y = to_local_xy(tree_lat, tree_lng)
+                msp.add_circle((tree_x, tree_y), tree_radius, dxfattribs={"layer": "TREES"})
+                osm_trees += 1
+
+        # Draw parks/green areas
+        for park in features.parks:
+            local_points = [to_local_xy(point_lat, point_lng) for point_lat, point_lng in park]
+            msp.add_lwpolyline(local_points, close=True, dxfattribs={"layer": "PARKS", "color": 10})
+            osm_parks += 1
+
+        # Draw water bodies
+        for water_poly in features.water:
+            local_points = [to_local_xy(point_lat, point_lng) for point_lat, point_lng in water_poly]
+            msp.add_lwpolyline(local_points, close=True, dxfattribs={"layer": "WATER", "color": 5})
+            osm_water += 1
+
+        # Draw waterways (rivers/streams)
+        for waterway in features.waterways:
+            local_points = [to_local_xy(point_lat, point_lng) for point_lat, point_lng in waterway]
+            msp.add_lwpolyline(local_points, close=False, dxfattribs={"layer": "WATERWAYS", "color": 5})
+            osm_waterways += 1
+
+        # Draw power lines
+        for power_line in features.power_lines:
+            local_points = [to_local_xy(point_lat, point_lng) for point_lat, point_lng in power_line]
+            msp.add_lwpolyline(local_points, close=False, dxfattribs={"layer": "INFRASTRUCTURE", "color": 232})
+            osm_power_lines += 1
+
+        # Draw amenities (hospitals, schools, shops, etc) as circles
+        for amenity_lat, amenity_lng, amenity_type in features.amenities:
+            amenity_x, amenity_y = to_local_xy(amenity_lat, amenity_lng)
+            amenity_radius = max(2.0, radius / 250.0)  # Visible but not too large
+            msp.add_circle((amenity_x, amenity_y), amenity_radius, dxfattribs={"layer": "EQUIPAMENTOS", "color": 4})
+            osm_amenities += 1
+
+        # Draw text labels on roads with names
+        for road_coords, road_name in features.roads_with_names:
+            if len(road_coords) >= 2:
+                # Get middle point of road
+                mid_idx = len(road_coords) // 2
+                mid_lat, mid_lng = road_coords[mid_idx]
+                mid_x, mid_y = to_local_xy(mid_lat, mid_lng)
+                
+                # Calculate angle from previous to next point
+                angle = 0.0
+                if mid_idx > 0 and mid_idx < len(road_coords) - 1:
+                    prev_lat, prev_lng = road_coords[mid_idx - 1]
+                    next_lat, next_lng = road_coords[mid_idx + 1]
+                    prev_x, prev_y = to_local_xy(prev_lat, prev_lng)
+                    next_x, next_y = to_local_xy(next_lat, next_lng)
+                    dx = next_x - prev_x
+                    dy = next_y - prev_y
+                    angle = math.degrees(math.atan2(dy, dx))
+                    # Keep text readable (not inverted)
+                    if angle > 90:
+                        angle -= 180
+                    elif angle < -90:
+                        angle += 180
+                
+                # Add text
+                try:
+                    text = msp.add_text(
+                        road_name,
+                        dxfattribs={
+                            "layer": "LABELS",
+                            "height": max(1.0, radius / 200.0),
+                            "rotation": angle
+                        }
+                    )
+                    text.set_placement((mid_x, mid_y), align=ezdxf.enums.TextEntityAlignment.MIDDLE_CENTER)
+                except Exception:
+                    pass  # Silently skip label if fails
+    except Exception:
+        pass
+
+    if road_type != "none" and osm_roads == 0:
+        ring_points = _geodesic_ring_points(center_lat=lat, center_lng=lng, radius_m=max(1.0, radius * 0.75), samples=4)
+        # Draw fallback roads with offset
+        road_line_1 = [to_local_xy(ring_points[0][0], ring_points[0][1]), to_local_xy(ring_points[2][0], ring_points[2][1])]
+        road_line_2 = [to_local_xy(ring_points[1][0], ring_points[1][1]), to_local_xy(ring_points[3][0], ring_points[3][1])]
+        _draw_road_with_offsets(msp, road_line_1, "primary")
+        _draw_road_with_offsets(msp, road_line_2, "primary")
+        osm_roads = 2
+
+    if include_buildings and osm_buildings == 0:
+        building_ring = _geodesic_ring_points(center_lat=lat, center_lng=lng, radius_m=max(1.0, radius * 0.35), samples=4)
+        msp.add_lwpolyline([to_local_xy(point_lat, point_lng) for point_lat, point_lng in building_ring], close=True, dxfattribs={"layer": "BUILDINGS"})
+        osm_buildings = 1
+
+    if include_trees and osm_trees == 0:
+        tree_points = _geodesic_ring_points(center_lat=lat, center_lng=lng, radius_m=max(1.0, radius * 0.6), samples=6)
+        tree_radius = max(0.5, radius / 350.0)
+        for tree_lat, tree_lng in tree_points[:-1]:
+            tree_x, tree_y = to_local_xy(tree_lat, tree_lng)
+            msp.add_circle((tree_x, tree_y), tree_radius, dxfattribs={"layer": "TREES"})
+            osm_trees += 1
+
+    if include_labels:
+        provider = samples[0].provider if samples else "unknown"
+        msp.add_text(
+            f"Topografia: {provider}",
+            dxfattribs={"height": settings.get("label_height", 2.5), "layer": "LABELS"},
+        ).set_placement((0.0, 0.0))
+
+    doc.saveas(output_path)
+
+    result = {
+        "success": True,
+        "filename": str(output_path),
+        "metadata": {
+            "lat": lat,
+            "lng": lng,
+            "radius": radius,
+            "road_type": road_type,
+            "quality_mode": quality_mode,
+            "providers_used": sorted({sample.provider for sample in samples}),
+        },
+        "stats": {
+            "total_objects": len(samples) + 2 + osm_buildings + osm_roads + osm_trees + osm_parks + osm_water + osm_waterways + osm_power_lines + osm_amenities,
+            "buildings": 0 if not include_buildings else osm_buildings,
+            "roads": 0 if road_type == "none" else osm_roads,
+            "trees": 0 if not include_trees else osm_trees,
+            "parks": osm_parks,
+            "water": osm_water,
+            "waterways": osm_waterways,
+            "power_lines": osm_power_lines,
+            "amenities": osm_amenities,
+            "failed_samples": failed_samples,
+            "sample_count": len(samples),
+        },
+    }
+    return result
+
+
+def _parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="SISRUA topography engine")
+    parser.add_argument("--status", action="store_true")
+    parser.add_argument("--lat", type=float)
+    parser.add_argument("--lng", type=float)
+    parser.add_argument("--radius", type=float)
+    parser.add_argument("--output", type=str)
+    parser.add_argument("--quality-mode", type=str, default="high")
+    parser.add_argument("--strict", action="store_true")
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    args = _parse_args(argv)
+
+    if args.status:
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "providers": get_provider_status(),
+                },
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    missing = [
+        name
+        for name, value in {
+            "lat": args.lat,
+            "lng": args.lng,
+            "radius": args.radius,
+            "output": args.output,
+        }.items()
+        if value is None
+    ]
+    if missing:
+        raise ValueError(f"Missing required arguments: {', '.join(missing)}")
+
+    result = generate_dxf_from_coordinates(
+        lat=float(args.lat),
+        lng=float(args.lng),
+        radius=float(args.radius),
+        output_filename=str(args.output),
+        quality_mode=args.quality_mode,
+        strict_mode=args.strict,
+    )
+    print(json.dumps(result, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
