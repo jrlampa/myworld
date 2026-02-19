@@ -164,10 +164,11 @@
             border: 1px solid #bee5eb;
         }
         
-        #canvas {
+        #three-canvas {
             width: 100%;
             height: 100%;
             background: #f0f4f8;
+            min-height: 400px;
         }
         
         .metric {
@@ -367,7 +368,11 @@
         <div class="panel main-panel">
             <div class="panel-header">🌍 3D Terrain Visualization</div>
             <div style="flex: 1; position: relative;">
-                <canvas id="canvas"></canvas>
+                <div style="position: absolute; top: 10px; left: 10px; z-index: 2;">
+                    <button id="btn-solar" onclick="toggleOverlay('solar')" style="margin-right: 6px;">☀️ Solar Exposure</button>
+                    <button id="btn-viewshed" onclick="toggleOverlay('viewshed')">👁️ Viewshed</button>
+                </div>
+                <div id="three-canvas"></div>
                 <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; padding: 10px; border-radius: 6px; font-size: 0.85em;">
                     Use mouse to rotate • Scroll to zoom • Right-click to pan
                 </div>
@@ -445,6 +450,9 @@
         <p>SISRUA v2.0 | Advanced Topography via Satellite | © 2024</p>
     </footer>
     
+    <!-- Three.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/js/controls/OrbitControls.min.js"></script>
     <script>
         // Preset button handlers
         document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -486,32 +494,38 @@
                 data.terrain_ruggedness ? `${data.terrain_ruggedness.toFixed(1)}` : '-';
         }
         
+        // Overlay state
+        let lastGrid = null, lastGridSize = 0, lastSolar = null, lastViewshed = null, lastOverlay = null;
         async function generateAnalysis() {
             const lat = parseFloat(document.getElementById('latitude').value);
             const lng = parseFloat(document.getElementById('longitude').value);
             const radius = parseFloat(document.getElementById('radius').value);
             const quality = document.getElementById('quality').value;
-            
             if (!lat || !lng || !radius) {
                 showStatus('Please fill in all fields', 'error');
                 return;
             }
-            
             showLoading(true);
             showStatus('Analyzing terrain...', 'info');
-            
             try {
                 const response = await fetch('/api/topography/analysis', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lat, lng, radius, qualityMode: quality })
                 });
-                
                 const data = await response.json();
-                
                 if (data.ok) {
                     updateMetrics(data.analysis.output);
                     showStatus(`Analysis complete! ${data.analysis.output.stats.total_objects} objects detected.`, 'success');
+                    // Store overlays
+                    lastGrid = data.analysis.output.elevation_grid;
+                    lastGridSize = data.analysis.output.grid_size;
+                    lastSolar = data.analysis.output.solar_exposure;
+                    lastViewshed = data.analysis.output.viewshed;
+                    lastOverlay = null;
+                    if (lastGrid && lastGridSize && lastGridSize > 1) {
+                        renderTerrainMesh(lastGrid, lastGridSize);
+                    }
                 } else {
                     showStatus('Analysis failed: ' + data.error, 'error');
                 }
@@ -521,6 +535,75 @@
                 showLoading(false);
             }
         }
+                // Render the 3D terrain mesh using Three.js
+                function renderTerrainMesh(elevationGrid, gridSize, overlayType = null) {
+                    if (!window.terrainMesh || !window.scene) return;
+                    window.scene.remove(window.terrainMesh);
+                    const geometry = new THREE.PlaneGeometry(2, 2, gridSize - 1, gridSize - 1);
+                    let min = Infinity, max = -Infinity;
+                    for (let i = 0; i < gridSize; i++) {
+                        for (let j = 0; j < gridSize; j++) {
+                            const z = elevationGrid[i][j];
+                            if (z < min) min = z;
+                            if (z > max) max = z;
+                        }
+                    }
+                    for (let i = 0; i < geometry.attributes.position.count; i++) {
+                        const ix = i % gridSize;
+                        const iy = Math.floor(i / gridSize);
+                        let z = elevationGrid[iy][ix];
+                        z = (z - min) / (max - min + 1e-6) * 0.5;
+                        geometry.attributes.position.setZ(i, z);
+                    }
+                    geometry.computeVertexNormals();
+                    // Overlay coloring
+                    const colors = [];
+                    let overlay = null;
+                    if (overlayType === 'solar' && lastSolar) overlay = lastSolar;
+                    if (overlayType === 'viewshed' && lastViewshed) overlay = lastViewshed;
+                    for (let i = 0; i < geometry.attributes.position.count; i++) {
+                        const ix = i % gridSize;
+                        const iy = Math.floor(i / gridSize);
+                        let color;
+                        if (overlay) {
+                            let v = overlay[iy][ix];
+                            if (overlayType === 'solar') {
+                                // Blue (low) to yellow (high)
+                                color = new THREE.Color().setHSL(0.15 + 0.25 * v, 0.8, 0.5 + 0.2 * v);
+                            } else if (overlayType === 'viewshed') {
+                                // Green if visible, gray if not
+                                color = v > 0.5 ? new THREE.Color(0x7ed957) : new THREE.Color(0xcccccc);
+                            }
+                        } else {
+                            // Default: elevation coloring
+                            const z = geometry.attributes.position.getZ(i);
+                            if (z < 0.15) color = new THREE.Color(0x4a90e2);
+                            else if (z < 0.35) color = new THREE.Color(0x7ed957);
+                            else color = new THREE.Color(0xb97a56);
+                        }
+                        colors.push(color.r, color.g, color.b);
+                    }
+                    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+                    const material = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: false, side: THREE.DoubleSide });
+                    window.terrainMesh = new THREE.Mesh(geometry, material);
+                    window.terrainMesh.rotation.x = -Math.PI / 2;
+                    window.scene.add(window.terrainMesh);
+                }
+
+                function toggleOverlay(type) {
+                    if (!lastGrid || !lastGridSize) return;
+                    if (lastOverlay === type) {
+                        lastOverlay = null;
+                        renderTerrainMesh(lastGrid, lastGridSize, null);
+                        document.getElementById('btn-solar').style.opacity = 1;
+                        document.getElementById('btn-viewshed').style.opacity = 1;
+                    } else {
+                        lastOverlay = type;
+                        renderTerrainMesh(lastGrid, lastGridSize, type);
+                        document.getElementById('btn-solar').style.opacity = (type === 'solar') ? 0.6 : 1;
+                        document.getElementById('btn-viewshed').style.opacity = (type === 'viewshed') ? 0.6 : 1;
+                    }
+                }
         
         async function generateDXF() {
             const lat = parseFloat(document.getElementById('latitude').value);
@@ -555,32 +638,105 @@
             }
         }
         
-        function exportFormat(format) {
-            showStatus(`Export as ${format.toUpperCase()} - Feature coming soon!`, 'info');
+
+        async function exportFormat(format) {
+            // Only allow after analysis has been run
+            const lat = parseFloat(document.getElementById('latitude').value);
+            const lng = parseFloat(document.getElementById('longitude').value);
+            const radius = parseFloat(document.getElementById('radius').value);
+            const quality = document.getElementById('quality').value;
+            showLoading(true);
+            showStatus(`Exporting as ${format.toUpperCase()}...`, 'info');
+            try {
+                // First, get a jobId by running analysis if not already present
+                // For simplicity, re-run analysis and use returned data
+                const response = await fetch('/api/topography/analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat, lng, radius, qualityMode: quality })
+                });
+                const data = await response.json();
+                if (!data.ok) throw new Error('Analysis failed');
+                // Use a hash of lat/lng/radius/quality as jobId (or backend should return jobId)
+                // For now, simulate jobId as 'export_job'
+                const jobId = 'export_job';
+                // Request export
+                const exportResp = await fetch('/api/topography/export', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jobId, format })
+                });
+                if (exportResp.ok) {
+                    // Download file
+                    const blob = await exportResp.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${format}_export.${format === 'geotiff' ? 'tif' : (format === 'ascii' ? 'asc' : (format === 'json' ? 'json' : 'stl'))}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    showStatus(`Exported as ${format.toUpperCase()}!`, 'success');
+                } else {
+                    showStatus('Export failed', 'error');
+                }
+            } catch (err) {
+                showStatus('Export error: ' + err.message, 'error');
+            } finally {
+                showLoading(false);
+            }
         }
         
-        // Simple 3D visualization placeholder
-        window.addEventListener('load', () => {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            function resizeCanvas() {
-                canvas.width = canvas.parentElement.clientWidth;
-                canvas.height = canvas.parentElement.clientHeight;
+        // Three.js 3D Terrain Visualization
+        let renderer, scene, camera, controls, terrainMesh;
+        function initThree() {
+            const container = document.getElementById('three-canvas');
+            // Remove previous renderer if any
+            if (renderer) {
+                renderer.dispose && renderer.dispose();
+                container.innerHTML = '';
             }
-            
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-            
-            // Draw placeholder
-            ctx.fillStyle = '#f0f4f8';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = '#667eea';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('3D Visualization - Click "Generate Analysis" to load terrain', canvas.width / 2, canvas.height / 2);
-        });
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            container.appendChild(renderer.domElement);
+            window.scene = new THREE.Scene();
+            window.scene.background = new THREE.Color(0xf0f4f8);
+            window.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
+            window.camera.position.set(0, -2, 2.5);
+            window.controls = new THREE.OrbitControls(window.camera, renderer.domElement);
+            window.controls.target.set(0, 0, 0);
+            window.controls.update();
+            // Lighting
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(1, 1, 2);
+            window.scene.add(light);
+            window.scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            // Placeholder mesh (flat)
+            const geometry = new THREE.PlaneGeometry(2, 2, 32, 32);
+            const material = new THREE.MeshStandardMaterial({ color: 0x667eea, wireframe: true });
+            window.terrainMesh = new THREE.Mesh(geometry, material);
+            window.terrainMesh.rotation.x = -Math.PI / 2;
+            window.scene.add(window.terrainMesh);
+            animate();
+            window.addEventListener('resize', onWindowResize);
+        }
+        function onWindowResize() {
+            const container = document.getElementById('three-canvas');
+            if (!renderer || !camera) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        }
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        window.addEventListener('load', initThree);
     </script>
 </body>
 </html>

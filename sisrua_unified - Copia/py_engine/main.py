@@ -309,25 +309,33 @@ def generate_dxf_from_coordinates(
     
     # Advanced topographic analysis
     elevation_points = [(to_local_xy(s.lat, s.lng)[0], to_local_xy(s.lat, s.lng)[1], s.elevation_m) for s in samples]
+    elevation_grid = None
+    grid_size_used = min(50, len(samples)) if len(elevation_points) >= 4 else 0
+    solar_exposure = None
+    viewshed = None
     if len(elevation_points) >= 4:
         try:
             terrain_analysis = TopographicAnalyzer.analyze_full(
                 elevation_points,
-                grid_size=min(50, len(samples)),
+                grid_size=grid_size_used,
                 cell_size=30.0,
                 latitude=lat
             )
-            
-            # Generate slope analysis (render select slopes as semi-transparent)
-            if terrain_analysis.slope_degrees:
-                slope_grid = np.array(terrain_analysis.slope_degrees)
-                
-                # Add slope layers for visualization (every 5 degrees creates a sublayer)
-                for threshold in [5, 15, 25]:
-                    steep_points = np.where(slope_grid > threshold)
-                    if len(steep_points[0]) > 0:
-                        # Could add slope visualization layers here
-                        pass
+            # Save the elevation grid for frontend visualization
+            xs = [p[0] for p in elevation_points]
+            ys = [p[1] for p in elevation_points]
+            grid_xs = np.linspace(min(xs), max(xs), grid_size_used)
+            grid_ys = np.linspace(min(ys), max(ys), grid_size_used)
+            grid_points = [(x, y) for x in grid_xs for y in grid_ys]
+            interpolated = TopographicAnalyzer.idw_interpolation(elevation_points, grid_points)
+            elevation_grid_np = np.array(interpolated).reshape(grid_size_used, grid_size_used)
+            elevation_grid = elevation_grid_np.tolist()
+            # Solar exposure
+            slope, aspect = TopographicAnalyzer.calculate_slope_aspect(elevation_grid_np, 30.0)
+            solar_exposure = TopographicAnalyzer.solar_exposure(aspect, slope, lat).tolist()
+            # Viewshed (observer at center)
+            center = (grid_size_used // 2, grid_size_used // 2)
+            viewshed = TopographicAnalyzer.viewshed_analysis(elevation_grid_np, center, 1.7, 30.0).tolist()
         except Exception as e:
             pass  # Silently skip advanced analysis if error
     
@@ -539,6 +547,10 @@ def generate_dxf_from_coordinates(
             "failed_samples": failed_samples,
             "sample_count": len(samples),
         },
+        "elevation_grid": elevation_grid,
+        "grid_size": grid_size_used,
+        "solar_exposure": solar_exposure,
+        "viewshed": viewshed,
     }
     return result
 

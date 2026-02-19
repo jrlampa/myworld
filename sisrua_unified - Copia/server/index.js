@@ -686,27 +686,59 @@ app.post('/api/topography/export', async (req, res) => {
   try {
     const dxfPath = job.result.filename;
     const baseName = path.basename(dxfPath, '.dxf');
-    
     const formats = {
       'stl': `${baseName}.stl`,
       'geotiff': `${baseName}.tif`,
       'ascii': `${baseName}.asc`,
       'json': `${baseName}-analysis.json`
     };
-    
     const outputFile = formats[format] || formats.stl;
-    
-    res.json({
-      ok: true,
-      export: {
-        jobId,
-        format,
-        originalDxf: dxfPath,
-        exportPath: outputFile,
-        available_formats: Object.keys(formats),
-        status: 'ready_for_conversion'
+
+    // If file exists, stream it; otherwise, generate and then stream
+    const outputPath = path.join(repoRoot, outputFile);
+    const pyEngine = path.join(repoRoot, 'py_engine');
+    const analysis = job.result;
+    const grid = analysis.elevation_grid;
+    const gridSize = analysis.grid_size;
+    const cellSize = 30.0;
+    const npyPath = path.join(pyEngine, 'tmp_grid.npy');
+    const bounds = [analysis.metadata.lat, analysis.metadata.lng, analysis.metadata.radius];
+
+    // Helper to save grid as .npy for Python
+    function saveGridAsNpy(grid, filePath) {
+      const npy = require('numpy-typed-array');
+      const arr = npy.fromArray(grid, 'float64');
+      npy.toFile(arr, filePath);
+    }
+
+    // Generate file if not present
+    if (!fs.existsSync(outputPath)) {
+      if (format === 'stl') {
+        // Use TerrainExporter.export_stl
+        const { TerrainExporter } = require('../py_engine/utils/terrain_exporter');
+        const np = require('numpy-typed-array');
+        const arr = np.fromArray(grid, 'float64');
+        TerrainExporter.export_stl(arr, outputPath, cellSize, 1.0, 'Terrain');
+      } else if (format === 'geotiff') {
+        // Use TerrainExporter.export_geotiff
+        const { TerrainExporter } = require('../py_engine/utils/terrain_exporter');
+        const np = require('numpy-typed-array');
+        const arr = np.fromArray(grid, 'float64');
+        // Dummy bounds for now (should be improved)
+        TerrainExporter.export_geotiff(arr, outputPath, [0,0,1,1], 'EPSG:4326');
+      } else if (format === 'ascii') {
+        // Use TerrainExporter.export_ascii_grid
+        const { TerrainExporter } = require('../py_engine/utils/terrain_exporter');
+        const np = require('numpy-typed-array');
+        const arr = np.fromArray(grid, 'float64');
+        TerrainExporter.export_ascii_grid(arr, outputPath, [0,0,1,1], cellSize);
+      } else if (format === 'json') {
+        fs.writeFileSync(outputPath, JSON.stringify(analysis, null, 2), 'utf8');
       }
-    });
+    }
+
+    // Stream file for download
+    res.download(outputPath, path.basename(outputPath));
   } catch (err) {
     res.status(500).json({
       ok: false,
