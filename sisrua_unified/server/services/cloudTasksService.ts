@@ -7,15 +7,28 @@ import { scheduleDxfDeletion } from './dxfCleanupService.js';
 
 // Environment variables
 const GCP_PROJECT = process.env.GCP_PROJECT || '';
+// Prefer explicit project number envs (GCP_PROJECT_NUMBER > GOOGLE_CLOUD_PROJECT_NUMBER > PROJECT_NUMBER)
+const GCP_PROJECT_NUMBER = process.env.GCP_PROJECT_NUMBER || process.env.GOOGLE_CLOUD_PROJECT_NUMBER || process.env.PROJECT_NUMBER || '';
 const CLOUD_TASKS_LOCATION = process.env.CLOUD_TASKS_LOCATION || 'southamerica-east1';
 const CLOUD_TASKS_QUEUE = process.env.CLOUD_TASKS_QUEUE || 'sisrua-queue';
 const CLOUD_RUN_BASE_URL = process.env.CLOUD_RUN_BASE_URL || 'http://localhost:3001';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const IS_DEVELOPMENT = NODE_ENV === 'development' || !GCP_PROJECT;
-const CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL = 
-    process.env.CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL || 
-    process.env.CLOUD_RUN_SERVICE_ACCOUNT || 
-    (GCP_PROJECT ? `${GCP_PROJECT}@appspot.gserviceaccount.com` : '');
+/*
+ * Default service account patterns:
+ * - Compute Engine default ({PROJECT_NUMBER}-compute@developer.gserviceaccount.com) used by Cloud Run when not customized
+ * - App Engine default ({PROJECT_ID}@appspot.gserviceaccount.com) kept for legacy deployments
+ */
+const DEFAULT_COMPUTE_SERVICE_ACCOUNT = GCP_PROJECT_NUMBER ? `${GCP_PROJECT_NUMBER}-compute@developer.gserviceaccount.com` : '';
+const DEFAULT_APPSPOT_SERVICE_ACCOUNT = GCP_PROJECT ? `${GCP_PROJECT}@appspot.gserviceaccount.com` : '';
+// Priority: explicit override > Cloud Run service account > compute default (preferred) > appspot legacy
+const RESOLVED_SERVICE_ACCOUNT_EMAIL = [
+    process.env.CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL,
+    process.env.CLOUD_RUN_SERVICE_ACCOUNT,
+    DEFAULT_COMPUTE_SERVICE_ACCOUNT,
+    DEFAULT_APPSPOT_SERVICE_ACCOUNT
+].find(Boolean) || '';
+// Validation happens in createDxfTask to keep development mode (without GCP vars) working.
 
 // gRPC error codes
 const GRPC_NOT_FOUND_CODE = 5;
@@ -113,8 +126,8 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
     }
 
     // Production mode: Use Cloud Tasks
-    if (!CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL) {
-        const errorMsg = 'service_account_email must be set. Configure CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL or CLOUD_RUN_SERVICE_ACCOUNT, or ensure GCP_PROJECT is defined to use the default App Engine service account.';
+    if (!RESOLVED_SERVICE_ACCOUNT_EMAIL) {
+        const errorMsg = 'Cloud Tasks service account email not configured. Set CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL, CLOUD_RUN_SERVICE_ACCOUNT, or provide GCP_PROJECT_NUMBER/GCP_PROJECT for defaults.';
         logger.error('Missing Cloud Tasks service account email', { error: errorMsg });
         throw new Error(errorMsg);
     }
@@ -136,7 +149,7 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
             },
             body: Buffer.from(JSON.stringify(fullPayload)).toString('base64'),
             oidcToken: {
-                serviceAccountEmail: CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL
+                serviceAccountEmail: RESOLVED_SERVICE_ACCOUNT_EMAIL
             },
         },
     };

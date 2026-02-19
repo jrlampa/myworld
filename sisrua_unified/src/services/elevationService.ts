@@ -16,9 +16,9 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
   const minLng = center.lng - dLng;
   const maxLng = center.lng + dLng;
 
-  // Limit grid to avoid oversized Open-Meteo URLs (request length > ~1800 chars causes 400)
-  const MAX_GRID_POINTS = 90; // 9x9 grid keeps URL length within safe limits
-  const effectiveGridSize = Math.min(gridSize, Math.floor(Math.sqrt(MAX_GRID_POINTS)));
+  // Limit grid to prevent Open-Meteo URL length errors
+  const MAX_GRID_SIZE = 9;
+  const effectiveGridSize = Math.min(gridSize, MAX_GRID_SIZE);
 
   if (effectiveGridSize < gridSize) {
     Logger.warn(`Reducing elevation grid size to ${effectiveGridSize}x${effectiveGridSize} to respect Open-Meteo limits`);
