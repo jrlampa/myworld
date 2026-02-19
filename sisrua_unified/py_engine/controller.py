@@ -44,7 +44,16 @@ class OSMController:
         Logger.info("Step 1/5: Fetching OSM features...", progress=10)
         gdf = self._fetch_features(tags)
         if gdf is None or gdf.empty:
-            raise ValueError("No architectural features found in the specified area.")
+            Logger.info("No architectural features found in the specified area. Generating empty DXF.")
+            dxf_gen = DXFGenerator(self.output_file)
+            dxf_gen.project_info = self.project_metadata
+            dxf_gen.msp.add_text(
+                "No architectural features found in the specified area.",
+                dxfattribs={'height': 10, 'layer': '0'}  # 10m text height for visibility in CAD
+            ).set_placement((0, 0))
+            dxf_gen.save()
+            Logger.success(f"Empty DXF generated: {self.output_file}")
+            return
 
         # 3. Spatial GIS Audit (Authoritative Logic)
         Logger.info("Step 2/5: Running spatial audit...", progress=30)

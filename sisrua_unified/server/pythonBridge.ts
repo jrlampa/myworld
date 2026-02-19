@@ -44,6 +44,18 @@ interface DxfOptions {
     projection?: string;
 }
 
+// Permanent error patterns that indicate non-retriable failures
+const NON_RETRIABLE_ERROR_PATTERNS = [
+    'No architectural features found',
+    'No infrastructure layers selected',
+    'Invalid latitude',
+    'Invalid longitude',
+    'Invalid radius',
+    'Missing required parameters',
+    'Python script not found',
+    'Output directory does not exist'
+] as const;
+
 /**
  * Sleep for a specified number of milliseconds
  */
@@ -83,7 +95,21 @@ export const generateDxf = async (options: DxfOptions): Promise<string> => {
                 error: error.message,
                 outputFile: options.outputFile
             });
-            
+
+            // Detect permanent (non-retriable) errors - retrying will not help
+            const isNonRetriable = NON_RETRIABLE_ERROR_PATTERNS.some(pattern =>
+                error.message.includes(pattern)
+            );
+
+            if (isNonRetriable) {
+                logger.warn('Non-retriable error detected, skipping retries', {
+                    attempt,
+                    error: error.message,
+                    outputFile: options.outputFile
+                });
+                break;
+            }
+
             // If this was the last attempt, don't wait
             if (attempt < MAX_RETRIES) {
                 logger.info('Retrying DXF generation after delay', {
