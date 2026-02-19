@@ -1,9 +1,6 @@
 name: Create Tag 'funcionando'
 
 on:
-  push:
-    branches:
-      - copilot/add-funcionando-tag
   workflow_dispatch:
     inputs:
       sha:
@@ -33,7 +30,12 @@ jobs:
           if [ -z "$SHA" ]; then
             SHA=$(git rev-parse HEAD)
           fi
-          echo "Creating tag 'funcionando' on commit $SHA"
-          git tag funcionando "$SHA" || git tag -f funcionando "$SHA"
-          git push origin funcionando || git push -f origin funcionando
-          echo "✅ Tag 'funcionando' created successfully on $SHA"
+          echo "Target commit: $SHA"
+          if git tag -l funcionando | grep -q funcionando; then
+            echo "✅ Tag 'funcionando' already exists — nothing to do."
+            git tag -l --format='%(refname:short) -> %(objectname:short) %(contents:subject)' funcionando
+          else
+            git tag funcionando "$SHA"
+            git push origin funcionando
+            echo "✅ Tag 'funcionando' created successfully on $SHA"
+          fi
