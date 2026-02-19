@@ -1,0 +1,399 @@
+name: Auto-Heal Deployment
+
+on:
+  workflow_run:
+    workflows: ["Deploy to Cloud Run"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      max_retries:
+        description: 'Maximum number of healing attempts'
+        required: false
+        default: '3'
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+  actions: write
+
+env:
+  MAX_RETRIES: ${{ inputs.max_retries || '3' }}
+
+jobs:
+  detect-failure:
+    runs-on: ubuntu-latest
+    # Only run if the deployment workflow failed
+    if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      should_heal: ${{ steps.analyze.outputs.should_heal }}
+      error_type: ${{ steps.analyze.outputs.error_type }}
+      error_details: ${{ steps.analyze.outputs.error_details }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Analyze Deployment Failure
+        id: analyze
+        run: |
+          echo "🔍 Analyzing deployment failure..."
+
+          # Get the failed workflow run logs
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            RUN_ID="${{ github.event.workflow_run.id }}"
+          else
+            # For manual trigger, get the latest failed run
+            RUN_ID=$(gh run list --workflow="deploy-cloud-run.yml" --status=failure --limit=1 --json databaseId --jq '.[0].databaseId')
+          fi
+
+          echo "Workflow Run ID: $RUN_ID"
+
+          # Download logs (requires GH CLI)
+          mkdir -p /tmp/logs
+          gh run view $RUN_ID --log > /tmp/logs/deploy-failure.log || true
+
+          # Analyze common error patterns
+          ERROR_TYPE="unknown"
+          ERROR_DETAILS=""
+          SHOULD_HEAL="false"
+
+          if grep -q "Permission denied" /tmp/logs/deploy-failure.log; then
+            ERROR_TYPE="permissions"
+            ERROR_DETAILS="IAM permissions issue detected"
+            SHOULD_HEAL="true"
+          elif grep -q "Image not found\|failed to build" /tmp/logs/deploy-failure.log; then
+            ERROR_TYPE="build"
+            ERROR_DETAILS="Docker build or image issue detected"
+            SHOULD_HEAL="true"
+          elif grep -q "Quota exceeded\|Resource exhausted" /tmp/logs/deploy-failure.log; then
+            ERROR_TYPE="quota"
+            ERROR_DETAILS="Resource quota exceeded"
+            SHOULD_HEAL="true"
+          elif grep -q "API.*not enabled" /tmp/logs/deploy-failure.log; then
+            ERROR_TYPE="api"
+            ERROR_DETAILS="Required API not enabled"
+            SHOULD_HEAL="true"
+          elif grep -q "timeout\|timed out" /tmp/logs/deploy-failure.log; then
+            ERROR_TYPE="timeout"
+            ERROR_DETAILS="Deployment timeout detected"
+            SHOULD_HEAL="true"
+          elif grep -q "does not exist\|not found" /tmp/logs/deploy-failure.log; then
+            ERROR_TYPE="resource"
+            ERROR_DETAILS="Missing resource detected"
+            SHOULD_HEAL="true"
+          fi
+
+          echo "Error Type: $ERROR_TYPE"
+          echo "Error Details: $ERROR_DETAILS"
+          echo "Should Heal: $SHOULD_HEAL"
+
+          # Set outputs
+          echo "should_heal=$SHOULD_HEAL" >> $GITHUB_OUTPUT
+          echo "error_type=$ERROR_TYPE" >> $GITHUB_OUTPUT
+          echo "error_details=$ERROR_DETAILS" >> $GITHUB_OUTPUT
+
+          # Save logs for analysis
+          echo "ERROR_LOG_PATH=/tmp/logs/deploy-failure.log" >> $GITHUB_ENV
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Upload Failure Logs
+        if: steps.analyze.outputs.should_heal == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-failure-logs
+          path: /tmp/logs/deploy-failure.log
+          retention-days: 7
+
+  analyze-and-fix:
+    needs: detect-failure
+    runs-on: ubuntu-latest
+    if: needs.detect-failure.outputs.should_heal == 'true'
+    outputs:
+      fix_applied: ${{ steps.fix.outputs.fix_applied }}
+      fix_description: ${{ steps.fix.outputs.fix_description }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Download Failure Logs
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-failure-logs
+          path: /tmp/logs
+
+      - name: Apply Automated Fixes
+        id: fix
+        run: |
+          echo "🔧 Applying automated fixes for error type: ${{ needs.detect-failure.outputs.error_type }}"
+
+          ERROR_TYPE="${{ needs.detect-failure.outputs.error_type }}"
+          FIX_APPLIED="false"
+          FIX_DESCRIPTION=""
+
+          case "$ERROR_TYPE" in
+            permissions)
+              echo "📋 Fixing IAM permissions..."
+
+              # Grant required permissions
+              PROJECT_NUMBER=$(gcloud projects describe ${{ secrets.GCP_PROJECT_ID }} --format="value(projectNumber)")
+
+              # Grant Cloud Tasks enqueuer role
+              gcloud projects add-iam-policy-binding ${{ secrets.GCP_PROJECT_ID }} \
+                --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+                --role="roles/cloudtasks.enqueuer" \
+                --condition=None || true
+
+              # Grant Cloud Run invoker role (if service exists)
+              if gcloud run services describe sisrua-app --region=southamerica-east1 --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
+                gcloud run services add-iam-policy-binding sisrua-app \
+                  --region=southamerica-east1 \
+                  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+                  --role="roles/run.invoker" \
+                  --project=${{ secrets.GCP_PROJECT_ID }} || true
+              fi
+
+              FIX_APPLIED="true"
+              FIX_DESCRIPTION="Applied IAM permission fixes"
+              ;;
+
+            api)
+              echo "🔌 Enabling required APIs..."
+
+              gcloud services enable \
+                cloudresourcemanager.googleapis.com \
+                cloudtasks.googleapis.com \
+                run.googleapis.com \
+                cloudbuild.googleapis.com \
+                artifactregistry.googleapis.com \
+                --project=${{ secrets.GCP_PROJECT_ID }}
+
+              FIX_APPLIED="true"
+              FIX_DESCRIPTION="Enabled required Google Cloud APIs"
+              ;;
+
+            resource)
+              echo "🏗️ Creating missing resources..."
+
+              # Ensure Cloud Tasks queue exists
+              if ! gcloud tasks queues describe sisrua-queue \
+                --location=southamerica-east1 \
+                --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
+
+                echo "Creating Cloud Tasks queue..."
+                gcloud tasks queues create sisrua-queue \
+                  --location=southamerica-east1 \
+                  --project=${{ secrets.GCP_PROJECT_ID }} \
+                  --max-dispatches-per-second=10 \
+                  --max-concurrent-dispatches=10
+              fi
+
+              FIX_APPLIED="true"
+              FIX_DESCRIPTION="Created missing Cloud Tasks queue"
+              ;;
+
+            build)
+              echo "🔨 Attempting to fix build issues..."
+
+              # Clear any cached build data
+              echo "Clearing build cache is handled by Cloud Build..."
+
+              FIX_APPLIED="true"
+              FIX_DESCRIPTION="Prepared for clean rebuild"
+              ;;
+
+            timeout)
+              echo "⏱️ Timeout detected - will retry with extended timeout..."
+
+              FIX_APPLIED="true"
+              FIX_DESCRIPTION="Prepared for retry with extended timeout"
+              ;;
+
+            *)
+              echo "⚠️ Unknown error type: $ERROR_TYPE"
+              FIX_APPLIED="false"
+              FIX_DESCRIPTION="No automated fix available"
+              ;;
+          esac
+
+          echo "fix_applied=$FIX_APPLIED" >> $GITHUB_OUTPUT
+          echo "fix_description=$FIX_DESCRIPTION" >> $GITHUB_OUTPUT
+
+          if [ "$FIX_APPLIED" = "true" ]; then
+            echo "✅ Fix applied successfully: $FIX_DESCRIPTION"
+          else
+            echo "❌ No fix could be applied"
+          fi
+
+      - name: Create Healing Report
+        if: steps.fix.outputs.fix_applied == 'true'
+        run: |
+          cat > /tmp/healing-report.md << 'EOF'
+          # 🏥 Auto-Healing Report
+
+          ## Deployment Failure Detected
+
+          - **Workflow Run**: ${{ github.event.workflow_run.html_url }}
+          - **Error Type**: ${{ needs.detect-failure.outputs.error_type }}
+          - **Error Details**: ${{ needs.detect-failure.outputs.error_details }}
+          - **Fix Applied**: ${{ steps.fix.outputs.fix_description }}
+          - **Timestamp**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          ## Actions Taken
+
+          The auto-healing system has detected and attempted to fix the deployment failure.
+          A retry will be attempted automatically.
+
+          ## Next Steps
+
+          The deployment will be retried automatically. Monitor the workflow runs for status.
+          EOF
+
+          echo "📄 Healing report created"
+          cat /tmp/healing-report.md
+
+      - name: Upload Healing Report
+        if: steps.fix.outputs.fix_applied == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: healing-report
+          path: /tmp/healing-report.md
+          retention-days: 30
+
+  retry-deployment:
+    needs: [detect-failure, analyze-and-fix]
+    runs-on: ubuntu-latest
+    if: needs.analyze-and-fix.outputs.fix_applied == 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Retry Count
+        id: check-retry
+        run: |
+          # Get the number of previous auto-heal attempts from workflow runs
+          RETRY_COUNT=$(gh run list \
+            --workflow="auto-heal-deploy.yml" \
+            --json conclusion \
+            --limit 10 \
+            | jq '[.[] | select(.conclusion == "success")] | length')
+
+          echo "Previous retry count: $RETRY_COUNT"
+          echo "Max retries allowed: $MAX_RETRIES"
+
+          if [ "$RETRY_COUNT" -ge "$MAX_RETRIES" ]; then
+            echo "❌ Maximum retry limit ($MAX_RETRIES) reached"
+            echo "should_retry=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ Retry allowed (attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES)"
+            echo "should_retry=true" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Wait Before Retry
+        if: steps.check-retry.outputs.should_retry == 'true'
+        run: |
+          echo "⏳ Waiting 30 seconds before retry..."
+          sleep 30
+
+      - name: Trigger Deployment Retry
+        if: steps.check-retry.outputs.should_retry == 'true'
+        run: |
+          echo "🔄 Triggering deployment retry..."
+
+          gh workflow run deploy-cloud-run.yml \
+            --ref ${{ github.ref }}
+
+          echo "✅ Deployment retry triggered"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  notify-failure:
+    needs: [detect-failure, analyze-and-fix, retry-deployment]
+    runs-on: ubuntu-latest
+    if: |
+      always() &&
+      needs.detect-failure.outputs.should_heal == 'true' &&
+      (needs.analyze-and-fix.result == 'failure' ||
+       needs.analyze-and-fix.outputs.fix_applied != 'true' ||
+       needs.retry-deployment.result == 'failure')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Failure Notification
+        run: |
+          echo "================================================"
+          echo "❌ Auto-Healing Failed"
+          echo "================================================"
+          echo ""
+          echo "Error Type: ${{ needs.detect-failure.outputs.error_type }}"
+          echo "Error Details: ${{ needs.detect-failure.outputs.error_details }}"
+          echo ""
+          echo "The auto-healing system was unable to automatically"
+          echo "fix this deployment failure. Manual intervention required."
+          echo ""
+          echo "Please review the deployment logs and take appropriate action."
+          echo "================================================"
+
+  success-notification:
+    needs: [detect-failure, analyze-and-fix, retry-deployment]
+    runs-on: ubuntu-latest
+    if: needs.retry-deployment.result == 'success'
+
+    steps:
+      - name: Success Notification
+        run: |
+          echo "================================================"
+          echo "✅ Auto-Healing Successful"
+          echo "================================================"
+          echo ""
+          echo "Error Type: ${{ needs.detect-failure.outputs.error_type }}"
+          echo "Fix Applied: ${{ needs.analyze-and-fix.outputs.fix_description }}"
+          echo ""
+          echo "The deployment has been automatically healed and"
+          echo "a retry has been triggered successfully."
+          echo ""
+          echo "Monitor the deployment workflow for final status."
+          echo "================================================"

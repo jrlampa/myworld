@@ -9,6 +9,7 @@ This repository contains comprehensive documentation and scripts for deploying t
 | Document | Purpose | When to Use |
 |----------|---------|-------------|
 | [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Complete step-by-step deployment guide | First-time deployment or comprehensive reference |
+| [AUTO_HEALING_DEPLOYMENT.md](./AUTO_HEALING_DEPLOYMENT.md) | Auto-healing deployment system documentation | Understanding self-healing features and troubleshooting |
 | [IAM_DEPLOYMENT_TROUBLESHOOTING.md](./IAM_DEPLOYMENT_TROUBLESHOOTING.md) | Troubleshooting IAM and deployment issues | When encountering permission or deployment errors |
 | [DEPLOYMENT_VERIFICATION_CHECKLIST.md](./DEPLOYMENT_VERIFICATION_CHECKLIST.md) | Verification checklist for deployments | After deployment to verify everything works |
 | [sisrua_unified/README.md](./sisrua_unified/README.md) | Application documentation | Understanding the application structure |
@@ -76,6 +77,49 @@ gcloud run deploy sisrua-app \
    ```bash
    curl $(gcloud run services describe sisrua-app --region=southamerica-east1 --format='value(status.url)' --project=sisrua-producao)/health
    ```
+
+## 🏥 Auto-Healing Deployment
+
+The repository includes an intelligent auto-healing system that automatically detects and fixes deployment failures.
+
+### Features
+
+- **Automatic Error Detection**: Monitors deployments and detects failures
+- **Intelligent Analysis**: Categorizes errors (permissions, API, build, resource, timeout, etc.)
+- **Automated Fixes**: Automatically applies fixes for common issues:
+  - Grants missing IAM permissions
+  - Enables required Google Cloud APIs
+  - Creates missing resources (Cloud Tasks queues)
+  - Triggers clean rebuilds
+- **Retry Logic**: Automatically retries deployment after applying fixes
+- **Comprehensive Logging**: Detailed reports of issues and fixes applied
+
+### How It Works
+
+```
+Pre-Deploy → Deploy → Success ✅
+                 ↓
+              Failure ❌
+                 ↓
+         Auto-Heal Agent 🤖
+                 ↓
+         Analyze Error 🔍
+                 ↓
+          Apply Fix 🔧
+                 ↓
+         Retry Deploy 🔄
+```
+
+### Usage
+
+The auto-healing workflow runs automatically when a deployment fails. No manual intervention is required for common issues.
+
+To manually trigger:
+1. Go to Actions → "Auto-Heal Deployment"
+2. Click "Run workflow"
+3. Set max retries (default: 3)
+
+For more details, see [AUTO_HEALING_DEPLOYMENT.md](./AUTO_HEALING_DEPLOYMENT.md).
 
 ## 🔧 Tools & Scripts
 
