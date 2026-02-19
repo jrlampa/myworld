@@ -441,6 +441,13 @@ app.post('/api/tasks/process-dxf',
             return res.status(400).json({ error: 'Task ID is required' });
         }
 
+        // Create job if it doesn't exist (Cloud Tasks may invoke webhook before job is created)
+        // This ensures job tracking works correctly in both sync and async modes
+        if (!getJob(taskId)) {
+            createJob(taskId);
+            logger.info('Job created in webhook (was not pre-created)', { taskId });
+        }
+
         // Update job status to processing
         updateJobStatus(taskId, 'processing', 10);
 
@@ -450,7 +457,8 @@ app.post('/api/tasks/process-dxf',
             lon,
             radius,
             mode,
-            cacheKey
+            cacheKey,
+            outputFile
         });
 
         try {
@@ -465,6 +473,11 @@ app.post('/api/tasks/process-dxf',
                 projection,
                 outputFile
             });
+
+            // Verify the file was actually created
+            if (!fs.existsSync(outputFile)) {
+                throw new Error(`DXF file was not created at expected path: ${outputFile}`);
+            }
 
             // Cache the filename
             setCachedFilename(cacheKey, filename);
@@ -481,7 +494,8 @@ app.post('/api/tasks/process-dxf',
             logger.info('DXF generation completed', {
                 taskId,
                 filename,
-                cacheKey
+                cacheKey,
+                outputFile
             });
 
             return res.status(200).json({
@@ -492,10 +506,15 @@ app.post('/api/tasks/process-dxf',
             });
 
         } catch (error: any) {
-            logger.error('DXF generation failed', {
+            logger.error('DXF generation failed in webhook', {
                 taskId,
                 error: error.message,
-                stack: error.stack
+                stack: error.stack,
+                outputFile,
+                lat,
+                lon,
+                radius,
+                mode
             });
 
             failJob(taskId, error.message);
@@ -674,13 +693,24 @@ app.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, res: 
         const outputFile = path.join(dxfDirectory, filename);
         const downloadUrl = `${baseUrl}/downloads/${filename}`;
 
+        // Verify DXF directory exists before queueing generation
+        if (!fs.existsSync(dxfDirectory)) {
+            logger.error('DXF directory does not exist', { dxfDirectory });
+            return res.status(500).json({ 
+                error: 'Server configuration error',
+                details: 'DXF output directory is not available' 
+            });
+        }
+
         logger.info('Queueing DXF generation', {
             lat,
             lon,
             radius,
             mode: resolvedMode,
             projection: projection || 'local',
-            cacheKey
+            cacheKey,
+            outputFile,
+            dxfDirectory
         });
 
         const { taskId, alreadyCompleted } = await createDxfTask({

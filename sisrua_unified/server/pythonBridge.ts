@@ -71,10 +71,23 @@ export const generateDxf = (options: DxfOptions): Promise<string> => {
         
         // Validate that the Python script exists
         if (!existsSync(scriptPath)) {
-            const error = new Error(`Python script not found at: ${scriptPath}`);
+            const error = new Error(`Python script not found at: ${scriptPath} (cwd: ${process.cwd()})`);
             logger.error('Python script path validation failed', {
                 scriptPath,
                 cwd: process.cwd(),
+                error: error.message
+            });
+            reject(error);
+            return;
+        }
+
+        // Validate that the output directory exists and is writable
+        const outputDir = path.dirname(options.outputFile);
+        if (!existsSync(outputDir)) {
+            const error = new Error(`Output directory does not exist: ${outputDir}`);
+            logger.error('Output directory validation failed', {
+                outputDir,
+                outputFile: options.outputFile,
                 error: error.message
             });
             reject(error);
