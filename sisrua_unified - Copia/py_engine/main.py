@@ -106,6 +106,53 @@ def _draw_road_with_offsets(msp, road_coords: List[Tuple[float, float]], highway
         msp.add_lwpolyline(road_coords, close=False, dxfattribs={"layer": "ROADS", "color": 3})
 
 
+def _draw_waterway_with_offset(msp, waterway_coords: List[Tuple[float, float]]):
+    """Draw waterway centerline with offset banks using Shapely."""
+    if len(waterway_coords) < 2:
+        return
+    
+    try:
+        # Create LineString from coordinates
+        line = LineString(waterway_coords)
+        
+        if line.is_empty:
+            return
+        
+        # Draw main centerline (river/stream)
+        msp.add_lwpolyline(waterway_coords, close=False, dxfattribs={"layer": "WATERWAYS", "color": 5})
+        
+        # Get width for offset - rivers typically 5-10m wide, streams 2-5m
+        width = 3.0 / 2.0  # Half-width (3m rivers are typical)
+        
+        if width > 0.1:
+            try:
+                # Try Shapely 2.0+ method first
+                if hasattr(line, 'offset_curve'):
+                    left_bank = line.offset_curve(width, join_style=2)
+                    right_bank = line.offset_curve(-width, join_style=2)
+                else:
+                    left_bank = line.parallel_offset(width, 'left', join_style=2)
+                    right_bank = line.parallel_offset(width, 'right', join_style=2)
+                
+                # Draw left bank
+                if not left_bank.is_empty:
+                    if hasattr(left_bank, 'coords'):  # LineString
+                        bank_coords = list(left_bank.coords)
+                        msp.add_lwpolyline(bank_coords, close=False, dxfattribs={"layer": "WATERWAYS", "color": 34})  # Light blue
+                
+                # Draw right bank
+                if not right_bank.is_empty:
+                    if hasattr(right_bank, 'coords'):  # LineString
+                        bank_coords = list(right_bank.coords)
+                        msp.add_lwpolyline(bank_coords, close=False, dxfattribs={"layer": "WATERWAYS", "color": 34})
+            except Exception as offset_err:
+                # Silently skip offset if it fails, but keep centerline
+                pass
+    except Exception as e:
+        # If something goes wrong, just draw the centerline
+        msp.add_lwpolyline(waterway_coords, close=False, dxfattribs={"layer": "WATERWAYS", "color": 5})
+
+
 def _generate_contour_lines(samples: List[ElevationSample], to_local_xy, radius: float) -> List[List[Tuple[float, float]]]:
     """Generate contour lines from elevation samples using simple interpolation."""
     if len(samples) < 3:
@@ -259,6 +306,9 @@ def generate_dxf_from_coordinates(
     osm_waterways = 0
     osm_power_lines = 0
     osm_amenities = 0
+    osm_footways = 0
+    osm_bus_stops = 0
+    osm_leisure = 0
     try:
         features = fetch_osm_features(lat=lat, lng=lng, radius_m=radius)
 
@@ -313,6 +363,27 @@ def generate_dxf_from_coordinates(
             amenity_radius = max(2.0, radius / 250.0)  # Visible but not too large
             msp.add_circle((amenity_x, amenity_y), amenity_radius, dxfattribs={"layer": "EQUIPAMENTOS", "color": 4})
             osm_amenities += 1
+
+        # Draw footways (pedestrian paths)
+        for footway in features.footways:
+            local_points = [to_local_xy(point_lat, point_lng) for point_lat, point_lng in footway]
+            if len(local_points) >= 2:
+                msp.add_lwpolyline(local_points, close=False, dxfattribs={"layer": "FOOTWAYS", "color": 8, "linetype": "DASHED"})
+                osm_footways += 1
+
+        # Draw bus stops as small circles
+        bus_stop_radius = max(1.0, radius / 300.0)
+        for bus_stop_lat, bus_stop_lng in features.bus_stops:
+            bus_x, bus_y = to_local_xy(bus_stop_lat, bus_stop_lng)
+            msp.add_circle((bus_x, bus_y), bus_stop_radius, dxfattribs={"layer": "TRANSPORT", "color": 1})
+            osm_bus_stops += 1
+
+        # Draw leisure areas (sports centers, playgrounds, etc)
+        for leisure in features.leisure_areas:
+            local_points = [to_local_xy(point_lat, point_lng) for point_lat, point_lng in leisure]
+            if len(local_points) >= 2:
+                msp.add_lwpolyline(local_points, close=True, dxfattribs={"layer": "LEISURE", "color": 6})
+                osm_leisure += 1
 
         # Draw text labels on roads with names
         for road_coords, road_name in features.roads_with_names:
@@ -397,7 +468,7 @@ def generate_dxf_from_coordinates(
             "providers_used": sorted({sample.provider for sample in samples}),
         },
         "stats": {
-            "total_objects": len(samples) + 2 + osm_buildings + osm_roads + osm_trees + osm_parks + osm_water + osm_waterways + osm_power_lines + osm_amenities,
+            "total_objects": len(samples) + 2 + osm_buildings + osm_roads + osm_trees + osm_parks + osm_water + osm_waterways + osm_power_lines + osm_amenities + osm_footways + osm_bus_stops + osm_leisure,
             "buildings": 0 if not include_buildings else osm_buildings,
             "roads": 0 if road_type == "none" else osm_roads,
             "trees": 0 if not include_trees else osm_trees,
@@ -406,6 +477,9 @@ def generate_dxf_from_coordinates(
             "waterways": osm_waterways,
             "power_lines": osm_power_lines,
             "amenities": osm_amenities,
+            "footways": osm_footways,
+            "bus_stops": osm_bus_stops,
+            "leisure_areas": osm_leisure,
             "failed_samples": failed_samples,
             "sample_count": len(samples),
         },
