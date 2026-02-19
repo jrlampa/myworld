@@ -79,6 +79,8 @@ export function updateJobStatus(id: string, status: JobStatus, progress?: number
         job.updatedAt = new Date();
         jobs.set(id, job);
         logger.info('Job status updated', { jobId: id, status, progress });
+    } else {
+        logger.error('Cannot update job status: job not found', { jobId: id, status, progress });
     }
 }
 
@@ -91,6 +93,8 @@ export function completeJob(id: string, result: { url: string; filename: string 
         job.updatedAt = new Date();
         jobs.set(id, job);
         logger.info('Job completed', { jobId: id, filename: result.filename });
+    } else {
+        logger.error('Cannot complete job: job not found', { jobId: id, filename: result.filename });
     }
 }
 
@@ -102,5 +106,7 @@ export function failJob(id: string, error: string): void {
         job.updatedAt = new Date();
         jobs.set(id, job);
         logger.error('Job failed', { jobId: id, error });
+    } else {
+        logger.error('Cannot fail job: job not found', { jobId: id, error });
     }
 }

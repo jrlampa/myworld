@@ -44,6 +44,7 @@ const dxfRateLimiter = rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     keyGenerator,
+    validate: { trustProxy: false }, // We handle proxy validation in keyGenerator
     message: { error: 'Too many DXF requests, please try again later.' },
     handler: (req, res, _next, options) => {
         logger.warn('DXF rate limit exceeded', {
@@ -62,6 +63,7 @@ const generalRateLimiter = rateLimit({
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     keyGenerator,
+    validate: { trustProxy: false }, // We handle proxy validation in keyGenerator
     message: { error: 'Too many requests, please try again later.' },
     handler: (req, res, _next, options) => {
         logger.warn('Rate limit exceeded', {
