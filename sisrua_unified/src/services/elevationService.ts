@@ -16,15 +16,23 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
   const minLng = center.lng - dLng;
   const maxLng = center.lng + dLng;
 
-  const latStep = (maxLat - minLat) / (gridSize - 1);
-  const lngStep = (maxLng - minLng) / (gridSize - 1);
+  // Limit grid to prevent Open-Meteo URL length errors
+  const MAX_GRID_SIZE = 9;
+  const effectiveGridSize = Math.min(gridSize, MAX_GRID_SIZE);
+
+  if (effectiveGridSize < gridSize) {
+    Logger.warn(`Reducing elevation grid size to ${effectiveGridSize}x${effectiveGridSize} to respect Open-Meteo limits`);
+  }
+
+  const latStep = (maxLat - minLat) / (effectiveGridSize - 1);
+  const lngStep = (maxLng - minLng) / (effectiveGridSize - 1);
 
   const lats: number[] = [];
   const lngs: number[] = [];
 
   // Generate grid points (row by row)
-  for (let i = 0; i < gridSize; i++) {
-    for (let j = 0; j < gridSize; j++) {
+  for (let i = 0; i < effectiveGridSize; i++) {
+    for (let j = 0; j < effectiveGridSize; j++) {
       lats.push(minLat + i * latStep);
       lngs.push(minLng + j * lngStep);
     }
@@ -35,7 +43,7 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
   const url = `https://api.open-meteo.com/v1/elevation?latitude=${lats.map(l => l.toFixed(6)).join(',')}&longitude=${lngs.map(l => l.toFixed(6)).join(',')}`;
 
   try {
-    Logger.debug(`Fetching elevation grid for ${gridSize}x${gridSize} points`);
+    Logger.debug(`Fetching elevation grid for ${effectiveGridSize}x${effectiveGridSize} points`);
     const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch terrain data');
     const data = await response.json();
@@ -48,9 +56,9 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
     // Reconstruct into 2D grid
     const grid: TerrainGrid = [];
     let idx = 0;
-    for (let i = 0; i < gridSize; i++) {
+    for (let i = 0; i < effectiveGridSize; i++) {
       const row: TerrainPoint[] = [];
-      for (let j = 0; j < gridSize; j++) {
+      for (let j = 0; j < effectiveGridSize; j++) {
         row.push({
           lat: lats[idx],
           lng: lngs[idx],
@@ -68,9 +76,9 @@ export const fetchElevationGrid = async (center: GeoLocation, radius: number, gr
     Logger.error("Elevation API Error", error);
     // Return flat grid on error so app doesn't crash, just flat terrain
     const grid: TerrainGrid = [];
-    for (let i = 0; i < gridSize; i++) {
+    for (let i = 0; i < effectiveGridSize; i++) {
       const row: TerrainPoint[] = [];
-      for (let j = 0; j < gridSize; j++) {
+      for (let j = 0; j < effectiveGridSize; j++) {
         row.push({
           lat: minLat + i * latStep,
           lng: minLng + j * lngStep,
