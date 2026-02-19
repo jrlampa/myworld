@@ -4,11 +4,37 @@ import { logger } from '../utils/logger.js';
 
 /**
  * Custom key generator that uses the client IP address
- * This respects X-Forwarded-For when trust proxy is enabled
+ * This respects X-Forwarded-For and Forwarded headers when trust proxy is enabled
  * Uses ipKeyGenerator to properly handle both IPv4 and IPv6 addresses
- * Fixes: ValidationError about IPv6 addresses bypassing rate limits
+ * Fixes: ValidationError about Forwarded header being ignored
  */
 const keyGenerator = (req: Request): string => {
+    // Extract IP from Forwarded header if present (standardized header)
+    const forwardedHeader = req.headers.forwarded as string | undefined;
+    if (forwardedHeader) {
+        // Parse Forwarded header: "for=192.0.2.60;proto=http;by=203.0.113.43"
+        // Can also be: "for=\"192.0.2.60:47011\"" (with port) or "for=_hidden" (obfuscated)
+        const forMatch = forwardedHeader.match(/for=([^;,\s]+)/);
+        if (forMatch) {
+            // Remove quotes and brackets, extract just the IP
+            let ip = forMatch[1].replace(/["'\[\]]/g, '');
+            
+            // Skip obfuscated identifiers (e.g., "_hidden", "_secret") and fall back to req.ip
+            if (!ip.startsWith('_')) {
+                // Remove port number if present (e.g., "192.0.2.60:47011" -> "192.0.2.60")
+                // For IPv4: count colons - if exactly 1, it's likely an IPv4:port
+                const colonCount = (ip.match(/:/g) || []).length;
+                if (colonCount === 1) {
+                    // IPv4 with port - strip the port
+                    ip = ip.substring(0, ip.indexOf(':'));
+                }
+                // For IPv6: multiple colons, keep as-is (ipKeyGenerator will handle it)
+                return ipKeyGenerator(ip);
+            }
+        }
+    }
+    
+    // Fall back to req.ip (which handles X-Forwarded-For when trust proxy is enabled)
     return ipKeyGenerator(req.ip || 'unknown');
 };
 
