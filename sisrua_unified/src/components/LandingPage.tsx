@@ -1,10 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Map, Layers, Download, Globe, ChevronRight, Container, Sparkles, FileStack, Zap } from 'lucide-react';
+import { APP_VERSION } from '../constants';
 
 interface LandingPageProps {
   onEnter: () => void;
 }
+
+// Animation timing constants
+const ANIMATION_DELAYS = {
+  INITIAL: 0.8,
+  STAGGER: 0.05,
+} as const;
 
 const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
   return (
@@ -64,7 +71,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
               Sistema Avançado de Exportação OSM para DXF 2.5D
             </p>
             <div className="flex items-center justify-center gap-4 text-sm text-slate-500">
-              <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">v1.0.0</span>
+              <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">v{APP_VERSION}</span>
               <span className="flex items-center gap-1.5">
                 <Container size={14} />
                 Docker Ready
@@ -98,7 +105,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
               key={feature.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 + index * 0.05 }}
+              transition={{ delay: ANIMATION_DELAYS.INITIAL + index * ANIMATION_DELAYS.STAGGER }}
               className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all"
             >
               <feature.icon className="mx-auto mb-4 text-blue-400" size={32} />
