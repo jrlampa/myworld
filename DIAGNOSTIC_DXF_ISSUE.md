@@ -91,7 +91,16 @@ export PYTHON_COMMAND=python
 
 ## Como Testar
 
-### Teste Rápido
+### Script de Diagnóstico Automático
+```bash
+cd sisrua_unified
+chmod +x diagnose_dxf.sh
+./diagnose_dxf.sh
+```
+
+Este script verificará automaticamente todos os requisitos e identificará problemas.
+
+### Teste Rápido Manual
 ```bash
 cd sisrua_unified
 
@@ -130,7 +139,7 @@ curl -X POST http://localhost:3001/api/dxf \
 ## Comparação de Versões
 
 | Aspecto | f34b5ea (Antigo) | HEAD (Atual) | Status |
-|---------|-----------------|--------------|---------|
+|---------|------------------|--------------|---------|
 | Comando Python | `python` | `python3` | ✅ Compatível |
 | Suporte .exe | Sim | Não (Docker) | ⚠️ Mudança arquitetural |
 | Parâmetro projection | ❌ Não | ✅ Sim | ✅ Novo recurso |
