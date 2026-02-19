@@ -68,18 +68,6 @@ jobs:
             echo "Queue 'sisrua-queue' already exists."
           fi
 
-      - name: Grant Cloud Tasks Permissions
-        run: |
-          SERVICE_ACCOUNT="${{ secrets.GCP_SERVICE_ACCOUNT }}"
-          
-          echo "Granting Cloud Tasks enqueuer role to ${SERVICE_ACCOUNT}..."
-          gcloud projects add-iam-policy-binding ${{ secrets.GCP_PROJECT_ID }} \
-            --member="serviceAccount:${SERVICE_ACCOUNT}" \
-            --role="roles/cloudtasks.enqueuer" \
-            --condition=None
-          
-          echo "Cloud Tasks permissions granted successfully."
-
       - name: Deploy to Cloud Run
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -113,16 +101,3 @@ jobs:
             --region=southamerica-east1 \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             --update-env-vars="CLOUD_RUN_BASE_URL=${CLOUD_RUN_URL}"
-
-      - name: Grant Cloud Run Invoker Permission
-        run: |
-          SERVICE_ACCOUNT="${{ secrets.GCP_SERVICE_ACCOUNT }}"
-          
-          echo "Granting Cloud Run invoker role to ${SERVICE_ACCOUNT}..."
-          gcloud run services add-iam-policy-binding sisrua-app \
-            --region=southamerica-east1 \
-            --member="serviceAccount:${SERVICE_ACCOUNT}" \
-            --role="roles/run.invoker" \
-            --project=${{ secrets.GCP_PROJECT_ID }}
-          
-          echo "Cloud Run invoker permission granted successfully."
