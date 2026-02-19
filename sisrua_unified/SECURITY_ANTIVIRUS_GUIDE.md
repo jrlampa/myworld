@@ -107,8 +107,8 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
 
 #### ✅ Validação de Paths
 ```typescript
-// pythonBridge.ts usa paths absolutos e validação
-const scriptPath = path.join(__dirname, '../py_engine/main.py');
+// pythonBridge.ts usa process.cwd() para paths consistentes em dev e prod
+const scriptPath = path.join(process.cwd(), 'py_engine/main.py');
 if (!fs.existsSync(scriptPath)) {
     reject(new Error('Python script not found'));
 }
