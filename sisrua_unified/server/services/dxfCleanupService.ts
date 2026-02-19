@@ -2,8 +2,14 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger.js';
 
-// DXF files should be deleted after 10 minutes as per requirements
-const DXF_FILE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+// DXF files TTL - configurable via environment variable
+// Default: 1 hour in production, 10 minutes in development
+// This prevents premature deletion of files that users may still need to download
+const DEFAULT_TTL_PROD = 60 * 60 * 1000; // 1 hour
+const DEFAULT_TTL_DEV = 10 * 60 * 1000; // 10 minutes
+const DXF_FILE_TTL_MS = process.env.DXF_TTL_MS 
+    ? parseInt(process.env.DXF_TTL_MS, 10) 
+    : (process.env.NODE_ENV === 'production' ? DEFAULT_TTL_PROD : DEFAULT_TTL_DEV);
 const CLEANUP_CHECK_INTERVAL = 2 * 60 * 1000; // Check every 2 minutes
 
 interface ScheduledFile {
@@ -29,7 +35,7 @@ export function scheduleDxfDeletion(filePath: string): void {
     logger.info('DXF file scheduled for deletion', {
         filePath,
         deleteAt: new Date(deleteAt).toISOString(),
-        ttlMinutes: 10
+        ttlMinutes: DXF_FILE_TTL_MS / 60000
     });
 }
 

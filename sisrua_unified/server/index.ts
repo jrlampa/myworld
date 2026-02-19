@@ -49,15 +49,31 @@ const port = process.env.PORT || 3001;
 function resolveDxfDirectory(): string {
     const candidates = [
         path.resolve(__dirname, '../public/dxf'),
-        path.resolve(__dirname, '../../../public/dxf')
+        path.resolve(__dirname, '../../../public/dxf'),
+        '/app/public/dxf', // Docker/Cloud Run path
+        path.resolve(process.cwd(), 'public/dxf') // Working directory fallback
     ];
 
     const existing = candidates.find((candidate) => fs.existsSync(candidate));
     if (existing) {
+        logger.info('DXF directory found', { path: existing });
         return existing;
     }
 
-    return candidates[candidates.length - 1];
+    // Create the first candidate directory if none exist
+    const defaultDir = candidates[0];
+    try {
+        fs.mkdirSync(defaultDir, { recursive: true });
+        logger.info('DXF directory created', { path: defaultDir });
+        return defaultDir;
+    } catch (error: any) {
+        logger.error('Failed to create DXF directory', { 
+            path: defaultDir, 
+            error: error.message 
+        });
+        // Return the last candidate as fallback
+        return candidates[candidates.length - 1];
+    }
 }
 
 function resolveFrontendDistDirectory(): string {
@@ -179,7 +195,9 @@ logger.info('Server starting with environment configuration', {
     hasGroqApiKey: !!process.env.GROQ_API_KEY,
     // Removed groqKeyLength and groqKeyPrefix for security
     gcpProject: process.env.GCP_PROJECT || 'not-set',
-    cloudRunBaseUrl: process.env.CLOUD_RUN_BASE_URL || 'not-set'
+    cloudRunBaseUrl: process.env.CLOUD_RUN_BASE_URL || 'not-set',
+    dxfDirectory,
+    frontendDistDirectory
 });
 
 // Logging Middleware
@@ -326,8 +344,70 @@ app.get('/api/firestore/status', async (_req: Request, res: Response) => {
     }
 });
 
-// Serve generated files
-app.use('/downloads', express.static(dxfDirectory));
+// Serve generated DXF files with explicit error handling
+app.get('/downloads/:filename', (req: Request, res: Response) => {
+    const filename = req.params.filename;
+    
+    // Security: Only allow DXF files and prevent directory traversal
+    if (!filename.endsWith('.dxf') || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        logger.warn('Invalid download request', { filename });
+        return res.status(400).json({ 
+            error: 'Invalid filename',
+            message: 'Only DXF files are allowed'
+        });
+    }
+    
+    const filePath = path.join(dxfDirectory, filename);
+    
+    // Check if file exists and get stats in one operation to avoid race conditions
+    let stats;
+    try {
+        stats = fs.statSync(filePath);
+    } catch (error: any) {
+        // File doesn't exist or cannot be accessed
+        logger.warn('DXF file not found or inaccessible', { 
+            filename,
+            error: error.message
+        });
+        return res.status(404).json({ 
+            error: 'File not found',
+            message: 'The requested DXF file may have expired or does not exist',
+            filename
+        });
+    }
+    
+    // Check if path is actually a file (not a directory)
+    if (!stats.isFile()) {
+        logger.error('Download path is not a file', { filePath });
+        return res.status(400).json({ 
+            error: 'Invalid request',
+            message: 'The requested path is not a file'
+        });
+    }
+    
+    // Serve the file
+    logger.info('Serving DXF file', { 
+        filename, 
+        size: stats.size,
+        age: Date.now() - stats.mtimeMs
+    });
+    
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            logger.error('Error sending DXF file', { 
+                filename, 
+                error: err.message 
+            });
+            // Only send response if headers haven't been sent
+            if (!res.headersSent) {
+                res.status(500).json({ 
+                    error: 'Failed to send file',
+                    message: 'An error occurred while sending the file'
+                });
+            }
+        }
+    });
+});
 
 // Cloud Tasks Webhook - Process DXF Generation
 // Protected by OIDC token validation and rate limiting
