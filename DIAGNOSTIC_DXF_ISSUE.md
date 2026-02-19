@@ -191,3 +191,4 @@ Para mais informações:
 - Documentação DXF: `sisrua_unified/TESTE_DXF_GROQ.md`
 - Documentação Docker: `sisrua_unified/DOCKER_USAGE.md`
 - Guia de Deploy: `GUIA_DEPLOY.md`
+
