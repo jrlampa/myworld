@@ -204,7 +204,7 @@ cd sisrua_unified
 docker build -t sisrua-test .
 ```
 
-Isso mostrará exatamente onde o build está falahando.
+Isso mostrará exatamente onde o build está falhando.
 
 #### 2. Problemas comuns
 
