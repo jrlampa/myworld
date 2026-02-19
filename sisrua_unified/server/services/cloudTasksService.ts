@@ -59,6 +59,59 @@ export interface TaskCreationResult {
 }
 
 /**
+ * Generates a DXF file directly (in-process), bypassing Cloud Tasks.
+ * Used in development mode and as a fallback when Cloud Tasks is unavailable.
+ */
+async function generateDxfDirectly(taskId: string, payload: DxfTaskPayload, taskNamePrefix: string): Promise<TaskCreationResult> {
+    try {
+        // Create job FIRST (must exist before updateJobStatus)
+        createJob(taskId);
+        updateJobStatus(taskId, 'processing', 10);
+
+        // Generate DXF using Python bridge
+        await generateDxf({
+            lat: payload.lat,
+            lon: payload.lon,
+            radius: payload.radius,
+            mode: payload.mode,
+            polygon: payload.polygon,
+            layers: payload.layers as Record<string, boolean>,
+            projection: payload.projection,
+            outputFile: payload.outputFile
+        });
+
+        // Schedule DXF file for deletion after 10 minutes
+        scheduleDxfDeletion(payload.outputFile);
+
+        // Mark job as completed
+        completeJob(taskId, {
+            url: payload.downloadUrl,
+            filename: payload.filename
+        });
+
+        logger.info('DXF generation completed (direct)', {
+            taskId,
+            filename: payload.filename,
+            cacheKey: payload.cacheKey
+        });
+
+        return {
+            taskId,
+            taskName: `${taskNamePrefix}-${taskId}`,
+            alreadyCompleted: true
+        };
+    } catch (error: any) {
+        logger.error('Direct DXF generation failed', {
+            taskId,
+            error: error.message,
+            stack: error.stack
+        });
+        failJob(taskId, error.message);
+        throw new Error(`DXF generation failed: ${error.message}`);
+    }
+}
+
+/**
  * Creates a Cloud Task to process DXF generation
  * In development mode (when GCP_PROJECT is not set), generates DXF directly
  */
@@ -76,53 +129,7 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
             cacheKey: payload.cacheKey
         });
 
-        try {
-            // Create job FIRST (must exist before updateJobStatus)
-            createJob(taskId);
-            updateJobStatus(taskId, 'processing', 10);
-
-            // Generate DXF directly using Python bridge
-            await generateDxf({
-                lat: payload.lat,
-                lon: payload.lon,
-                radius: payload.radius,
-                mode: payload.mode,
-                polygon: payload.polygon,
-                layers: payload.layers as Record<string, boolean>,
-                projection: payload.projection,
-                outputFile: payload.outputFile
-            });
-
-            // Schedule DXF file for deletion after 10 minutes
-            scheduleDxfDeletion(payload.outputFile);
-
-            // Mark job as completed
-            completeJob(taskId, {
-                url: payload.downloadUrl,
-                filename: payload.filename
-            });
-
-            logger.info('DXF generation completed (dev mode)', {
-                taskId,
-                filename: payload.filename,
-                cacheKey: payload.cacheKey
-            });
-
-            return {
-                taskId,
-                taskName: `dev-task-${taskId}`,
-                alreadyCompleted: true  // Job already completed in dev mode
-            };
-        } catch (error: any) {
-            logger.error('DXF generation failed in dev mode', {
-                taskId,
-                error: error.message,
-                stack: error.stack
-            });
-
-            failJob(taskId, error.message);
-            throw new Error(`DXF generation failed: ${error.message}`);
-        }
+        return generateDxfDirectly(taskId, fullPayload, 'dev-task');
     }
 
     // Production mode: Use Cloud Tasks
@@ -159,6 +166,10 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
             taskId,
             queueName: parent,
             url,
+            gcpProject: GCP_PROJECT,
+            location: CLOUD_TASKS_LOCATION,
+            queue: CLOUD_TASKS_QUEUE,
+            serviceAccountEmail: RESOLVED_SERVICE_ACCOUNT_EMAIL,
             cacheKey: payload.cacheKey
         });
 
@@ -187,43 +198,37 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
             queue: CLOUD_TASKS_QUEUE
         });
         
+        const isNotFound = error.code === GRPC_NOT_FOUND_CODE;
+        const isPermissionDenied = error.code === GRPC_PERMISSION_DENIED_CODE;
+
         // Check for permission denied errors (check code first for efficiency)
-        if (error.code === GRPC_PERMISSION_DENIED_CODE || error.message?.includes('PERMISSION_DENIED')) {
+        if (isPermissionDenied) {
             // Cloud Run uses the default compute service account
             // Format: {PROJECT_NUMBER}-compute@developer.gserviceaccount.com
-            const errorMsg = `Permission denied to access Cloud Tasks queue '${CLOUD_TASKS_QUEUE}'. ` +
-                           `The Cloud Run service account (default compute service account) needs the following roles:\n` +
-                           `1. roles/cloudtasks.enqueuer - To create tasks in the queue\n` +
-                           `2. roles/run.invoker - To invoke the Cloud Run webhook\n\n` +
-                           `To find your service account:\n` +
-                           `gcloud projects describe ${GCP_PROJECT} --format="value(projectNumber)"\n\n` +
-                           `The service account format is: {PROJECT_NUMBER}-compute@developer.gserviceaccount.com\n\n` +
-                           `Grant permissions using:\n` +
-                           `gcloud projects add-iam-policy-binding ${GCP_PROJECT} --member="serviceAccount:{PROJECT_NUMBER}-compute@developer.gserviceaccount.com" --role="roles/cloudtasks.enqueuer"\n` +
-                           `gcloud run services add-iam-policy-binding sisrua-app --region=${CLOUD_TASKS_LOCATION} --member="serviceAccount:{PROJECT_NUMBER}-compute@developer.gserviceaccount.com" --role="roles/run.invoker"\n\n` +
-                           `See .github/IAM_SETUP_REQUIRED.md for detailed instructions.`;
-            logger.error('Cloud Tasks permission denied', { 
+            logger.error('Cloud Tasks permission denied - falling back to direct DXF generation', { 
                 queue: parent,
                 expectedServiceAccountFormat: '{PROJECT_NUMBER}-compute@developer.gserviceaccount.com',
-                suggestion: errorMsg 
+                hint: `Grant roles/cloudtasks.enqueuer to the Cloud Run service account for project ${GCP_PROJECT}`
             });
-            throw new Error(errorMsg);
         }
         
         // Provide more specific error message for missing queue
-        if (error.message?.includes('NOT_FOUND') || error.code === GRPC_NOT_FOUND_CODE) {
-            const errorMsg = `Cloud Tasks queue '${CLOUD_TASKS_QUEUE}' not found in project '${GCP_PROJECT}' at location '${CLOUD_TASKS_LOCATION}'. ` +
-                           `Please verify that:\n` +
-                           `1. The queue exists: gcloud tasks queues describe ${CLOUD_TASKS_QUEUE} --location=${CLOUD_TASKS_LOCATION} --project=${GCP_PROJECT}\n` +
-                           `2. The GCP_PROJECT environment variable is set correctly (current value: '${GCP_PROJECT}')\n` +
-                           `3. The service account has permission to access the queue\n\n` +
-                           `If the queue doesn't exist, create it using:\n` +
-                           `gcloud tasks queues create ${CLOUD_TASKS_QUEUE} --location=${CLOUD_TASKS_LOCATION} --project=${GCP_PROJECT}`;
-            logger.error('Cloud Tasks queue does not exist', { 
+        if (isNotFound) {
+            logger.error('Cloud Tasks queue does not exist - falling back to direct DXF generation', { 
                 queue: parent,
-                suggestion: errorMsg 
+                hint: `Create the queue: gcloud tasks queues create ${CLOUD_TASKS_QUEUE} --location=${CLOUD_TASKS_LOCATION} --project=${GCP_PROJECT}`
             });
-            throw new Error(errorMsg);
+        }
+
+        // Fallback: generate DXF directly when Cloud Tasks is unavailable
+        if (isNotFound || isPermissionDenied) {
+            logger.warn('Cloud Tasks unavailable, generating DXF directly as fallback', {
+                taskId,
+                reason: isNotFound ? 'queue-not-found' : 'permission-denied',
+                errorCode: error.code
+            });
+
+            return generateDxfDirectly(taskId, fullPayload, 'fallback-task');
         }
         
         throw new Error(`Failed to create Cloud Task: ${error.message}`);
