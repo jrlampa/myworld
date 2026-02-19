@@ -227,9 +227,9 @@ app.get('/health', async (_req: Request, res: Response) => {
             dockerized: process.env.DOCKER_ENV === 'true',
             // Include GROQ API key status for debugging
             groqApiKey: {
-                configured: !!process.env.GROQ_API_KEY,
-                length: process.env.GROQ_API_KEY?.length || 0,
-                prefix: process.env.GROQ_API_KEY?.substring(0, 7) || 'NOT_SET'
+                configured: !!process.env.GROQ_API_KEY
+                // Removed 'prefix' and 'length' fields for security
+                // API key details should not be exposed in public endpoints
             }
         });
     } catch (error) {
