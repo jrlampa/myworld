@@ -349,7 +349,7 @@ app.get('/downloads/:filename', (req: Request, res: Response) => {
     const filename = req.params.filename;
     
     // Security: Only allow DXF files and prevent directory traversal
-    if (!filename.endsWith('.dxf') || filename.includes('..') || filename.includes('/')) {
+    if (!filename.endsWith('.dxf') || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
         logger.warn('Invalid download request', { filename });
         return res.status(400).json({ 
             error: 'Invalid filename',
@@ -359,12 +359,15 @@ app.get('/downloads/:filename', (req: Request, res: Response) => {
     
     const filePath = path.join(dxfDirectory, filename);
     
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-        logger.warn('DXF file not found', { 
-            filename, 
-            filePath,
-            dxfDirectory
+    // Check if file exists and get stats in one operation to avoid race conditions
+    let stats;
+    try {
+        stats = fs.statSync(filePath);
+    } catch (error: any) {
+        // File doesn't exist or cannot be accessed
+        logger.warn('DXF file not found or inaccessible', { 
+            filename,
+            error: error.message
         });
         return res.status(404).json({ 
             error: 'File not found',
@@ -374,7 +377,6 @@ app.get('/downloads/:filename', (req: Request, res: Response) => {
     }
     
     // Check if path is actually a file (not a directory)
-    const stats = fs.statSync(filePath);
     if (!stats.isFile()) {
         logger.error('Download path is not a file', { filePath });
         return res.status(400).json({ 
