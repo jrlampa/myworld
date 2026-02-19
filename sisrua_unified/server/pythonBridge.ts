@@ -243,6 +243,11 @@ const generateDxfInternal = (options: DxfOptions): Promise<string> => {
             
             logger.info('Python process exited', { exitCode: code });
             if (code === 0) {
+                // Verify the output file was actually created (guards against silent Python failures)
+                if (!existsSync(options.outputFile)) {
+                    reject(new Error(`DXF file was not created at expected path: ${options.outputFile}`));
+                    return;
+                }
                 resolve(stdoutData);
             } else {
                 reject(new Error(`Python script failed with code ${code}\nStderr: ${stderrData}`));
