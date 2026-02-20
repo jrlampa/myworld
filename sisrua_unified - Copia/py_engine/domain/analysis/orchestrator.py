@@ -9,17 +9,17 @@ from typing import List, Tuple, Dict, Any, Optional, Union
 from dataclasses import dataclass
 
 # Modular Imports
-from .interpolators import idw_interpolation
+from ..terrain.interpolators import idw_interpolation
 from .geomorphometry import (
     calculate_slope_aspect, terrain_ruggedness_index, 
     calculate_tpi, classify_landforms_weiss, classify_terrain_slope
 )
-from .hydrology import (
+from ..hydrology.service import (
     calculate_flow_direction, calculate_flow_accumulation, 
     extract_watersheds, calculate_strahler_order, trace_streams,
     fill_sinks, calculate_watershed_metrics
 )
-from .solar import solar_exposure_master
+from ..solar.service import solar_exposure_master
 from .visibility import viewshed_analysis
 
 
@@ -44,6 +44,10 @@ class TerrainMetrics:
     stream_orders: Optional[List[int]] = None # Strahler order per stream segment
     tpi: Optional[np.ndarray] = None # Topographic Position Index
     landforms: Optional[np.ndarray] = None # Classification (ridge, valley, etc.)
+    # Master Analysis (Phase 15)
+    stability_index: Optional[np.ndarray] = None
+    plan_curvature: Optional[np.ndarray] = None
+    profile_curvature: Optional[np.ndarray] = None
     # Raw Grid (for TIN/Visualization)
     elevation_grid: Optional[np.ndarray] = None
 
@@ -92,12 +96,12 @@ class TopographicAnalyzer:
         grid = np.array(interpolated).reshape(grid_size, grid_size)
         
         # 2. Master Hydrology: Sink Filling (CRITICAL for valid drainage)
-        from .hydrology import fill_sinks, calculate_watershed_metrics
+        from ..hydrology.service import fill_sinks, calculate_watershed_metrics
         filled_grid = fill_sinks(grid)
         
         # 3. Geomorphometry (Uses filled grid for more accurate slopes in pits)
         from .geomorphometry import classify_landforms_weiss
-        from .solar import solar_exposure_master
+        from ..solar.service import solar_exposure_master
         slope, aspect = calculate_slope_aspect(filled_grid, cell_size)
         tri = terrain_ruggedness_index(filled_grid)
         # 10-Class Weiss Classification
@@ -105,6 +109,12 @@ class TopographicAnalyzer:
         
         # 4. Solar & Shadows (Master Engine)
         solar = solar_exposure_master(filled_grid, cell_size, latitude, aspect, slope)
+
+        # 4.1 Master Geomorphometry & Stability (Phase 15)
+        from .slope_stability import SlopeStabilityAnalyzer
+        from .geomorphometry import GeomorphometryEngine
+        stability = SlopeStabilityAnalyzer.calculate_stability(filled_grid, cell_size)
+        plan_curv, prof_curv = GeomorphometryEngine.calculate_curvatures(filled_grid, cell_size)
 
         # 5. Hydrology Analysis (on filled grid)
         flow_dir = calculate_flow_direction(filled_grid)
@@ -145,5 +155,8 @@ class TopographicAnalyzer:
             stream_orders=orders,
             tpi=calculate_tpi(filled_grid, radius_cells=3), 
             landforms=landforms,
+            stability_index=stability,
+            plan_curvature=plan_curv,
+            profile_curvature=prof_curv,
             elevation_grid=filled_grid
         )

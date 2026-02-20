@@ -63,6 +63,24 @@ class ColorManager {
         return new THREE.Color(0.2, 0.2, 1.0); // Fill
     }
 
+    getStabilityColor(idx) {
+        // idx is 0-1 (Risk to Stable)
+        if (idx < 0.3) return new THREE.Color(1.0, 0.1, 0.1); // Critical (Red)
+        if (idx < 0.6) return new THREE.Color(1.0, 0.9, 0.1); // Moderate (Yellow)
+        return new THREE.Color(0.1, 0.9, 0.1); // Stable (Green)
+    }
+
+    getCurvatureColor(val) {
+        // Concave (Positive) -> Radiant Green, Convex (Negative) -> Electric Blue, Flat -> Slate
+        if (Math.abs(val) < 0.005) return new THREE.Color(0.85, 0.85, 0.85);
+        if (val > 0) {
+            const intensity = Math.min(0.5 + val * 10, 1.0);
+            return new THREE.Color(0.1, intensity, 0.1);
+        }
+        const intensity = Math.min(0.5 + Math.abs(val) * 10, 1.0);
+        return new THREE.Color(0.1, 0.1, intensity);
+    }
+
     applyTheme(geom, analysis, mode, state) {
         const colorsAttr = geom.attributes.color;
         const size = analysis.grid_size;
@@ -112,6 +130,15 @@ class ColorManager {
                     break;
                 case 'landform':
                     colorObj = this.getLandformColor(analysis.landforms ? analysis.landforms[r][c] : -1);
+                    break;
+                case 'stability':
+                    colorObj = this.getStabilityColor(analysis.stability_index ? analysis.stability_index[r][c] : 1);
+                    break;
+                case 'plan_curvature':
+                    colorObj = this.getCurvatureColor(analysis.plan_curvature ? analysis.plan_curvature[r][c] : 0);
+                    break;
+                case 'profile_curvature':
+                    colorObj = this.getCurvatureColor(analysis.profile_curvature ? analysis.profile_curvature[r][c] : 0);
                     break;
                 case 'cutfill':
                     const currentElev = analysis.elevation_grid[r][c];

@@ -1,11 +1,13 @@
 import ezdxf
 import math
 import struct
+import numpy as np
 from typing import Dict, List, Tuple, Optional
 from shapely.geometry import LineString
 from .tin_generator import TINGenerator
+from .geometry import GeometryUtil
 
-class ExportService:
+class CADExporter:
     """
     Handles DXF and CAD-related export tasks.
     Following SRP, this service expects clean analysis data.
@@ -57,7 +59,6 @@ class ExportService:
             text_scale = 2.0
             
         # 1. AOI
-        from .geometry_util import GeometryUtil
         if clip_poly_local:
             msp.add_lwpolyline(clip_poly_local, close=True, dxfattribs={"layer": "TOPO_AOI", "color": 6})
         else:
@@ -87,7 +88,46 @@ class ExportService:
                 grid_list, 
                 min(xs), max(xs), min(ys), max(ys)
             )
-            TINGenerator.export_tin_to_dxf(msp, faces, layer_name="TIN_SURFACE")
+            
+            # Prepare BIM Metadata for Each Face
+            metadata_list = []
+            rows = len(elevation_grid)
+            cols = len(elevation_grid[0]) if rows > 0 else 0
+            
+            # Analysis matrices (robust access)
+            def get_val(matrix, r, c):
+                if matrix is None: return 0.0
+                if hasattr(matrix, 'iloc'): # pandas?
+                     return matrix.iloc[r, c]
+                if hasattr(matrix, 'item'): # numpy
+                     return matrix[r, c]
+                return matrix[r][c] # list
+            
+            slopes = analysis.get("slope_degrees") if isinstance(analysis, dict) else getattr(analysis, "slope_degrees", None)
+            aspects = analysis.get("aspect") if isinstance(analysis, dict) else getattr(analysis, "aspect", None)
+            stabilities = analysis.get("stability_index") if isinstance(analysis, dict) else getattr(analysis, "stability_index", None)
+            
+            for r in range(rows - 1):
+                for c in range(cols - 1):
+                    # Each cell has 2 faces. Replicate metadata for both.
+                    face_meta = {
+                        "Slope_deg": round(float(get_val(slopes, r, c)), 2),
+                        "Aspect_deg": round(float(get_val(aspects, r, c)), 2),
+                        "Stability_FoS": round(float(get_val(stabilities, r, c)), 2),
+                        "Category": "Terrain_Mesh"
+                    }
+                    metadata_list.append(face_meta) # Tri 1
+                    metadata_list.append(face_meta) # Tri 2
+            
+            TINGenerator.export_tin_to_dxf(msp, faces, layer_name="TOPO_TIN_SURF", metadata_list=metadata_list)
+        
+        # 4.5 Hydrology
+        analysis = analysis_data.get("analysis", {})
+        if analysis.get("hydrology_streams"):
+            self._draw_streams(msp, analysis["hydrology_streams"], clip_poly_local)
+        
+        if analysis.get("watersheds"):
+             self._draw_watersheds(msp, analysis_data, to_local_xy, clip_poly_local)
 
         # 5. Features (Buildings, Roads, etc.)
         osm_stats = {"buildings": 0, "roads": 0, "trees": 0}
@@ -104,7 +144,7 @@ class ExportService:
     def _generate_contours(self, msp, grid, radius, interval_minor, interval_major, clip_poly_local=None):
         try:
              from .contour_generator import ContourGenerator
-             from .geometry_util import GeometryUtil
+             from .geometry import GeometryUtil
              
              grid_list = grid.tolist() if hasattr(grid, 'tolist') else grid
              
@@ -218,6 +258,8 @@ class ExportService:
             "TOPO_VEGT_FORS": 3,
             "TOPO_TIN_SURF": 252, 
             "TOPO_HYDR_STRM": 5,
+            "TOPO_HYDR_BASN": 140, # Dark blue for basins
+            "TOPO_HYDR_BASN": 140, 
             "TOPO_CONT_MINR": 249, 
             "TOPO_CONT_MAJR": 7,
             "TOPO_ANNO_CONT": 7,
@@ -227,8 +269,81 @@ class ExportService:
             if name not in doc.layers:
                 doc.layers.new(name=name, dxfattribs={"color": color})
 
+        if "SISRUA_BIM" not in doc.appids:
+            doc.appids.new("SISRUA_BIM")
+
+    def _add_bim_metadata(self, entity, metadata: Dict):
+        """
+        Attaches engineering metadata as XData (Extended Data).
+        Visible in AutoCAD 'Extended Data' tab or via Properties.
+        """
+        xdata = []
+        for key, value in metadata.items():
+            if isinstance(value, float):
+                xdata.append((1040, value)) # Double
+            elif isinstance(value, int):
+                xdata.append((1070, value)) # 16-bit integer
+            else:
+                xdata.append((1000, f"{key}: {value}")) # String
+        
+        entity.set_xdata("SISRUA_BIM", xdata)
+
+    def _draw_watersheds(self, msp, analysis_data, to_local_xy, clip_poly_local=None):
+        """Vectorizes and draws watershed basins with BIM metadata."""
+        from .geometry import GeometryUtil
+        analysis = analysis_data.get("analysis", {})
+        basins_grid = np.array(analysis.get("watersheds", []))
+        if basins_grid.size == 0: return
+        
+        # Grid parameters
+        rows, cols = basins_grid.shape
+        metadata = analysis_data.get("metadata", {})
+        radius = metadata.get("radius", 500.0)
+        
+        # We need world bounds to map grid to local XY
+        min_x, max_x = -radius, radius
+        min_y, max_y = -radius, radius
+        dx = (max_x - min_x) / (rows - 1)
+        dy = (max_y - min_y) / (cols - 1)
+        
+        unique_basins = np.unique(basins_grid[basins_grid > 0])
+        
+        for b_id in unique_basins:
+            mask = (basins_grid == b_id)
+            coords = np.argwhere(mask)
+            if len(coords) < 3: continue
+            
+            # Reconstruct local XY
+            pts = []
+            for r, c in coords:
+                pts.append((min_x + r * dx, min_y + c * dy))
+            
+            # Find Convex Hull for the basin polygon
+            from shapely.geometry import MultiPoint
+            hull = MultiPoint(pts).convex_hull
+            if hull.geom_type != 'Polygon': continue
+            
+            hull_coords = list(hull.exterior.coords)
+            
+            # Clip if needed
+            clipped_list = [hull_coords]
+            if clip_poly_local:
+                clipped_list = GeometryUtil.clip_polygon(hull_coords, clip_poly_local)
+                
+            for clipped in clipped_list:
+                poly = msp.add_lwpolyline(clipped, close=True, dxfattribs={"layer": "TOPO_HYDR_BASN", "color": 140})
+                
+                # Attach Metadata
+                area = hull.area
+                self._add_bim_metadata(poly, {
+                    "Type": "Watershed Basin",
+                    "ID": int(b_id),
+                    "Area_m2": round(area, 2),
+                    "Category": "Catchment"
+                })
+
     def _draw_streams(self, msp, streams, clip_poly_local=None):
-        from .geometry_util import GeometryUtil
+        from .geometry import GeometryUtil
         for path in streams:
             if not path: continue
             
@@ -238,7 +353,15 @@ class ExportService:
                 
             for clipped in clipped_list:
                 points_2d = [(p[0], p[1]) for p in clipped]
-                msp.add_lwpolyline(points_2d, dxfattribs={"layer": "TOPO_HYDR_STRM", "color": 5})
+                line = msp.add_lwpolyline(points_2d, dxfattribs={"layer": "TOPO_HYDR_STRM", "color": 5})
+                
+                # Add BIM metadata for streams if order is available
+                # (Simple mapping for now)
+                self._add_bim_metadata(line, {
+                    "Type": "Stream",
+                    "Length_m": round(LineString(points_2d).length, 2),
+                    "Phase": "Existing"
+                })
 
     def _is_point_in_local_poly(self, x, y, poly):
         n = len(poly)
@@ -341,7 +464,7 @@ class ExportService:
         else:
             meta = getattr(analysis, "metadata", None)
             if meta: radius = meta.get("radius", 500.0)
-        from .geometry_util import GeometryUtil
+        from .geometry import GeometryUtil
 
         # Buildings
         for bld in collection.buildings:
@@ -357,7 +480,20 @@ class ExportService:
                 cx = sum(p[0] for p in clipped) / len(clipped)
                 cy = sum(p[1] for p in clipped) / len(clipped)
                 z = self._get_z(cx, cy, analysis, radius)
-                msp.add_lwpolyline(clipped, close=True, dxfattribs={"layer": "TOPO_BLDG", "color": 1, "elevation": z, "thickness": 6.0})
+                
+                # Calculate Polygon Area
+                area = GeometryUtil.calculate_area(clipped)
+                
+                poly = msp.add_lwpolyline(clipped, close=True, dxfattribs={"layer": "TOPO_BLDG", "color": 1, "elevation": z, "thickness": 6.0})
+                
+                # Add BIM Metadata
+                self._add_bim_metadata(poly, {
+                    "Type": "Building",
+                    "Area_m2": round(area, 2),
+                    "Elevation": round(z, 2),
+                    "Source": "OSM/SISRUA"
+                })
+                
                 stats["buildings"] += 1
 
         # Roads

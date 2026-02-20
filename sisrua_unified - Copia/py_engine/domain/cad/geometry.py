@@ -76,3 +76,23 @@ class GeometryUtil:
         except Exception as e:
             print(f"Polygon clipping failed: {e}")
             return [poly_coords]
+
+    @staticmethod
+    def calculate_area(coords: List[Tuple[float, float]]) -> float:
+        """Calculates area of a 2D polygon using Shapely."""
+        try:
+            if not coords or len(coords) < 3: return 0.0
+            p = Polygon(coords)
+            if not p.is_valid: p = p.buffer(0)
+            return p.area
+        except Exception:
+            return 0.0
+
+    @staticmethod
+    def calculate_length(coords: List[Tuple[float, ...]]) -> float:
+        """Calculates length of a 2D or 3D line using Shapely."""
+        try:
+            if not coords or len(coords) < 2: return 0.0
+            return LineString(coords).length
+        except Exception:
+            return 0.0

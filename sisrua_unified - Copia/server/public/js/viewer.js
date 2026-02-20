@@ -666,3 +666,50 @@ function calculateVolumesJS() {
     document.getElementById('vol-fill').textContent = fill.toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' m³';
     document.getElementById('vol-net').textContent = (cut - fill).toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' m³';
 }
+let profileCrosshair = null;
+
+export function showProfileCrosshair(index) {
+    if (!state.rulerState.points || state.rulerState.points.length < 2) return;
+
+    // Calculate world position for the index
+    const p1 = state.rulerState.points[0];
+    const p2 = state.rulerState.points[1];
+    const steps = 50; // Must match calculateProfile steps
+    const t = index / steps;
+
+    const px = p1.x + (p2.x - p1.x) * t;
+    const pz = p1.z + (p2.z - p1.z) * t;
+    const py = _get_world_y(px, pz);
+
+    if (!profileCrosshair) {
+        const geo = new THREE.SphereGeometry(3, 16, 16);
+        const mat = new THREE.MeshBasicMaterial({ color: 0xff3333, depthTest: false, transparent: true, opacity: 0.8 });
+        profileCrosshair = new THREE.Mesh(geo, mat);
+        profileCrosshair.renderOrder = 999;
+        state.scene.add(profileCrosshair);
+    }
+
+    profileCrosshair.position.set(px, py + 5, pz);
+    profileCrosshair.visible = true;
+}
+
+export function hideProfileCrosshair() {
+    if (profileCrosshair) profileCrosshair.visible = false;
+}
+
+function _get_world_y(x, z) {
+    if (!state.lastResult) return 0;
+    const analysis = state.lastResult.analysis;
+    const grid = analysis.elevation_grid;
+    const size = analysis.grid_size;
+    const radius = state.radius;
+
+    const col = ((x + radius) / (radius * 2)) * (size - 1);
+    const row_z = ((z + radius) / (radius * 2)) * (size - 1);
+    const r = Math.max(0, Math.min(size - 1, Math.floor(row_z)));
+    const c = Math.max(0, Math.min(size - 1, Math.floor(col)));
+
+    const elev = grid[r][c];
+    const minZ = Math.min(...grid.flat());
+    return (elev - minZ) * 2;
+}

@@ -1,8 +1,8 @@
 
 import concurrent.futures
 from typing import List, Tuple, Optional
-from .elevation_cache import ElevationCache, CachedElevation
-from .satellite_topography import sample_elevation_batch, ElevationSample
+from .cache import ElevationCache, CachedElevation
+from .satellite_provider import sample_elevation_batch, ElevationSample
 
 class GridTiler:
     """

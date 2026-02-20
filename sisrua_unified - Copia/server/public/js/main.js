@@ -37,7 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('button[onclick="downloadSTL()"]')?.addEventListener('click', downloadSTL);
 
     // Bind Viz Mode buttons
-    ['natural', 'elevation', 'slope', 'solar', 'aspect', 'watershed', 'tpi', 'tri', 'landform', 'cutfill'].forEach(mode => {
+    const analyticalModes = [
+        'natural', 'elevation', 'slope', 'solar', 'aspect',
+        'watershed', 'tpi', 'tri', 'landform', 'cutfill',
+        'stability', 'plan_curvature', 'profile_curvature'
+    ];
+
+    analyticalModes.forEach(mode => {
         const btn = document.getElementById(`mode-${mode}`);
         if (btn) {
             btn.addEventListener('click', () => setVizMode(mode));
@@ -114,10 +120,19 @@ document.addEventListener('DOMContentLoaded', () => {
 // Helper for VizMode
 function setVizMode(mode) {
     state.vizMode = mode;
-    ['natural', 'elevation', 'slope', 'solar', 'aspect', 'watershed', 'tpi', 'tri', 'landform', 'cutfill'].forEach(m => {
+    const analyticalModes = [
+        'natural', 'elevation', 'slope', 'solar', 'aspect',
+        'watershed', 'tpi', 'tri', 'landform', 'cutfill',
+        'stability', 'plan_curvature', 'profile_curvature'
+    ];
+
+    analyticalModes.forEach(m => {
         const b = document.getElementById(`mode-${m}`);
         if (b) b.classList.toggle('active', m === mode);
     });
+
+    // Update Legend
+    import('./ui.js').then(m => m.updateLegend(mode));
 
     // Toggle Earthworks Panel
     const earthPanel = document.getElementById('earthworks-panel');

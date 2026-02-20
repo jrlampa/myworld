@@ -57,31 +57,26 @@
                     <input type="number" id="lat" placeholder="Latitude (-22.15)" step="0.0001">
                     <input type="number" id="lng" placeholder="Longitude (-42.92)" step="0.0001">
                 </div>
-                <div
-                    style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; display: flex; align-items: center; gap: 6px;">
-                    <i data-feather="crosshair" style="width: 12px;"></i> Click map to update target
+                <div class="panel-hint">
+                    <i data-feather="crosshair"></i> Click map to update target
                 </div>
             </div>
 
             <div class="panel-section">
                 <div class="panel-title">Analysis Parameters</div>
                 <div class="input-group">
-                    <label for="radius-slider"
-                        style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-muted);">Radius
-                        (meters)</label>
+                    <label for="radius-slider" class="input-label">Radius (meters)</label>
                     <input type="range" id="radius-slider" min="100" max="2500" step="50" value="500"
-                        title="Analysis Radius" style="width: 100%; margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                        title="Analysis Radius">
+                    <div class="slider-labels">
                         <span id="radius-val">500m</span>
-                        <span style="color: var(--warning); font-size: 0.75rem;" id="radius-warning"></span>
+                        <span id="radius-warning" class="slider-warning"></span>
                     </div>
                 </div>
 
                 <div class="input-group">
-                    <label
-                        style="display: block; font-size: 0.8rem; margin-bottom: 6px; color: var(--text-muted);">Quality
-                        Mode</label>
-                    <select id="quality">
+                    <label class="input-label">Quality Mode</label>
+                    <select id="quality" title="Topography Detail Quality">
                         <option value="balanced">Balanced (Fast)</option>
                         <option value="high" selected>High Detail (Recommended)</option>
                         <option value="ultra">Ultra (Topography Master)</option>
@@ -215,6 +210,18 @@
                     <i data-feather="move"></i>
                     <div class="tooltip">Terraplanagem (Cut/Fill)</div>
                 </button>
+                <button class="icon-btn" id="mode-stability">
+                    <i data-feather="alert-triangle"></i>
+                    <div class="tooltip">Estabilidade de Talude (FoS)</div>
+                </button>
+                <button class="icon-btn" id="mode-plan-curvature">
+                    <i data-feather="shuffle"></i>
+                    <div class="tooltip">Curvatura em Planta</div>
+                </button>
+                <button class="icon-btn" id="mode-profile-curvature">
+                    <i data-feather="trending-up"></i>
+                    <div class="tooltip">Curvatura de Perfil</div>
+                </button>
                 <div class="divider"></div>
                 <button class="icon-btn">
                     <i data-feather="maximize"></i>
@@ -230,6 +237,9 @@
                     <div class="tooltip">Perfil de Elevação</div>
                 </button>
             </div>
+
+            <!-- Dynamic Legend -->
+            <div id="dynamic-legend" class="dynamic-legend"></div>
 
             <!-- Simulation Panel -->
         </div>

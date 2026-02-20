@@ -2,11 +2,12 @@ import math
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from pyproj import Geod, Transformer
-from .satellite_topography import ElevationSample, sample_elevation_batch, sample_elevation_with_fallback
-from .topographic_analysis import TopographicAnalyzer
-from .osm_features import fetch_osm_features
+from ..domain.terrain.satellite_provider import ElevationSample, sample_elevation_batch, sample_elevation_with_fallback
+from ..domain.analysis.orchestrator import TopographicAnalyzer
+from ..domain.terrain.osm_repository import fetch_osm_features
+from ..domain.engineering.profile_engine import ProfileEngine
 
-class TopographyService:
+class TopographyAppService:
     """
     Handles core topographic data fetching and analysis.
     Following SRP, this service does NOT know about DXF or CAD.
@@ -22,7 +23,8 @@ class TopographyService:
         radius: float, 
         quality_mode: str = "high", 
         bounds: Optional[List[List[float]]] = None,
-        target_elevation: Optional[float] = None
+        target_elevation: Optional[float] = None,
+        profile_path: Optional[List[Dict]] = None
     ) -> Dict:
         """
         Main entry point for topographic analysis.
@@ -40,7 +42,7 @@ class TopographyService:
             points = self._geodesic_ring_points(lat, lng, radius, sample_count)
         
         # 3. Fetch Elevation (Optimized with GridTiler & Cache)
-        from .grid_tiler import GridTiler
+        from ..domain.terrain.tiler import GridTiler
         tiler = GridTiler()
         samples = tiler.fetch_points(points)
 
@@ -58,11 +60,24 @@ class TopographyService:
             cell_size=radius * 2 / grid_size if grid_size > 0 else 30.0,
             latitude=lat
         )
+
+        profile_data = None
+        if profile_path and analysis_result.elevation_grid is not None:
+             local_path = []
+             for p in profile_path:
+                 lx, ly = to_local_xy(p["lat"], p["lng"])
+                 local_path.append((lx, ly))
+             
+             profile_data = ProfileEngine.calculate_profile(
+                 local_path, 
+                 analysis_result.elevation_grid, 
+                 (-radius, -radius, radius, radius)
+             )
         
         # 5.1 Earthworks Analysis (Phase 11)
         earthworks = None
         if target_elevation is not None:
-            from .earthworks_analyzer import EarthworksAnalyzer
+            from ..domain.engineering.earthworks import EarthworksAnalyzer
             clip_poly_local = None
             if bounds:
                 clip_poly_local = [to_local_xy(p[1], p[0]) for p in bounds] #lat, lng to x, y
@@ -77,7 +92,7 @@ class TopographyService:
         
         # 6. Generate Contours (Smart Backend)
         try:
-            from .contour_generator import ContourGenerator
+            from ..domain.cad.contour_generator import ContourGenerator
             
             # Use local coordinates limits [-radius, radius]
             # Grid needs to be converted to list if it's numpy
@@ -113,12 +128,9 @@ class TopographyService:
                 "feature_collection": feature_collection,
                 "analysis": analysis_dict,
                 "earthworks": earthworks,
-                "contours": {
-                    "minor": contours_minor,
-                    "major": contours_major
-                },
                 "grid_size": grid_size,
                 "to_local_xy": to_local_xy,
+                "profile": profile_data,
                 "metadata": {"lat": lat, "lng": lng, "radius": radius, "bounds": bounds}
             }
             

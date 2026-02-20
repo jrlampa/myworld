@@ -5,11 +5,11 @@ from pathlib import Path
 from typing import Dict, Optional, List
 
 try:
-    from .utils.topography_service import TopographyService
-    from .utils.export_service import ExportService
+    from .application.topography_app_service import TopographyAppService
+    from .domain.cad.exporter import CADExporter
 except (ModuleNotFoundError, ImportError):
-    from utils.topography_service import TopographyService
-    from utils.export_service import ExportService
+    from application.topography_app_service import TopographyAppService
+    from domain.cad.exporter import CADExporter
 
 def generate_dxf_from_coordinates(
     lat: float,
@@ -30,8 +30,8 @@ def generate_dxf_from_coordinates(
     output_path = Path(output_filename)
     
     # 1. Initialize Services
-    topo_service = TopographyService()
-    export_service = ExportService()
+    topo_service = TopographyAppService()
+    export_service = CADExporter()
     
     # 2. Get Analysis Data
     analysis_data = topo_service.get_analysis(

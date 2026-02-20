@@ -2,7 +2,7 @@
 # py_engine/utils/tin_generator.py
 
 import ezdxf
-from typing import List, Tuple, Sequence
+from typing import List, Tuple, Sequence, Optional
 
 class TINGenerator:
     """
@@ -85,12 +85,20 @@ class TINGenerator:
         msp, 
         faces: Sequence[Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]],
         layer_name: str = "TIN_SURFACE",
-        color: int = 252 # Gray
+        color: int = 252, # Gray
+        metadata_list: Optional[List[dict]] = None
     ):
         """
         Export generated faces to DXF as 3DFACE entities.
+        Optionally attaches BIM metadata as XData.
         """
-        for face in faces:
+        for i, face in enumerate(faces):
             # face is tuple of 3 points: (p1, p2, p3)
             # p1 is (x, y, z)
-            msp.add_3dface(face, dxfattribs={"layer": layer_name, "color": color})
+            entity = msp.add_3dface(face, dxfattribs={"layer": layer_name, "color": color})
+            
+            if metadata_list and i < len(metadata_list):
+                # We expect the caller to have defined the "SISRUA_BIM" appid
+                # and provide a helper or directly set xdata
+                from .exporter import CADExporter # Circular import check? Might be better to pass a callback
+                CADExporter()._add_bim_metadata(entity, metadata_list[i])
