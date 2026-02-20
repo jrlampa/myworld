@@ -1,0 +1,2 @@
+# Python requirements for sisrua_unified
+black==24.2.0

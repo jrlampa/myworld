@@ -1,0 +1,19 @@
+{
+  "name": "sisrua_unified",
+  "version": "1.0.0",
+  "description": "Unified project for Node.js/TypeScript and Python integration.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint . --ext .ts,.tsx,.js",
+    "format": "prettier --write .",
+    "test": "echo \"No test script yet\""
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "prettier": "^2.0.0"
+  }
+}

@@ -1,0 +1,43 @@
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.__pycache__/
+    | \.git/
+    | \build/
+    | \dist/
+    | \env/
+    | \venv/
+    | \tests/
+    | \scripts/
+    | \py_engine/
+    | \application/
+    | \domain/
+    | \utils/
+    | \server/
+    | \test_files/
+    | \coverage/
+    | \engine/
+    | \localpycs/
+    | \__pycache__/
+    | \coverage/
+    | \build/
+    | \dist/
+    | \env/
+    | \venv/
+    | \tests/
+    | \scripts/
+    | \py_engine/
+    | \application/
+    | \domain/
+    | \utils/
+    | \server/
+    | \test_files/
+    | \coverage/
+    | \engine/
+    | \localpycs/
+    | \__pycache__/
+)
+'''
