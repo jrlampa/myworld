@@ -22,6 +22,11 @@ def main():
     parser.add_argument('--polygon', type=str, required=False, default='[]', help='JSON string of polygon points [[lat, lon], ...]')
     parser.add_argument('--client_name', type=str, required=False, default='CLIENTE PADRÃO', help='Client name for title block')
     parser.add_argument('--project_id', type=str, required=False, default='PROJETO URBANISTICO', help='Project ID for title block')
+    parser.add_argument('--designer', type=str, required=False, default='sisRUA AI', help='Designer name for ABNT title block')
+    parser.add_argument('--numero_desenho', type=str, required=False, default='SR-0001', help='Drawing number (ABNT NBR 10582)')
+    parser.add_argument('--revisao', type=str, required=False, default='A', help='Revision letter for ABNT title block')
+    parser.add_argument('--verificado_por', type=str, required=False, default='', help='Verified by (ABNT NBR 10582)')
+    parser.add_argument('--aprovado_por', type=str, required=False, default='', help='Approved by (ABNT NBR 10582)')
     parser.add_argument('--no-preview', action='store_true', help='Skip GeoJSON preview logs (prevents OOM in CLI)')
     
     args = parser.parse_args()
@@ -48,7 +53,12 @@ def main():
         )
         controller.project_metadata = {
             'client': args.client_name,
-            'project': args.project_id
+            'project': args.project_id,
+            'designer': args.designer,
+            'numero_desenho': args.numero_desenho,
+            'revisao': args.revisao,
+            'verificado_por': args.verificado_por,
+            'aprovado_por': args.aprovado_por,
         }
         controller.run()
         

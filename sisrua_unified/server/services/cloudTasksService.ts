@@ -50,6 +50,12 @@ export interface DxfTaskPayload {
     filename: string;
     cacheKey: string;
     downloadUrl: string;
+    /** Campos ABNT NBR 10582 (opcionais) */
+    designer?: string;
+    numero_desenho?: string;
+    revisao?: string;
+    verificado_por?: string;
+    aprovado_por?: string;
 }
 
 export interface TaskCreationResult {
@@ -77,7 +83,12 @@ async function generateDxfDirectly(taskId: string, payload: DxfTaskPayload, task
             polygon: payload.polygon,
             layers: payload.layers as Record<string, boolean>,
             projection: payload.projection,
-            outputFile: payload.outputFile
+            outputFile: payload.outputFile,
+            designer: payload.designer,
+            numero_desenho: payload.numero_desenho,
+            revisao: payload.revisao,
+            verificado_por: payload.verificado_por,
+            aprovado_por: payload.aprovado_por,
         });
 
         // Schedule DXF file for deletion after 10 minutes

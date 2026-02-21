@@ -48,7 +48,13 @@ const specs = swaggerJsdoc({
                             type: 'object',
                             additionalProperties: true
                         },
-                        projection: { type: 'string', example: 'local' }
+                        projection: { type: 'string', example: 'local' },
+                        /** Campos ABNT NBR 10582 (carimbo) — todos opcionais */
+                        designer: { type: 'string', maxLength: 60, description: 'Responsável pelo desenho (ABNT NBR 10582)', example: 'Eng. João Silva' },
+                        numero_desenho: { type: 'string', maxLength: 20, description: 'Número do desenho (ABNT NBR 10582)', example: 'SR-0001' },
+                        revisao: { type: 'string', maxLength: 3, description: 'Letra de revisão (ABNT NBR 10582)', example: 'A' },
+                        verificado_por: { type: 'string', maxLength: 60, description: 'Verificado por (ABNT NBR 10582)', example: 'Eng. Maria Souza' },
+                        aprovado_por: { type: 'string', maxLength: 60, description: 'Aprovado por (ABNT NBR 10582)', example: 'Arq. Carlos Lima' },
                     }
                 },
                 DxfQueuedResponse: {
