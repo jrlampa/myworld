@@ -134,16 +134,11 @@ class OSMController:
                 Logger.info(f"Reconstructing {rows}x{cols} terrain grid...", progress=60)
                 transformer = Transformer.from_crs("EPSG:4326", gdf.crs, always_xy=True)
                 
-                grid_rows = []
-                current_row = []
-                for lat, lon, z in elev_points:
-                    x, y = transformer.transform(lon, lat)
-                    current_row.append((x, y, z))
-                    if len(current_row) >= cols:
-                        grid_rows.append(current_row)
-                        current_row = []
-                
-                if current_row: grid_rows.append(current_row)
+                # Batch-transform all elevation points at once instead of one-by-one
+                lats_arr, lons_arr, zs_arr = zip(*elev_points)
+                xs, ys = transformer.transform(lons_arr, lats_arr)
+                all_points = list(zip(xs, ys, zs_arr))
+                grid_rows = [all_points[i:i+cols] for i in range(0, len(all_points), cols)]
                 dxf_gen.add_terrain_from_grid(grid_rows)
                 
                 # Contours
@@ -204,11 +199,22 @@ class OSMController:
             preview_gdf = gdf.copy()
             preview_gdf['area'] = preview_gdf.geometry.area
             preview_gdf['length'] = preview_gdf.geometry.length
-            def get_type(row):
-                if row.get('building'): return 'building'
-                if row.get('highway'): return 'highway'
-                return 'other'
-            preview_gdf['feature_type'] = preview_gdf.apply(get_type, axis=1)
+            # Vectorized feature_type classification using np.select
+            has_building = (
+                preview_gdf['building'].notna() & (preview_gdf['building'] != False)
+                if 'building' in preview_gdf.columns
+                else pd.Series(False, index=preview_gdf.index)
+            )
+            has_highway = (
+                preview_gdf['highway'].notna() & (preview_gdf['highway'] != False)
+                if 'highway' in preview_gdf.columns
+                else pd.Series(False, index=preview_gdf.index)
+            )
+            preview_gdf['feature_type'] = np.select(
+                [has_building, has_highway],
+                ['building', 'highway'],
+                default='other'
+            )
             gdf_wgs84 = preview_gdf.to_crs(epsg=4326)
             payload = json.loads(gdf_wgs84.to_json())
             if analysis_gdf is not None and not analysis_gdf.empty:

@@ -90,15 +90,20 @@ def _audit_power_line_proximity(power_lines, buildings, crs):
         buffers_gdf['geometry'] = power_lines.geometry.buffer(POWER_LINE_BUFFER_METERS)
         buffers_gdf['analysis_type'] = 'buffer'
         
-        # Check intersections with buildings
-        for idx, building in buildings.iterrows():
-            if buffers_gdf.geometry.intersects(building.geometry).any():
-                violations_count += 1
-                
-                # Get centroid in WGS84 for reporting
-                building_wgs84 = gpd.GeoSeries([building.geometry], crs=crs).to_crs(epsg=4326).iloc[0]
-                centroid = building_wgs84.centroid
-                
+        # Vectorized intersection check using spatial join instead of per-row iterrows loop
+        joined = gpd.sjoin(
+            buildings[['geometry']],
+            buffers_gdf[['geometry']],
+            how='inner',
+            predicate='intersects'
+        )
+        violating_idx = joined.index.unique()
+        violations_count = len(violating_idx)
+        
+        if violations_count > 0:
+            violating_wgs84 = buildings.loc[violating_idx].to_crs(epsg=4326)
+            for idx, row in violating_wgs84.iterrows():
+                centroid = row.geometry.centroid
                 violations_list.append({
                     "type": "proximity",
                     "description": f"Building {idx} within {POWER_LINE_BUFFER_METERS}m of power line",

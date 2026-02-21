@@ -27,12 +27,12 @@ def fetch_elevation_grid(north, south, east, west, resolution=50):
     lats = np.linspace(south, north, rows)
     lons = np.linspace(west, east, cols)
     
-    # Create grid points
-    locations = []
-    # Grid order: for each latitude (row), all longitudes (cols)
-    for lat in lats:
-        for lon in lons:
-            locations.append({'latitude': float(lat), 'longitude': float(lon)})
+    # Create grid points using meshgrid (avoids slow nested Python loops)
+    lat_grid, lon_grid = np.meshgrid(lats, lons, indexing='ij')
+    locations = [
+        {'latitude': float(lat), 'longitude': float(lon)}
+        for lat, lon in zip(lat_grid.ravel(), lon_grid.ravel())
+    ]
             
     total_points = len(locations)
     Logger.info(f"Querying elevation for {total_points} points ({rows}x{cols} grid)...")
