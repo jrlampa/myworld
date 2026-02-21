@@ -56,6 +56,8 @@ export interface DxfTaskPayload {
     revisao?: string;
     verificado_por?: string;
     aprovado_por?: string;
+    /** Normas ANEEL/PRODIST — substitui ABNT para camadas elétricas */
+    aneelProdist?: boolean;
 }
 
 export interface TaskCreationResult {
@@ -89,6 +91,7 @@ async function generateDxfDirectly(taskId: string, payload: DxfTaskPayload, task
             revisao: payload.revisao,
             verificado_por: payload.verificado_por,
             aprovado_por: payload.aprovado_por,
+            aneelProdist: payload.aneelProdist,
         });
 
         // Schedule DXF file for deletion after 10 minutes

@@ -235,6 +235,13 @@ class DXFDrawingMixin:
                 self.msp.add_blockref('TORRE', (x, y)).add_auto_attribs(attribs)
             else:
                 self.msp.add_blockref('POSTE', (x, y)).add_auto_attribs(attribs)
+        elif layer in ('REDE_AT', 'REDE_MT', 'REDE_BT', 'SUBESTACAO', 'TRANSFORMADOR'):
+            if layer == 'REDE_AT' or tags.get('power') == 'tower':
+                self.msp.add_blockref('TORRE', (x, y)).add_auto_attribs(attribs)
+            elif layer == 'TRANSFORMADOR':
+                self.msp.add_circle((x, y), radius=0.8, dxfattribs={'layer': layer, 'color': 3})
+            else:
+                self.msp.add_blockref('POSTE', (x, y)).add_auto_attribs(attribs)
         elif layer == 'INFRA_TELECOM':
             self.msp.add_blockref('POSTE', (x, y), dxfattribs={'xscale': 0.8, 'yscale': 0.8}).add_auto_attribs(attribs)
         else:

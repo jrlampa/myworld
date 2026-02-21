@@ -48,6 +48,8 @@ interface DxfOptions {
     revisao?: string;
     verificado_por?: string;
     aprovado_por?: string;
+    /** Normas ANEEL/PRODIST — substitui ABNT para camadas elétricas */
+    aneelProdist?: boolean;
 }
 
 // Permanent error patterns that indicate non-retriable failures
@@ -227,6 +229,9 @@ const generateDxfInternal = (options: DxfOptions): Promise<string> => {
         if (options.revisao) args.push('--revisao', String(options.revisao));
         if (options.verificado_por) args.push('--verificado_por', String(options.verificado_por));
         if (options.aprovado_por) args.push('--aprovado_por', String(options.aprovado_por));
+
+        // ANEEL/PRODIST norms (flag-based, substitutes ABNT for power layers)
+        if (options.aneelProdist) args.push('--aneel_prodist');
 
         logger.info('Spawning Python process for DXF generation', {
             command,

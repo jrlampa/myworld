@@ -49,7 +49,7 @@ router.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, re
             return res.status(400).json({ error: 'Corpo da requisição inválido', details: validation.error.issues });
         }
 
-        const { lat, lon, radius, mode, designer, numero_desenho, revisao, verificado_por, aprovado_por } = validation.data;
+        const { lat, lon, radius, mode, designer, numero_desenho, revisao, verificado_por, aprovado_por, aneel_prodist } = validation.data;
         const { polygon, layers, projection } = req.body;
         const resolvedMode = mode || 'circle';
         const cacheKey = createCacheKey({
@@ -95,6 +95,7 @@ router.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, re
             projection: projection || 'local',
             outputFile, filename, cacheKey, downloadUrl,
             designer, numero_desenho, revisao, verificado_por, aprovado_por,
+            aneelProdist: aneel_prodist,
         });
 
         if (!alreadyCompleted) {

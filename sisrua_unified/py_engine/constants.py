@@ -72,6 +72,13 @@ LAYER_VIAS_DEFAULT = 'VIAS'
 # Curb offset layer
 LAYER_VIAS_MEIO_FIO = 'VIAS_MEIO_FIO'
 
+# ANEEL/PRODIST layer names (infraestrutura elétrica — substitui ABNT para concessionária)
+LAYER_AT = 'REDE_AT'
+LAYER_MT = 'REDE_MT'
+LAYER_BT = 'REDE_BT'
+LAYER_SE = 'SUBESTACAO'
+LAYER_TRANSF = 'TRANSFORMADOR'
+
 # Fallback layer
 LAYER_DEFAULT = '0'
 

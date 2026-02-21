@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Zap, Layers, Car, Building2, Mountain, LampFloor, Globe, Moon, Sun,
   Map as MapIcon, Satellite, Type, Activity, ArrowLeftRight, Grid3X3,
-  AlertTriangle, PencilRuler,
+  AlertTriangle, PencilRuler, Bolt,
 } from 'lucide-react';
 import { AppSettings, LayerConfig, ProjectionType, MapProvider, SimplificationLevel } from '../../types';
 import LayerToggle from './LayerToggle';
@@ -181,6 +181,55 @@ const GeneralTab: React.FC<GeneralTabProps> = ({ settings, onUpdateSettings }) =
             <div className={`w-3 h-3 rounded-full ${settings.layers.grid ? 'bg-blue-500' : 'bg-slate-700'}`} />
           </div>
         </div>
+      </div>
+
+      <div className="h-px bg-white/20" />
+
+      {/* Normas ANEEL/PRODIST */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Bolt size={16} className="text-yellow-400" />
+          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Infraestrutura Elétrica</h3>
+        </div>
+
+        <LayerToggle
+          label="Rede Elétrica (ANEEL/PRODIST)"
+          icon={Zap}
+          active={settings.layers.power}
+          onClick={() => toggleLayer('power')}
+          colorClass="bg-yellow-500/20 text-yellow-500"
+        />
+
+        {settings.layers.power && (
+          <div
+            className={`p-3 rounded-lg border transition-all ${
+              settings.aneelProdist
+                ? 'bg-yellow-500/10 border-yellow-500/40'
+                : 'bg-slate-900 border-slate-700'
+            }`}
+          >
+            <button
+              onClick={() => onUpdateSettings({ ...settings, aneelProdist: !settings.aneelProdist })}
+              className="flex items-center gap-3 w-full text-left"
+              role="switch"
+              aria-checked={settings.aneelProdist}
+            >
+              <Bolt
+                size={16}
+                className={settings.aneelProdist ? 'text-yellow-400' : 'text-slate-600'}
+              />
+              <div className="flex-1">
+                <p className={`text-xs font-semibold ${settings.aneelProdist ? 'text-yellow-200' : 'text-slate-400'}`}>
+                  Aplicar Normas ANEEL/PRODIST
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Substitui ABNT para camadas elétricas (AT/MT/BT)
+                </p>
+              </div>
+              <div className={`w-3 h-3 rounded-full ${settings.aneelProdist ? 'bg-yellow-400' : 'bg-slate-700'}`} />
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="h-px bg-slate-800" />

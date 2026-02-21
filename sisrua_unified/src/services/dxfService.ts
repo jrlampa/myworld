@@ -34,13 +34,14 @@ export const generateDXF = async (
   mode: string,
   polygon: any[],
   layers: Record<string, boolean>,
-  projection: 'local' | 'utm' = 'local'
+  projection: 'local' | 'utm' = 'local',
+  aneelProdist: boolean = false
 ): Promise<DxfQueueResponse | DxfCachedResponse> => {
 
   const response = await fetch(`${API_URL}/dxf`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ lat, lon, radius, mode, polygon, layers, projection })
+    body: JSON.stringify({ lat, lon, radius, mode, polygon, layers, projection, aneel_prodist: aneelProdist })
   });
 
   if (!response.ok) {

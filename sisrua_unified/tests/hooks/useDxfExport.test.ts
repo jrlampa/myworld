@@ -121,7 +121,7 @@ describe('useDxfExport', () => {
     });
 
     expect(generateDXF).toHaveBeenCalledWith(
-      CENTER.lat, CENTER.lng, 100, 'circle', [], {}, 'utm'
+      CENTER.lat, CENTER.lng, 100, 'circle', [], {}, 'utm', false
     );
     expect(onSuccess).toHaveBeenCalledWith('DXF Downloaded');
   });

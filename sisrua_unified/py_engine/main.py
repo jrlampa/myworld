@@ -27,6 +27,7 @@ def main():
     parser.add_argument('--revisao', type=str, required=False, default='A', help='Revision letter for ABNT title block')
     parser.add_argument('--verificado_por', type=str, required=False, default='', help='Verified by (ABNT NBR 10582)')
     parser.add_argument('--aprovado_por', type=str, required=False, default='', help='Approved by (ABNT NBR 10582)')
+    parser.add_argument('--aneel_prodist', action='store_true', help='Apply ANEEL/PRODIST norms for electrical infrastructure (overrides ABNT for power layers)')
     parser.add_argument('--no-preview', action='store_true', help='Skip GeoJSON preview logs (prevents OOM in CLI)')
     
     args = parser.parse_args()
@@ -49,7 +50,8 @@ def main():
             crs=args.crs,
             export_format=args.format,
             selection_mode=args.selection_mode,
-            polygon=json.loads(args.polygon)
+            polygon=json.loads(args.polygon),
+            aneel_prodist=args.aneel_prodist
         )
         controller.project_metadata = {
             'client': args.client_name,

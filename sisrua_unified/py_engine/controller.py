@@ -15,7 +15,7 @@ from utils.logger import Logger
 from utils.geo import sirgas2000_utm_epsg
 
 class OSMController:
-    def __init__(self, lat, lon, radius, output_file, layers_config, crs, export_format='dxf', selection_mode='circle', polygon=None):
+    def __init__(self, lat, lon, radius, output_file, layers_config, crs, export_format='dxf', selection_mode='circle', polygon=None, aneel_prodist=False):
         self.lat = lat
         self.lon = lon
         self.radius = radius
@@ -25,6 +25,7 @@ class OSMController:
         self.export_format = export_format.lower()
         self.selection_mode = selection_mode
         self.polygon = polygon
+        self.aneel_prodist = aneel_prodist
         self.project_metadata = {
             'client': 'CLIENTE PADRÃO',
             'project': 'EXTRACAO ESPACIAL'
@@ -66,8 +67,17 @@ class OSMController:
         # AUTHORITATIVE FIX: Check if we want Georeferenced (Absolute) or Localized (0,0)
         use_georef = self.layers_config.get('georef', True)
         
-        Logger.info(f"Step 3/5: Initializing DXF Generation (Georef: {use_georef})...", progress=50)
+        Logger.info(f"Step 3/5: Initializing DXF Generation (Georef: {use_georef}, ANEEL: {self.aneel_prodist})...", progress=50)
         dxf_gen = DXFGenerator(self.output_file)
+        dxf_gen.aneel_prodist = self.aneel_prodist
+
+        if self.aneel_prodist:
+            try:
+                from dxf_aneel import setup_aneel_layers
+            except (ImportError, ValueError):
+                from .dxf_aneel import setup_aneel_layers
+            setup_aneel_layers(dxf_gen.doc)
+            Logger.info("Normas ANEEL/PRODIST ativas: layers elétricos conforme concessionária (ABNT ignorada para estas camadas).")
         
         if use_georef:
             dxf_gen.diff_x = 0.0
@@ -191,6 +201,10 @@ class OSMController:
                     tags['highway'].append('street_lamp')
             else:
                 tags['highway'] = ['street_lamp']
+        if self.aneel_prodist:
+            # 'power': True is OSM tag filter syntax: fetch all OSM elements that have ANY power tag.
+            # This does not modify individual feature tags — each fetched element has its own tags.
+            tags['power'] = True  # Infraestrutura elétrica (ANEEL/PRODIST)
         return tags
 
     def _send_geojson_preview(self, gdf, analysis_gdf=None):

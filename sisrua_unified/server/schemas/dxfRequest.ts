@@ -11,6 +11,8 @@ const dxfRequestSchema = z.object({
     revisao: z.string().max(3).optional(),
     verificado_por: z.string().max(60).optional(),
     aprovado_por: z.string().max(60).optional(),
+    /** Normas ANEEL/PRODIST — substitui ABNT para camadas elétricas */
+    aneel_prodist: z.boolean().optional().default(false),
 });
 
 export { dxfRequestSchema };

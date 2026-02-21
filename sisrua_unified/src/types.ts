@@ -100,6 +100,7 @@ export interface LayerConfig {
   labels: boolean;
   dimensions: boolean;
   grid: boolean;
+  power: boolean;
 }
 
 export type ProjectionType = 'local' | 'utm';
@@ -117,6 +118,8 @@ export interface AppSettings {
   mapProvider: MapProvider;
   projectMetadata: ProjectMetadata;
   contourInterval: number;
+  /** Aplica normas ANEEL/PRODIST — substitui ABNT para infraestrutura elétrica */
+  aneelProdist: boolean;
 }
 
 export type SelectionMode = 'circle' | 'polygon' | 'measure';
