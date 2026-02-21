@@ -320,10 +320,10 @@ npm run docker:dev          # Inicia ambiente completo Docker
 npm run dev                 # Frontend + Backend (sem Docker)
 
 # Testes
-npm run test:backend        # Jest (224 testes, 98.68% stmts, 94.4% branches)
-npm run test:frontend       # Vitest (105 testes)
+npm run test:backend        # Jest (224 testes, 98.82% stmts, 94.98% branches)
+npm run test:frontend       # Vitest (120 testes)
 npm run test:e2e            # Playwright
-cd py_engine && python3 -m pytest tests/ -v  # Python (213 testes, 83% cobertura)
+cd py_engine && python3 -m pytest tests/ -v  # Python (252 testes, 86% cobertura)
 
 # Build e Deploy
 npm run build               # Build frontend
@@ -398,7 +398,8 @@ PYTHONDONTWRITEBYTECODE=1
 | 2026-02-21 | **Cobertura DXF engine Python — 179 testes, dxf_generator 94%**: novo `test_dxf_drawing.py` (69 testes); `TestDetermineLayer` (14 tags), `TestMergeContiguousLines` (7), `TestAddTerrainFromGrid` (6), `TestAddContourLines` (4), `TestDrawGeometry` (9), `TestDrawPoint` (10), `TestDrawStreetOffsets` (6), `TestDrawLinestring` (3), `TestAddFeaturesIntegration` (5 com audit headless); `cacheService.ts` 100% branch (null/undefined layers); `incraService.ts` 92.3% branch; Python 110→179 testes; dxf_generator 57%→94%; dxf_drawing 70%→78%; backend 217 testes; branches 93.05%→93.82% | Dev Fullstack Sênior |
 | 2026-02-21 | **Bugfix Logger.warn + cobertura cartografia/auditoria — 213 Python, 220 backend**: **Bug crítico**: `Logger.warn()` inexistente → AttributeError em produção (concat fallback); novo `test_dxf_cartography.py` (29 testes, cartographicElements/coordinateGrid/legend/titleBlock+audit headless+3 raios); `test_spatial_audit.py` +14 testes (CombineFeatures/LightingScore/PowerLineException/EdgeCases); `test_logger.py` +1 warn; `rateLimiter.test.ts` +1 (req.ip undefined → "unknown", **rateLimiter.ts 100% branch**); `dxfCleanupService.test.ts`/`jobStatusService.test.ts` +1 cada (idempotência); Python 179→**213**; dxf_cartography 57%→**89%**; spatial_audit 84%→**95%**; Python total 80%→**83%**; backend 217→**220**; branches 93.82%→**94.2%** | Dev Fullstack Sênior |
 | 2026-02-21 | **Frontend hooks 45→105 testes, geo.ts 100%, useUndoRedo 100%, kmlParser 97%, useOsmEngine 100%**: Novos arquivos: `tests/hooks/useUndoRedo.test.ts` (22 testes: state machine completo, undo/redo multi-step, saveSnapshot, commit=false, objetos complexos); `tests/utils/kmlParser.test.ts` (8 testes: KML válido/inválido via vi.stubGlobal FileReader mock, onerror, NaN filtering); `tests/utils/geo.test.ts` (19 testes: UTM 23K, bandas C-M/N-X, zona 0/61 inválidas, regex edge cases, normalização vírgula); `tests/hooks/useOsmEngine.test.ts` (11 testes: success/empty/error flows, AI on/off, clearData, setOsmData); Backend +4: `geocodingService` zona 0/61/99 → cobre linha 48; `incraService` `id:undefined` → cobre `?? ''` branch (96.15%); Frontend 45→**105**; `useUndoRedo` **100%** all metrics; `geo.ts` **100%** stmts; `kmlParser.ts` **97%**; `useOsmEngine.ts` **100%** stmts; backend 220→**224** | Dev Fullstack Sênior |
+| 2026-02-21 | **SotA guards+services — 596 total tests: dxf_drawing 97%, dxf_generator 99%, elevationService 100%, logger 98%**: Novo `test_dxf_drawing_guards.py` (39 testes Python): `_safe_v` ValueError/TypeError, `_safe_p` IndexError, `_validate_points` guards (NaN deduplication, non-iterable except 58-60), `_get_thickness` levels/exception, polygon holes (97-100), building annotation/hatch exceptions (118-119/136-137), linestring VIAS exception (162-163), MultiLineString offset via MagicMock (178-179), offset exception, `_draw_point` NaN guard (209), bench/waste/lamp blocks (223-228), NaN bounds fallback (72), `_simplify_line` (114), start-start merge (153), street label exception via `np.arctan2` patch (212-213), bad terrain vertex (252-254), save exception (296-298); Frontend +15: `tests/utils/logger.test.ts` +6 (vi.stubEnv NODE_ENV=development, console.log/warn/error, data arg, debug on/off), `tests/services/elevationService.test.ts` +9 (error/non-ok/invalid response → flat grid, default clamp, lat/lng coords, fetchElevationProfile success/error/non-ok); Python 213→**252**; Frontend 105→**120**; `dxf_drawing.py` **78%→97%**; `dxf_generator.py` **94%→99%**; `elevationService.ts` **69%→100%** stmts, **64%→95%** branch; `logger.ts` **83%→98%** stmts, **81%→95%** branch; Python total **83%→86%**; CodeQL 0 alertas | Dev Fullstack Sênior |
 
 ---
 
-*Última atualização: 2026-02-21 | Versão do Documento: 2.2*
+*Última atualização: 2026-02-21 | Versão do Documento: 2.3*
