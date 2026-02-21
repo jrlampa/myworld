@@ -132,5 +132,59 @@ describe('BatchService', () => {
       // Empty CSV fields become empty strings, not undefined
       expect(results[0].row.radius).toBe('');
     });
+
+    it('should reject with error when the csv stream emits an error', async () => {
+      // Use jest.isolateModules to load batchService with a mocked csv-parser
+      await jest.isolateModulesAsync(async () => {
+        jest.doMock('csv-parser', () => {
+          const { Transform } = require('stream');
+          return () => {
+            const t = new Transform({
+              objectMode: true,
+              transform(_chunk: any, _enc: string, cb: Function) {
+                cb(new Error('csv parse error'));
+              }
+            });
+            return t;
+          };
+        });
+
+        const { parseBatchCsv: parseWithMock } = await import('../services/batchService');
+        await expect(parseWithMock(Buffer.from('name,lat\ntest,-22'))).rejects.toThrow('csv parse error');
+      });
+    });
+
+    it('should handle non-string values in CSV rows (normalize to string or undefined)', async () => {
+      // Verify normalizeRow handles non-string values via a mocked csv-parser that emits numeric data
+      await jest.isolateModulesAsync(async () => {
+        jest.doMock('csv-parser', () => {
+          const { Transform } = require('stream');
+          return () => {
+            const t = new Transform({
+              objectMode: true,
+              transform(_chunk: any, _enc: string, cb: Function) {
+                // Emit a row with numeric values (non-string)
+                t.push({ name: 'Test', lat: -22.15018, lon: -42.92185, radius: 500, mode: null });
+                cb();
+              }
+            });
+            // End stream after one push
+            t.end = t.end.bind(t);
+            return t;
+          };
+        });
+
+        const { parseBatchCsv: parseWithMock } = await import('../services/batchService');
+        const results = await parseWithMock(Buffer.from('name,lat,lon,radius,mode\nTest,-22,-42,500,'));
+        expect(results).toHaveLength(1);
+        expect(results[0].row.name).toBe('Test');
+        // Numeric lat/lon get coerced to string
+        expect(results[0].row.lat).toBe('-22.15018');
+        expect(results[0].row.lon).toBe('-42.92185');
+        expect(results[0].row.radius).toBe('500');
+        // null gets coerced to undefined (falsy, non-string)
+        expect(results[0].row.mode).toBeUndefined();
+      });
+    });
   });
 });

@@ -131,4 +131,30 @@ const PAST_TTL_MS = 62 * 60 * 1000;
             }).not.toThrow();
         });
     });
+
+    describe('setInterval callback (startCleanupInterval idempotência)', () => {
+        it('deve executar cleanup via setInterval callback', () => {
+            jest.useFakeTimers();
+            jest.isolateModules(() => {
+                const svc = require('../services/dxfCleanupService');
+                const os = require('os');
+                const path = require('path');
+                const fsReal = require('fs');
+
+                const filePath = path.join(os.tmpdir(), `test_interval_${Date.now()}.dxf`);
+                fsReal.writeFileSync(filePath, 'DXF');
+
+                svc.scheduleDxfDeletion(filePath);
+
+                // Advance fake clock beyond CLEANUP_CHECK_INTERVAL (2 min) AND dev TTL (10 min)
+                jest.advanceTimersByTime(62 * 60 * 1000);
+
+                // setInterval callback (performCleanup) should have fired and deleted the file
+                expect(fsReal.existsSync(filePath)).toBe(false);
+
+                svc.stopDxfCleanup();
+            });
+            jest.useRealTimers();
+        });
+    });
 });

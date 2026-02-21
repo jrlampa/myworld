@@ -93,6 +93,32 @@ describe('GeocodingService', () => {
       });
     });
   });
+
+  describe('utmToLatLon', () => {
+    it('deve retornar null quando zone é zero (falsy)', () => {
+      const result = GeocodingService.utmToLatLon(0, 'S', 788547, 7634925);
+      expect(result).toBeNull();
+    });
+
+    it('deve retornar null quando easting é zero (falsy)', () => {
+      const result = GeocodingService.utmToLatLon(23, 'S', 0, 7634925);
+      expect(result).toBeNull();
+    });
+
+    it('deve retornar null quando northing é zero (falsy)', () => {
+      const result = GeocodingService.utmToLatLon(23, 'S', 788547, 0);
+      expect(result).toBeNull();
+    });
+
+    it('deve converter coordenadas canônicas UTM 23K corretamente', () => {
+      // Coordenadas canônicas: E=788547, N=7634925 → região de Muriaé/MG
+      const result = GeocodingService.utmToLatLon(23, 'S', 788547, 7634925);
+      expect(result).not.toBeNull();
+      // Verifica que a conversão retorna coordenadas no Hemisfério Sul (Brasil)
+      expect(result?.lat).toBeLessThan(0);
+      expect(result?.lng).toBeLessThan(0);
+    });
+  });
 });
 
 
