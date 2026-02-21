@@ -42,3 +42,16 @@ class TestElevation:
         assert len(elevations) > 0
         assert elevations[0][2] == 0
 
+    @patch('requests.post')
+    def test_fetch_elevation_grid_exception(self, mock_post):
+        """Deve retornar elevação 0 quando a requisição lança exceção de rede."""
+        mock_post.side_effect = Exception("Connection timeout")
+        
+        # Coordenadas canônicas: Muriaé/MG
+        elevations, rows, cols = fetch_elevation_grid(-22.16, -42.93, -22.14, -42.91, resolution=10000)
+        
+        # Deve retornar fallback com elevação 0
+        assert len(elevations) > 0
+        assert all(e[2] == 0 for e in elevations)
+
+

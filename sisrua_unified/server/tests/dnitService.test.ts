@@ -130,6 +130,18 @@ describe('dnitService', () => {
 
             expect(result).toEqual([]);
         });
+
+        it('deve usar raio padrão de 1000m quando não especificado', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => makeFeatureCollection([]),
+            });
+
+            const result = await getObrasArteEspeciais(TEST_LAT, TEST_LON);
+
+            expect(result).toEqual([]);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('getRodoviasSummary', () => {
@@ -193,6 +205,18 @@ describe('dnitService', () => {
             const result = await getRodoviasSummary(TEST_LAT, TEST_LON, TEST_RADIUS);
 
             expect(result.rodovias).toEqual(['BR-116']);
+        });
+
+        it('deve usar raio padrão de 1000m quando não especificado', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => makeFeatureCollection([]),
+            });
+
+            const result = await getRodoviasSummary(TEST_LAT, TEST_LON);
+
+            expect(result.totalTrechos).toBe(0);
+            expect(result.rodovias).toEqual([]);
         });
     });
 });
