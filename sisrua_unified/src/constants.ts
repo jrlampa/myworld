@@ -6,6 +6,21 @@ export const DEFAULT_LOCATION = {
 
 export const APP_VERSION = "1.0.0";
 
+/**
+ * Coordenadas de teste canônicas do projeto (Muriaé/MG, Zona 23K).
+ * UTM 23K: 788547 7634925 → 100m
+ * WGS84: -22.15018, -42.92185 → 500m & 1km
+ */
+export const TEST_COORDS = {
+  lat: -22.15018,
+  lng: -42.92185,
+  label: 'Muriaé, MG (Área de Teste)',
+  utmZone: '23K',
+  utmE: 788547,
+  utmN: 7634925,
+  radii: [100, 500, 1000] as const
+};
+
 export const MIN_RADIUS = 10;
 export const MAX_RADIUS = 2000;
 

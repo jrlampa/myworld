@@ -89,3 +89,94 @@ def test_legend_and_title_block(dxf_gen):
     layout_text = [e.dxf.text for e in layout if e.dxftype() in ('TEXT', 'MTEXT')]
     assert any("TEST CLIENT" in t for t in layout_text)
     assert any("TEST PROJECT" in t for t in layout_text)
+
+
+# ─── Testes com coordenadas canônicas de teste ───────────────────────────────
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from constants import TEST_LAT, TEST_LON, TEST_RADII
+except ImportError:
+    TEST_LAT, TEST_LON, TEST_RADII = -22.15018, -42.92185, [100, 500, 1000]
+
+
+@pytest.fixture
+def dxf_gen_test_coords(tmp_path):
+    """DXFGenerator com coordenadas canônicas de teste (Muriaé/MG)."""
+    output_file = tmp_path / "test_coords.dxf"
+    gen = DXFGenerator(str(output_file))
+    gen.project_info = {
+        'client': 'TESTE AUTOMATIZADO',
+        'project': f'EXTRACAO OSM - LAT={TEST_LAT} LON={TEST_LON}'
+    }
+    return gen
+
+
+def test_dxf_with_test_coordinates_generates_valid_file(dxf_gen_test_coords, tmp_path):
+    """Gera DXF com coordenadas canônicas de teste e verifica integridade."""
+    from shapely.geometry import Point, LineString
+    import geopandas as gpd
+
+    # Simula geometrias reais próximas às coordenadas de teste (proj. UTM)
+    # TEST_UTM_E=788547, TEST_UTM_N=7634925
+    base_e, base_n = 788547.0, 7634925.0
+
+    data = {
+        'geometry': [
+            Point(base_e, base_n),
+            LineString([(base_e, base_n), (base_e + 50, base_n + 30)]),
+            LineString([(base_e - 20, base_n + 10), (base_e + 80, base_n + 10)])
+        ],
+        'highway': [None, 'residential', 'primary'],
+        'building': [None, None, None],
+        'name': [None, 'Rua de Teste', 'Av. Principal'],
+        'natural': ['tree', None, None]
+    }
+    gdf = gpd.GeoDataFrame(data)
+    dxf_gen_test_coords.add_features(gdf)
+    dxf_gen_test_coords.save()
+
+    output_path = str(tmp_path / "test_coords.dxf")
+    assert os.path.exists(output_path), "Arquivo DXF deve ser criado"
+    assert os.path.getsize(output_path) > 0, "Arquivo DXF não deve estar vazio"
+
+    # Verifica que o DXF pode ser lido sem erros (headless)
+    doc_check = ezdxf.readfile(output_path)
+    assert doc_check is not None
+    msp = doc_check.modelspace()
+    assert len(msp) > 0, "Model Space deve conter entidades"
+
+
+def test_dxf_coordinate_offset_applied(dxf_gen_test_coords):
+    """Verifica que o offset de coordenadas é aplicado corretamente."""
+    from shapely.geometry import Point
+    import geopandas as gpd
+
+    base_e, base_n = 788547.0, 7634925.0
+    data = {'geometry': [Point(base_e, base_n)], 'natural': ['tree'], 'highway': [None], 'building': [None]}
+    gdf = gpd.GeoDataFrame(data)
+    dxf_gen_test_coords.add_features(gdf)
+
+    # O offset deve ser inicializado com os valores do centróide
+    assert dxf_gen_test_coords._offset_initialized is True
+    assert abs(dxf_gen_test_coords.diff_x - base_e) < 1.0
+    assert abs(dxf_gen_test_coords.diff_y - base_n) < 1.0
+
+
+def test_dxf_modular_drawing_mixin(dxf_gen_test_coords):
+    """Verifica que os mixins DXFDrawingMixin e DXFCartographyMixin estão disponíveis."""
+    from dxf_drawing import DXFDrawingMixin
+    from dxf_cartography import DXFCartographyMixin
+    from dxf_generator import DXFGenerator
+
+    assert issubclass(DXFGenerator, DXFDrawingMixin)
+    assert issubclass(DXFGenerator, DXFCartographyMixin)
+    # Verifica métodos herdados
+    assert hasattr(dxf_gen_test_coords, '_draw_polygon')
+    assert hasattr(dxf_gen_test_coords, '_draw_linestring')
+    assert hasattr(dxf_gen_test_coords, '_draw_point')
+    assert hasattr(dxf_gen_test_coords, 'add_legend')
+    assert hasattr(dxf_gen_test_coords, 'add_title_block')
+    assert hasattr(dxf_gen_test_coords, 'add_coordinate_grid')
