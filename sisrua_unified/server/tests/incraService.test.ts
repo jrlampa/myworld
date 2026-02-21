@@ -225,5 +225,19 @@ describe('incraService', () => {
             expect(result.municipios).toHaveLength(1);
             expect(result.municipios[0]).toBe('Muriaé');
         });
+
+        it('deve usar raio padrão de 1000m em getParcelasSummary quando não especificado', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => makeFeatureCollection([
+                    { properties: { parcela_codigo: 'X1', area_ha: 5.0, municipio: 'Muriaé' } },
+                ]),
+            });
+
+            const result = await getParcelasSummary(TEST_LAT, TEST_LON);
+
+            expect(result.total).toBe(1);
+            expect(result.areaTotal_ha).toBe(5.0);
+        });
     });
 });

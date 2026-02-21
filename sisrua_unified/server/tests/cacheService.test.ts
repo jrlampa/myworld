@@ -125,6 +125,58 @@ describe('CacheService', () => {
       // Should be the same because keys are sorted internally
       expect(key1).toBe(key2);
     });
+
+    it('deve normalizar layers undefined para {} na chave de cache', () => {
+      const payloadSemLayers = {
+        lat: -22.15018,
+        lon: -42.92185,
+        radius: 500,
+        mode: 'circle',
+        polygon: null,
+        layers: undefined as any
+      };
+
+      const payloadComLayers = {
+        lat: -22.15018,
+        lon: -42.92185,
+        radius: 500,
+        mode: 'circle',
+        polygon: null,
+        layers: {}
+      };
+
+      const key1 = createCacheKey(payloadSemLayers);
+      const key2 = createCacheKey(payloadComLayers);
+
+      // Ambos devem gerar a mesma chave — `undefined` é normalizado para `{}`
+      expect(key1).toBe(key2);
+      expect(key1).toHaveLength(64);
+    });
+
+    it('deve normalizar layers null para {} na chave de cache', () => {
+      const payloadNullLayers = {
+        lat: -22.15018,
+        lon: -42.92185,
+        radius: 500,
+        mode: 'circle',
+        polygon: null,
+        layers: null as any
+      };
+
+      const payloadVazioLayers = {
+        lat: -22.15018,
+        lon: -42.92185,
+        radius: 500,
+        mode: 'circle',
+        polygon: null,
+        layers: {}
+      };
+
+      const key1 = createCacheKey(payloadNullLayers);
+      const key2 = createCacheKey(payloadVazioLayers);
+
+      expect(key1).toBe(key2);
+    });
   });
 
   describe('setCachedFilename and getCachedFilename', () => {
