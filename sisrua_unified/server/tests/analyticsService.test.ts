@@ -41,6 +41,7 @@ describe('AnalyticsService', () => {
             expect(s.exportsLast24h).toBe(0);
             expect(s.exportsLast7d).toBe(0);
             expect(s.exportsByHour).toHaveLength(24);
+            expect(s.exportsByMode).toEqual({ circle: 0, polygon: 0 });
             expect(s.topRegions).toHaveLength(0);
             expect(s.recentEvents).toHaveLength(0);
         });
@@ -78,6 +79,22 @@ describe('AnalyticsService', () => {
             const s = svc.getSummary();
             expect(s.batchExports).toBe(1);
             expect(s.singleExports).toBe(2);
+        });
+    });
+
+    describe('exportsByMode — circle vs polygon', () => {
+        it('deve contabilizar exportações por modo', () => {
+            svc.record(makeEvent({ mode: 'circle' }));
+            svc.record(makeEvent({ mode: 'polygon' }));
+            svc.record(makeEvent({ mode: 'circle' }));
+            const s = svc.getSummary();
+            expect(s.exportsByMode.circle).toBe(2);
+            expect(s.exportsByMode.polygon).toBe(1);
+        });
+
+        it('deve retornar zeros quando não há eventos', () => {
+            const s = svc.getSummary();
+            expect(s.exportsByMode).toEqual({ circle: 0, polygon: 0 });
         });
     });
 
