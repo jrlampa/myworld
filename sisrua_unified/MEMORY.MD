@@ -269,12 +269,13 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] Cloud Tasks para processamento assíncrono
 - [x] Frontend React completo (MapSelector, AppSidebar, Settings, Landing)
 - [x] Coordenadas de teste canônicas em constants.py
-- [x] 41 testes Python (pytest) — todos passando
-- [x] 100 testes backend (Jest) — todos passando (era 74)
-- [x] Cobertura backend > 90% (93.22% statements) — META ATINGIDA
-- [x] elevationService.ts: 100% cobertura (getElevationProfile totalmente testado)
-- [x] ibgeService.ts: 96.73% cobertura (getMunicipiosPorEstado, getMalhaGeoJson, extractCentroid)
-- [x] rateLimiter.ts: 81.81% cobertura (keyGenerator testado via supertest)
+- [x] 61 testes Python (pytest) — todos passando (era 41)
+- [x] 103 testes backend (Jest) — todos passando (era 100)
+- [x] Cobertura backend > 94% (94.79% statements) — subiu de 93.22%
+- [x] elevationService.ts: 100% cobertura
+- [x] ibgeService.ts: 96.73% cobertura
+- [x] rateLimiter.ts: 81.81% cobertura
+- [x] cloudTasksService.ts: 95.16% cobertura, 100% de funções cobertas (era 85%)
 - [x] E2E tests (Playwright) — configurados
 - [x] Docker multi-stage (Ubuntu 24.04, Node 22, Python 3.12)
 - [x] Swagger/OpenAPI documentation
@@ -283,10 +284,10 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] SIRGAS 2000 UTM CRS (pyproj)
 - [x] Batch processing (CSV upload)
 - [x] APIs brasileiras (IBGE, DNIT, INCRA)
-- [x] Headless DXF validation via ezdxf audit (substituto ao accoreconsole.exe em Linux/CI)
+- [x] Headless DXF validation via ezdxf audit
+- [x] **Otimização de queries OSM para áreas grandes (>1km)** — `osmnx_client.py` com `_fetch_chunked()`: busca por grupos de tags, deduplicação, fallback por grupo; 20 novos testes unitários (test_osmnx_client.py)
 
 ### 🔄 Em Desenvolvimento / Melhorias Pendentes
-- [ ] Otimização de queries OSM para áreas grandes (>1km radius)
 - [ ] Dashboard de analytics de uso (SaaS metrics)
 
 ---
@@ -363,6 +364,7 @@ PYTHONDONTWRITEBYTECODE=1
 |------|------|-------------|
 | 2026-02-21 | Criação deste MEMORY.MD; verificação de testes (98 passando) | Dev Fullstack Sênior |
 | 2026-02-21 | Elevação cobertura backend de 79% → 93.22%; testes 74→100: ElevationService (100%), IbgeService (96.73%), RateLimiter (81.81%); getMunicipiosPorEstado/getMalhaGeoJson/extractCentroid testados | Dev Fullstack Sênior |
+| 2026-02-21 | OSM query optimization: `_fetch_chunked()` em osmnx_client.py (chunked fetching para radius >1km); 20 novos testes (test_osmnx_client.py); cloudTasksService cobertura 85%→95% (+3 testes: dev mode, error path, getTaskStatus); Python 41→61 testes, Backend 100→103 testes, cobertura 93.22%→94.79% | Dev Fullstack Sênior |
 
 ---
 
