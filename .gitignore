@@ -1,6 +1,9 @@
 # Video files
 sisRUA.mp4
 
+# Backup/copy directories (not part of the project)
+sisrua_unified - Copia/
+
 # Build directories
 build/
 dist/
