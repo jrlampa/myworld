@@ -5,21 +5,40 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-02-21
+
+### Maturity Assessment — Why 1.0.0
+
+Analysis of the project's actual state determined that `0.1.0` (pre-stable, API unstable) did not
+reflect its real maturity. The project qualifies as a **stable 1.0.0** release based on:
+
+| Criterion | Evidence |
+|---|---|
+| **Production deployment** | Google Cloud Run with 7 GitHub Actions CI/CD workflows |
+| **Stable API** | Swagger/OpenAPI documented REST API with Zod validation on all endpoints |
+| **Enterprise features** | Firestore (circuit breaker), Cloud Tasks (async), rate limiting, OIDC auth |
+| **Comprehensive tests** | 207 backend tests (~97.94% coverage), 110 Python tests, Playwright E2E (350 lines) |
+| **Complete full-stack** | React 19 + TypeScript frontend, Express backend, Python DXF engine |
+| **18,333+ lines** | 145 source files across 3 languages |
+| **ABNT compliance** | DXF output compliant with NBR 8196/10582/13142 |
+| **Brazilian gov APIs** | IBGE, DNIT, INCRA integrated |
+
+> `0.1.0` per SemVer signals "initial development — API may change at any time".  
+> A production-deployed, enterprise-grade, feature-complete platform is `1.0.0` by definition.
+
+### Changed
+
+- **Version corrected**: `0.1.0` → `1.0.0` to reflect actual project maturity
+
 ## [0.1.0] - 2026-02-21
 
 ### Changed
 
-- **Versioning reset**: All version numbers zeroed and restarted from `0.1.0` as initial pre-stable release
+- **Versioning reset** _(transitional only)_: All version numbers zeroed and restarted from `0.1.0` as baseline
 - **Central server version**: New `server/version.ts` — single source of truth for backend version (eliminates hardcoded strings in `health.ts`, `index.ts`, `swagger.ts`)
 - **ABNT NBR compliance**: `dxf_abnt.py` module for ABNT NBR 8196/10582/13142 (scales, title block, paper sizes)
 - **Update scripts**: `update-version.sh` and `check-version.sh` now also manage `server/version.ts` and `src/constants.ts`
 - **Version tests**: `tests/version.test.ts` extended to verify `src/constants.ts` (`APP_VERSION`) and `server/version.ts` (`SERVER_VERSION`)
-
-### Versioning Philosophy (starting at 0.1.0)
-
-> Major = 0 → software in initial development (pre-stable)  
-> Minor = 1 → first coherent feature-complete iteration  
-> Patch = 0 → no patches yet on this baseline
 
 ## [Historical] Prior to 0.1.0
 

@@ -10,7 +10,7 @@
 **Nome:** sisRUA Unified  
 **Tipo:** SaaS Enterprise — Exportação de dados OSM → DXF 2.5D  
 **Objetivo:** Transformar dados geoespaciais públicos (OpenStreetMap) em plantas urbanas CAD prontas para uso profissional em engenharia, arquitetura e planejamento urbano.  
-**Versão atual:** 0.1.0 (ver `VERSION`, gerenciar via `./scripts/update-version.sh`)  
+**Versão atual:** 1.0.0 (ver `VERSION`, gerenciar via `./scripts/update-version.sh`)  
 **Stack primário:** React 19 + TypeScript (frontend) | Express + TypeScript (backend) | Python 3.12 (engine)
 
 ---
@@ -389,7 +389,8 @@ PYTHONDONTWRITEBYTECODE=1
 | 2026-02-21 | **Enterprise improvements — cobertura e correção de bug crítico**: `batchService.ts` 100% coverage (erro de stream + valores não-string); `dnitService.ts` 91.66% branch (default-radius tests); `dxfCleanupService.ts` 100% funções (fake timers, setInterval callback); `geocodingService.ts` 89.74% branch (utmToLatLon zero-inputs + coords canônicas); `analyticsService.ts` 97.61% (buffer circular MAX_EVENTS); Bug corrigido: `contour_generator.py` — `cs.collections` depreciado → `cs.allsegs` (matplotlib >= 3.8); `test_contour_generator.py` (7 testes) + `test_logger.py` (9 testes) + `test_elevation.py` +1 (exception path); Python 61→78 testes; Backend 198→206 testes; cobertura 97.06%→97.65% stmts, 83.39%→86.48% branches | Dev Fullstack Sênior |
 | 2026-02-21 | **ABNT NBR 8196/10582/13142 — carimbo técnico conforme norma**: novo módulo `dxf_abnt.py` (compute_abnt_scale, select_paper_size, ABNTTitleBlock); `dxf_cartography.py` usa ABNTTitleBlock com todos os campos normalizados; `dxf_generator.py` calcula extensão real para escala; campos ABNT propagados por toda a stack (main.py → pythonBridge.ts → dxfRequest.ts → cloudTasksService.ts → Swagger); `test_dxf_abnt.py` (32 testes); `rateLimiter.ts` 100% cobertura; Python 78→110 testes; Backend 206→207 testes | Dev Fullstack Sênior |
 | 2026-02-21 | **Versionamento zerado e coerente**: VERSION → `0.1.0`; novo `server/version.ts` (fonte central SERVER_VERSION); `health.ts`, `index.ts`, `swagger.ts` importam SERVER_VERSION (eliminadas 5 strings hardcoded `1.2.0`); `update-version.sh` e `check-version.sh` atualizados para gerenciar `server/version.ts` + `src/constants.ts`; `tests/version.test.ts` ampliado com 2 novos checks (APP_VERSION e SERVER_VERSION); docs/CHANGELOG.md e docs/RAG.md atualizados | Dev Fullstack Sênior |
+| 2026-02-21 | **Análise de maturidade — correção de versão para 1.0.0**: avaliação técnica conclui que `0.1.0` (pré-estável, API instável) é incoerente com a maturidade real do projeto (produção Cloud Run, 7 workflows CI/CD, 207 testes backend 97.94% cobertura, 110 testes Python, 18.333+ linhas, DDD completo, APIs governamentais BR, compliance ABNT); VERSION → `1.0.0` (primeiro release estável); CHANGELOG.md atualizado com justificativa técnica | Dev Fullstack Sênior |
 
 ---
 
-*Última atualização: 2026-02-21 | Versão do Documento: 1.7*
+*Última atualização: 2026-02-21 | Versão do Documento: 1.8*

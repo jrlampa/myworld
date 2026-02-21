@@ -7,4 +7,4 @@
  */
 
 // NOTE: Do not update SERVER_VERSION manually. Use ./scripts/update-version.sh instead.
-export const SERVER_VERSION = '0.1.0';
+export const SERVER_VERSION = '1.0.0';

@@ -4,7 +4,7 @@ export const DEFAULT_LOCATION = {
   label: "São Paulo, Brazil"
 };
 
-export const APP_VERSION = "0.1.0";
+export const APP_VERSION = "1.0.0";
 
 /**
  * Coordenadas de teste canônicas do projeto (Muriaé/MG, Zona 23K).
