@@ -67,6 +67,25 @@ describe('useElevationProfile', () => {
     });
   });
 
+  it('non-Error rejection — uses "Failed to load elevation profile" fallback', async () => {
+    // Covers `err instanceof Error ? err.message : 'Failed to load elevation profile'` right branch
+    (fetchElevationProfile as ReturnType<typeof vi.fn>).mockRejectedValueOnce('ABORT_ERR');
+
+    const { result } = renderHook(() => useElevationProfile());
+
+    const start = { lat: -22.15018, lng: -42.92185 };
+    const end = { lat: -22.15100, lng: -42.92100 };
+
+    await act(async () => {
+      await result.current.loadProfile(start, end);
+    });
+
+    await waitFor(() => {
+      expect(result.current.error).toBe('Failed to load elevation profile');
+      expect(result.current.profileData).toEqual([]);
+    });
+  });
+
   it('should clear profile', () => {
     const { result } = renderHook(() => useElevationProfile());
 

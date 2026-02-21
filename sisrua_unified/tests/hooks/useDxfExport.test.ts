@@ -129,4 +129,166 @@ describe('useDxfExport', () => {
   it('getDxfJobStatus is exported and callable', () => {
     expect(typeof getDxfJobStatus).toBe('function');
   });
+
+  it('downloadDxf: result with neither url nor jobId throws and calls onError', async () => {
+    (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ status: 'processing' });
+
+    const { result } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+    let downloadResult: boolean | undefined;
+    await act(async () => {
+      downloadResult = await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+    });
+
+    expect(downloadResult).toBe(false);
+    expect(onError).toHaveBeenCalledWith(expect.stringContaining('DXF Error:'));
+    expect(result.current.jobStatus).toBe('failed');
+    expect(result.current.isDownloading).toBe(false);
+  });
+
+  describe('polling useEffect', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('polling: completed status triggers download and cleanup', async () => {
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-poll-1' });
+      (getDxfJobStatus as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        status: 'completed',
+        progress: 100,
+        result: { url: '/downloads/result.dxf', filename: 'result.dxf' }
+      });
+
+      const { result } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      expect(result.current.jobId).toBe('job-poll-1');
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2100);
+      });
+
+      expect(onSuccess).toHaveBeenCalledWith('DXF Downloaded');
+      expect(result.current.jobId).toBeNull();
+      expect(result.current.isDownloading).toBe(false);
+      expect(result.current.jobStatus).toBe('completed');
+      expect(result.current.jobProgress).toBe(100);
+    });
+
+    it('polling: failed status with error string calls onError and cleans up', async () => {
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-fail-1' });
+      (getDxfJobStatus as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        status: 'failed',
+        error: 'Python engine error'
+      });
+
+      const { result } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2100);
+      });
+
+      expect(onError).toHaveBeenCalledWith('DXF Error: Python engine error');
+      expect(result.current.jobId).toBeNull();
+      expect(result.current.isDownloading).toBe(false);
+      expect(result.current.jobStatus).toBe('failed');
+    });
+
+    it('polling: failed status without error field uses default message', async () => {
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-fail-2' });
+      (getDxfJobStatus as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        status: 'failed'
+      });
+
+      const { result } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2100);
+      });
+
+      expect(onError).toHaveBeenCalledWith('DXF Error: DXF generation failed');
+      expect(result.current.jobId).toBeNull();
+    });
+
+    it('polling: getDxfJobStatus throws → catches and calls onError', async () => {
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-err-1' });
+      (getDxfJobStatus as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+        new Error('API unreachable')
+      );
+
+      const { result } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2100);
+      });
+
+      expect(onError).toHaveBeenCalledWith('DXF Error: API unreachable');
+      expect(result.current.jobId).toBeNull();
+      expect(result.current.jobStatus).toBe('failed');
+    });
+
+    it('polling: completed job with no URL throws catches as error', async () => {
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-nourl' });
+      (getDxfJobStatus as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        status: 'completed',
+        progress: 100,
+        result: { filename: 'result.dxf' }  // no url
+      });
+
+      const { result } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2100);
+      });
+
+      expect(onError).toHaveBeenCalledWith(
+        expect.stringContaining('DXF Error:')
+      );
+      expect(result.current.jobStatus).toBe('failed');
+    });
+
+    it('polling: cleanup on unmount stops interval via isActive guard', async () => {
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-unmount' });
+
+      const { result, unmount } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      expect(result.current.jobId).toBe('job-unmount');
+
+      unmount();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2100);
+      });
+
+      expect(getDxfJobStatus).not.toHaveBeenCalled();
+      expect(onError).not.toHaveBeenCalled();
+    });
+  });
 });

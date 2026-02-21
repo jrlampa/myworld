@@ -103,4 +103,31 @@ describe('geminiService', () => {
     const result = await analyzeArea({}, 'Test', true);
     expect(result).toContain('Erro de conexão');
   });
+
+  it('returns error message using errorData.error field when analysis and message are absent', async () => {
+    // Covers the `errorData.message || errorData.error || 'Analysis failed'` branch
+    // where errorData.message is falsy but errorData.error is present
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Upstream API failed' })
+    });
+
+    const result = await analyzeArea({}, 'Test', true);
+    expect(result).toContain('Erro na análise');
+    expect(result).toContain('Upstream API failed');
+  });
+
+  it('uses "Analysis failed" fallback when error response has no message, analysis, or error fields', async () => {
+    // Covers `errorData.message || errorData.error || 'Analysis failed'` rightmost branch
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({})
+    });
+
+    const result = await analyzeArea({}, 'Test', true);
+    expect(result).toContain('Erro na análise');
+    expect(result).toContain('Analysis failed');
+  });
 });

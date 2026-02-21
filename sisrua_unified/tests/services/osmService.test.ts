@@ -54,4 +54,18 @@ describe('osmService - fetchOsmData', () => {
 
     await expect(fetchOsmData(-22.15018, -42.92185, 100)).rejects.toThrow();
   });
+
+  it('handles non-Error rejection (string) in inner catch — falls back to second endpoint', async () => {
+    // Throwing a non-Error (string) covers the `String(error)` and `new Error(message)` branches
+    (global.fetch as ReturnType<typeof vi.fn>)
+      .mockRejectedValueOnce('ABORT_ERR')
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ elements: OSM_ELEMENTS })
+      });
+
+    const result = await fetchOsmData(-22.15018, -42.92185, 100);
+    expect(result).toEqual(OSM_ELEMENTS);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
 });

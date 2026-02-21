@@ -199,4 +199,21 @@ describe('useSearch', () => {
       expect(mockOnLocationFound).toHaveBeenCalled();
     });
   });
+
+  it('handles non-Error rejection — uses "Search failed" fallback message', async () => {
+    // Covers `error instanceof Error ? error.message : 'Search failed'` right branch
+    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce('ABORT_ERR');
+
+    const { result } = renderHook(() =>
+      useSearch({ onLocationFound: mockOnLocationFound, onError: mockOnError })
+    );
+
+    await act(async () => {
+      await result.current.executeSearch('Muriaé MG');
+    });
+
+    await waitFor(() => {
+      expect(mockOnError).toHaveBeenCalledWith('Search failed');
+    });
+  });
 });

@@ -209,6 +209,41 @@ describe('useOsmEngine', () => {
       expect(returnValue).toBe(false);
       expect(result.current.error).toBe('Elevation service unavailable');
     });
+
+    it('sets error to "Audit failed." when thrown object has no message property', async () => {
+      // Covers `err.message || "Audit failed."` right side branch
+      (fetchOsmData as ReturnType<typeof vi.fn>).mockRejectedValue({});
+
+      const { result } = renderHook(() => useOsmEngine());
+
+      await act(async () => {
+        await result.current.runAnalysis(CENTER, RADIUS, false);
+      });
+
+      act(() => { vi.advanceTimersByTime(800); });
+
+      expect(result.current.error).toBe('Audit failed.');
+      expect(result.current.isProcessing).toBe(false);
+    });
+  });
+
+  describe('runAnalysis — center sem label', () => {
+    it('usa "selected area" como nome padrão quando center não tem label', async () => {
+      // Covers `center.label || "selected area"` right side branch
+      (fetchOsmData as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_OSM_ELEMENTS);
+      (fetchElevationGrid as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TERRAIN);
+      (calculateStats as ReturnType<typeof vi.fn>).mockReturnValue(MOCK_STATS);
+      (analyzeArea as ReturnType<typeof vi.fn>).mockResolvedValue('Área analisada.');
+
+      const { result } = renderHook(() => useOsmEngine());
+      const centerWithoutLabel = { lat: -22.15018, lng: -42.92185 };
+
+      await act(async () => {
+        await result.current.runAnalysis(centerWithoutLabel as any, RADIUS, true);
+      });
+
+      expect(analyzeArea).toHaveBeenCalledWith(MOCK_STATS, 'selected area', true);
+    });
   });
 
   describe('clearData', () => {
