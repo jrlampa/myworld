@@ -139,4 +139,43 @@ describe('JobStatusService', () => {
             }).not.toThrow();
         });
     });
+
+    describe('cleanup interval (fake timers)', () => {
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('deve remover jobs antigos quando o intervalo é executado', () => {
+            jest.useFakeTimers();
+            jest.isolateModules(() => {
+                const svc = require('../services/jobStatusService');
+                const id = `cleanup-${Math.random()}`;
+                const job = svc.createJob(id);
+
+                // Retrodate the job so it exceeds MAX_JOB_AGE (1 hour)
+                job.createdAt = new Date(0);
+
+                // Advance fake clock by CLEANUP_INTERVAL (1 hour) to fire the callback
+                jest.advanceTimersByTime(60 * 60 * 1000);
+
+                expect(svc.getJob(id)).toBeNull();
+                svc.stopCleanupInterval();
+            });
+        });
+
+        it('deve manter jobs recentes após execução do intervalo', () => {
+            jest.useFakeTimers();
+            jest.isolateModules(() => {
+                const svc = require('../services/jobStatusService');
+                const id = `keep-${Math.random()}`;
+                svc.createJob(id); // createdAt = "now" (fake now)
+
+                // Advance by CLEANUP_INTERVAL — job is brand-new, should survive
+                jest.advanceTimersByTime(60 * 60 * 1000);
+
+                expect(svc.getJob(id)).not.toBeNull();
+                svc.stopCleanupInterval();
+            });
+        });
+    });
 });

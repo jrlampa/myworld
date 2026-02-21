@@ -87,6 +87,17 @@ describe('Rate Limiter Middleware', () => {
             const res = await request(app).get('/test');
             expect(res.status).toBe(200);
         });
+
+        it('deve chamar o handler do dxfRateLimiter ao exceder 10 req/hora', async () => {
+            const app = makeApp(dxfRateLimiter);
+            const uniqueIp = '198.51.100.42'; // IP dedicado a este teste
+            for (let i = 0; i < 10; i++) {
+                await request(app).get('/test').set('Forwarded', `for=${uniqueIp}`);
+            }
+            const res = await request(app).get('/test').set('Forwarded', `for=${uniqueIp}`);
+            expect(res.status).toBe(429);
+            expect(res.body.error).toBeDefined();
+        });
     });
 
     describe('General rate limiter', () => {
