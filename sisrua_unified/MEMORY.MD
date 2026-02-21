@@ -270,7 +270,7 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] Frontend React completo (MapSelector, AppSidebar, Settings, Landing)
 - [x] Coordenadas de teste canônicas em constants.py
 - [x] 61 testes Python (pytest) — todos passando (era 41)
-- [x] 149 testes backend (Jest) — todos passando (era 117)
+- [x] 156 testes backend (Jest) — todos passando (era 149)
 - [x] Cobertura backend > 95% (95.37% statements) — subiu de 94.79%
 - [x] elevationService.ts: 100% cobertura
 - [x] ibgeService.ts: 96.73% cobertura
@@ -290,9 +290,10 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] Headless DXF validation via ezdxf audit
 - [x] **Otimização de queries OSM para áreas grandes (>1km)** — `osmnx_client.py` com `_fetch_chunked()`: busca por grupos de tags, deduplicação, fallback por grupo; 20 novos testes unitários (test_osmnx_client.py)
 - [x] **Dashboard de analytics de uso (SaaS metrics)** — `server/services/analyticsService.ts` (in-memory, extensível Firestore); rota `GET /api/analytics`; `src/components/AnalyticsDashboard.tsx` (pt-BR, dark/light, charts Recharts); integração em `AppSidebar.tsx` via abas ANÁLISE/MÉTRICAS; 14 novos testes unitários (analyticsService.test.ts)
+- [x] **Persistência de métricas de analytics em Firestore** — `analyticsService.ts`: `persistToFirestore()` (fire-and-forget, circuit breaker), `initFromFirestore()` (carga na inicialização), `initAnalyticsFromFirestore()` exportada; `server/index.ts` chama init em produção; 7 novos testes (analyticsFirestore.test.ts); backend 149→156 testes
 
 ### 🔄 Em Desenvolvimento / Melhorias Pendentes
-- [ ] Persistência de métricas de analytics em Firestore (produção)
+_(sem itens pendentes no momento)_
 
 ---
 
@@ -304,7 +305,7 @@ npm run docker:dev          # Inicia ambiente completo Docker
 npm run dev                 # Frontend + Backend (sem Docker)
 
 # Testes
-npm run test:backend        # Jest (149 testes, >95% cobertura)
+npm run test:backend        # Jest (156 testes, >95% cobertura)
 npm run test:frontend       # Vitest
 npm run test:e2e            # Playwright
 cd py_engine && python -m pytest tests/ -v  # Python (61 testes)
@@ -371,7 +372,8 @@ PYTHONDONTWRITEBYTECODE=1
 | 2026-02-21 | OSM query optimization: `_fetch_chunked()` em osmnx_client.py (chunked fetching para radius >1km); 20 novos testes (test_osmnx_client.py); cloudTasksService cobertura 85%→95% (+3 testes: dev mode, error path, getTaskStatus); Python 41→61 testes, Backend 100→103 testes, cobertura 93.22%→94.79% | Dev Fullstack Sênior |
 | 2026-02-21 | **Analytics Dashboard SaaS**: `analyticsService.ts` (in-memory, singleton, prune 7d, cluster regiões, top5); rota `/api/analytics`; `AnalyticsDashboard.tsx` (pt-BR, dark/light, KPI cards, gráficos por hora/tipo/status, top regiões, eventos recentes); `AppSidebar.tsx` com abas ANÁLISE/MÉTRICAS; `src/services/analyticsService.ts` (cliente fetch); instrumentação em `routes/dxf.ts`; 14 novos testes (117 total backend); TypeScript compila sem erros | Dev Fullstack Sênior |
 | 2026-02-21 | **Expansão de testes e métricas**: `exportsByMode` em `AnalyticsSummary` (circle vs polygon); 3 novos arquivos de teste: `analyticsRoutes.test.ts` (integração HTTP), `dnitService.test.ts` (16 testes, 100% cobertura), `incraService.test.ts` (14 testes, 100% cobertura); backend 117→149 testes, cobertura 94.79%→95.37% | Dev Fullstack Sênior |
+| 2026-02-21 | **Persistência Firestore para Analytics**: `analyticsService.ts` — `persistToFirestore()` (async fire-and-forget, circuit breaker), `initFromFirestore()` (carga de eventos ao startup), `initAnalyticsFromFirestore()` exportada; `server/index.ts` chama init em produção; `analyticsFirestore.test.ts` (7 testes); backend 149→156 testes | Dev Fullstack Sênior |
 
 ---
 
-*Última atualização: 2026-02-21 | Versão do Documento: 1.2*
+*Última atualização: 2026-02-21 | Versão do Documento: 1.3*

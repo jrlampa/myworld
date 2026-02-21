@@ -17,6 +17,7 @@ import { logger } from './utils/logger.js';
 import { generalRateLimiter } from './middleware/rateLimiter.js';
 import { specs } from './swagger.js';
 import { startFirestoreMonitoring, stopFirestoreMonitoring } from './services/firestoreService.js';
+import { initAnalyticsFromFirestore } from './services/analyticsService.js';
 
 // Rotas modularizadas
 import healthRouter from './routes/health.js';
@@ -198,6 +199,8 @@ app.listen(port, async () => {
         try {
             await startFirestoreMonitoring();
             logger.info('Monitoramento Firestore iniciado');
+            await initAnalyticsFromFirestore();
+            logger.info('Analytics inicializado a partir do Firestore');
         } catch (error) {
             logger.error('Falha ao iniciar monitoramento Firestore', { error });
         }
