@@ -292,6 +292,7 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] **Dashboard de analytics de uso (SaaS metrics)** — `server/services/analyticsService.ts` (in-memory, extensível Firestore); rota `GET /api/analytics`; `src/components/AnalyticsDashboard.tsx` (pt-BR, dark/light, charts Recharts); integração em `AppSidebar.tsx` via abas ANÁLISE/MÉTRICAS; 14 novos testes unitários (analyticsService.test.ts)
 - [x] **Persistência de métricas de analytics em Firestore** — `analyticsService.ts`: `persistToFirestore()` (fire-and-forget, circuit breaker), `initFromFirestore()` (carga na inicialização), `initAnalyticsFromFirestore()` exportada; `server/index.ts` chama init em produção; 7 novos testes (analyticsFirestore.test.ts); backend 149→156 testes
 - [x] **Cobertura de testes expandida para serviços sem testes** — 3 novos arquivos de teste: `dxfCleanupService.test.ts` (8 testes, 95% cobertura), `jobStatusService.test.ts` (12 testes, 89% cobertura), `analysisService.test.ts` (10 testes, 100% cobertura); backend 157→187 testes; `analysisService.ts` agora com 100% de cobertura
+- [x] **Cobertura de testes aprimorada — caminhos de erro e timers** — `analyticsRoutes.test.ts`: +2 testes para catch blocks (analytics e events 500 error); `nominatimService.test.ts`: +4 testes (coords inválidas, catch reverseGeocode, display_name ausente, importance=0); `rateLimiter.test.ts`: +1 teste handler dxfRateLimiter; `jobStatusService.test.ts`: +2 testes fake timer (cleanup interval); backend 187→198 testes; cobertura 94.86%→97.06% statements; `nominatimService.ts` e `analytics.ts` agora 100% cobertura; `jobStatusService.ts` 98.18% (era 89.09%)
 
 ### 🔄 Em Desenvolvimento / Melhorias Pendentes
 _(sem itens pendentes no momento)_
@@ -306,7 +307,7 @@ npm run docker:dev          # Inicia ambiente completo Docker
 npm run dev                 # Frontend + Backend (sem Docker)
 
 # Testes
-npm run test:backend        # Jest (187 testes, >94% cobertura)
+npm run test:backend        # Jest (198 testes, >97% cobertura)
 npm run test:frontend       # Vitest
 npm run test:e2e            # Playwright
 cd py_engine && python -m pytest tests/ -v  # Python (61 testes)
@@ -375,7 +376,8 @@ PYTHONDONTWRITEBYTECODE=1
 | 2026-02-21 | **Expansão de testes e métricas**: `exportsByMode` em `AnalyticsSummary` (circle vs polygon); 3 novos arquivos de teste: `analyticsRoutes.test.ts` (integração HTTP), `dnitService.test.ts` (16 testes, 100% cobertura), `incraService.test.ts` (14 testes, 100% cobertura); backend 117→149 testes, cobertura 94.79%→95.37% | Dev Fullstack Sênior |
 | 2026-02-21 | **Persistência Firestore para Analytics**: `analyticsService.ts` — `persistToFirestore()` (async fire-and-forget, circuit breaker), `initFromFirestore()` (carga de eventos ao startup), `initAnalyticsFromFirestore()` exportada; `server/index.ts` chama init em produção; `analyticsFirestore.test.ts` (7 testes); backend 149→156 testes | Dev Fullstack Sênior |
 | 2026-02-21 | **Cobertura expandida — 3 novos arquivos de teste**: `dxfCleanupService.test.ts` (8 testes, 95% stmt), `jobStatusService.test.ts` (12 testes, 89% stmt), `analysisService.test.ts` (10 testes, 100% cobertura total); backend 157→187 testes; `analysisService.ts` 100% cobertura | Dev Fullstack Sênior |
+| 2026-02-21 | **Cobertura de caminhos de erro e timers**: analytics catch blocks (+2 testes 500 error em `/api/analytics` e `/api/analytics/events`); nominatim invalid coords/catch/optional fields (+4 testes → 100% cobertura total); rateLimiter handler dxfRateLimiter (+1 teste, 90.9%); jobStatusService cleanup interval com fake timers (+2 testes, 98.18%); backend 187→198 testes, cobertura 94.86%→97.06% statements | Dev Fullstack Sênior |
 
 ---
 
-*Última atualização: 2026-02-21 | Versão do Documento: 1.3*
+*Última atualização: 2026-02-21 | Versão do Documento: 1.4*

@@ -79,9 +79,57 @@ describe('NominatimService', () => {
             expect(result).toBeNull();
             expect(mockFetch).not.toHaveBeenCalled();
         });
+
+        it('deve retornar null quando coordenadas do resultado são inválidas (NaN)', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => [
+                    {
+                        lat: 'not-a-number',
+                        lon: 'also-not-a-number',
+                        display_name: 'Lugar inválido',
+                        type: 'place',
+                        importance: 0.5,
+                    },
+                ],
+            });
+
+            const result = await searchNominatim('lugar inválido');
+            expect(result).toBeNull();
+        });
+
+        it('deve usar query sanitizada como label quando display_name ausente', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => [
+                    {
+                        lat: '-22.15018',
+                        lon: '-42.92185',
+                        display_name: '',
+                        type: null,
+                        importance: null,
+                    },
+                ],
+            });
+
+            const result = await searchNominatim('Muriaé MG');
+            expect(result).not.toBeNull();
+            expect(result?.label).toBe('Muriaé MG');
+            expect(result?.type).toBe('unknown');
+            expect(result?.importance).toBe(0);
+        });
     });
 
     describe('reverseGeocode', () => {
+        it('deve retornar null quando display_name está ausente na resposta', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ osm_type: 'way' }), // sem display_name
+            });
+
+            const result = await reverseGeocode(-22.15018, -42.92185);
+            expect(result).toBeNull();
+        });
         it('should return address for valid coordinates', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -103,6 +151,13 @@ describe('NominatimService', () => {
             });
 
             const result = await reverseGeocode(-22.2835, -42.5321);
+            expect(result).toBeNull();
+        });
+
+        it('deve retornar null em erro de rede (catch block)', async () => {
+            mockFetch.mockRejectedValueOnce(new Error('Timeout'));
+
+            const result = await reverseGeocode(-22.15018, -42.92185);
             expect(result).toBeNull();
         });
     });

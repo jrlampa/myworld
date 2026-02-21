@@ -76,6 +76,15 @@ describe('Rotas de Analytics', () => {
             const res = await request(app).get('/api/analytics');
             expect(res.type).toBe('application/json');
         });
+
+        it('deve retornar 500 quando getSummary lança exceção', async () => {
+            jest.spyOn(analyticsService, 'getSummary').mockImplementationOnce(() => {
+                throw new Error('Falha interna simulada');
+            });
+            const res = await request(app).get('/api/analytics');
+            expect(res.status).toBe(500);
+            expect(res.body.error).toContain('Falha');
+        });
     });
 
     describe('GET /api/analytics/events', () => {
@@ -109,6 +118,15 @@ describe('Rotas de Analytics', () => {
             const res = await request(app).get('/api/analytics/events');
             expect(res.status).toBe(200);
             expect(res.body.data.length).toBeLessThanOrEqual(20);
+        });
+
+        it('deve retornar 500 quando getSummary lança exceção em /events', async () => {
+            jest.spyOn(analyticsService, 'getSummary').mockImplementationOnce(() => {
+                throw new Error('Erro ao buscar eventos');
+            });
+            const res = await request(app).get('/api/analytics/events');
+            expect(res.status).toBe(500);
+            expect(res.body.error).toContain('Falha');
         });
     });
 });

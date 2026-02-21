@@ -202,6 +202,13 @@ Todos os testes de integração DXF **devem** usar `TEST_LAT=-22.15018, TEST_LON
 - `analysisService.ts` agora com 100% de cobertura (statements, branches, funcs, lines)
 - Backend: 157 → 187 testes
 
+### 2026-02 – Cobertura de caminhos de erro e timers
+- `analyticsRoutes.test.ts`: +2 testes para catch blocks (500 error em `/api/analytics` e `/api/analytics/events`) → `analytics.ts` 100% cobertura
+- `nominatimService.test.ts`: +4 testes (coords inválidas NaN, catch reverseGeocode, display_name ausente, importance=0) → `nominatimService.ts` 100% cobertura total
+- `rateLimiter.test.ts`: +1 teste que excede `dxfRateLimiter` (10 req/h) → 90.9% cobertura
+- `jobStatusService.test.ts`: +2 testes com `jest.useFakeTimers()` e `jest.isolateModules()` para o callback do `setInterval` de limpeza → 98.18% cobertura
+- Backend: 187 → 198 testes; cobertura 94.86% → 97.06% statements
+
 ---
 
 ## 10. Checklist de Conformidade
