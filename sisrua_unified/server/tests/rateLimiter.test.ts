@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import request from 'supertest';
+import express, { Request, Response, NextFunction } from 'express';
 import { dxfRateLimiter, generalRateLimiter } from '../middleware/rateLimiter';
 
 // Mock logger
@@ -11,6 +12,14 @@ jest.mock('../utils/logger', () => ({
     }
 }));
 
+/** Helper: create a minimal Express app with the given rate limiter applied */
+function makeApp(limiter: (req: Request, res: Response, next: NextFunction) => void) {
+    const app = express();
+    app.use(limiter);
+    app.get('/test', (_req, res) => res.json({ ok: true }));
+    return app;
+}
+
 describe('Rate Limiter Middleware', () => {
     describe('Rate Limiter Configuration', () => {
         it('should export dxfRateLimiter', () => {
@@ -22,57 +31,69 @@ describe('Rate Limiter Middleware', () => {
             expect(generalRateLimiter).toBeDefined();
             expect(typeof generalRateLimiter).toBe('function');
         });
+    });
 
-        it('should handle IPv4 addresses', () => {
-            // This test verifies the rate limiters are properly configured
-            // In production, the ipKeyGenerator will handle IPv4 correctly
-            const mockReq = {
-                ip: '192.168.1.100',
-                headers: {}
-            } as unknown as Request;
-
-            expect(dxfRateLimiter).toBeDefined();
-            expect(generalRateLimiter).toBeDefined();
+    describe('keyGenerator — Forwarded header parsing', () => {
+        it('should allow request with plain IPv4 Forwarded header', async () => {
+            const app = makeApp(generalRateLimiter);
+            const res = await request(app)
+                .get('/test')
+                .set('Forwarded', 'for=203.0.113.1');
+            expect(res.status).toBe(200);
         });
 
-        it('should handle IPv6 addresses', () => {
-            // This test verifies the rate limiters can handle IPv6
-            // The ipKeyGenerator will normalize IPv6 to CIDR notation
-            const mockReq = {
-                ip: '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
-                headers: {}
-            } as unknown as Request;
-
-            expect(dxfRateLimiter).toBeDefined();
-            expect(generalRateLimiter).toBeDefined();
+        it('should allow request with IPv4:port in Forwarded header', async () => {
+            const app = makeApp(generalRateLimiter);
+            const res = await request(app)
+                .get('/test')
+                .set('Forwarded', 'for="203.0.113.2:47011"');
+            expect(res.status).toBe(200);
         });
 
-        it('should handle missing IP with fallback', () => {
-            const mockReq = {
-                ip: undefined,
-                headers: {}
-            } as unknown as Request;
+        it('should allow request with IPv6 in Forwarded header', async () => {
+            const app = makeApp(generalRateLimiter);
+            const res = await request(app)
+                .get('/test')
+                .set('Forwarded', 'for="[2001:db8::1]"');
+            expect(res.status).toBe(200);
+        });
 
-            // The rate limiter should still work even without IP
-            expect(dxfRateLimiter).toBeDefined();
-            expect(generalRateLimiter).toBeDefined();
+        it('should fall back to req.ip for obfuscated Forwarded identifier', async () => {
+            const app = makeApp(generalRateLimiter);
+            const res = await request(app)
+                .get('/test')
+                .set('Forwarded', 'for=_hidden');
+            expect(res.status).toBe(200);
+        });
+
+        it('should fall back to req.ip when Forwarded header is absent', async () => {
+            const app = makeApp(generalRateLimiter);
+            const res = await request(app).get('/test');
+            expect(res.status).toBe(200);
+        });
+
+        it('should allow request with multi-hop Forwarded header', async () => {
+            const app = makeApp(generalRateLimiter);
+            const res = await request(app)
+                .get('/test')
+                .set('Forwarded', 'for=203.0.113.5;proto=http;by=10.0.0.1');
+            expect(res.status).toBe(200);
         });
     });
 
-    describe('X-Forwarded-For Support', () => {
-        it('should respect X-Forwarded-For when trust proxy is enabled', () => {
-            // In production, when trust proxy is enabled, req.ip will be populated
-            // from X-Forwarded-For header automatically by Express
-            const mockReq = {
-                ip: '10.0.0.1',
-                headers: {
-                    'x-forwarded-for': '10.0.0.1'
-                }
-            } as unknown as Request;
+    describe('DXF rate limiter', () => {
+        it('should allow a single DXF request through', async () => {
+            const app = makeApp(dxfRateLimiter);
+            const res = await request(app).get('/test');
+            expect(res.status).toBe(200);
+        });
+    });
 
-            // The rate limiters should be configured to use the IP
-            expect(dxfRateLimiter).toBeDefined();
-            expect(generalRateLimiter).toBeDefined();
+    describe('General rate limiter', () => {
+        it('should allow a single request through', async () => {
+            const app = makeApp(generalRateLimiter);
+            const res = await request(app).get('/test');
+            expect(res.status).toBe(200);
         });
     });
 });
