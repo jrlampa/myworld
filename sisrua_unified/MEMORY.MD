@@ -303,6 +303,7 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] **Cobertura de testes aprimorada — caminhos de erro e timers** — `analyticsRoutes.test.ts`: +2 testes para catch blocks (analytics e events 500 error); `nominatimService.test.ts`: +4 testes (coords inválidas, catch reverseGeocode, display_name ausente, importance=0); `rateLimiter.test.ts`: +1 teste handler dxfRateLimiter; `jobStatusService.test.ts`: +2 testes fake timer (cleanup interval); backend 187→198 testes; cobertura 94.86%→97.06% statements; `nominatimService.ts` e `analytics.ts` agora 100% cobertura; `jobStatusService.ts` 98.18% (era 89.09%)
 - [x] **ABNT NBR 8196/10582/13142 compliance** — novo módulo `dxf_abnt.py`: `compute_abnt_scale()` (escala padrão), `select_paper_size()` (A0-A4 automático), `ABNTTitleBlock` (carimbo completo com todos os campos NBR 10582); `dxf_cartography.py` atualizado para usar `ABNTTitleBlock`; `dxf_generator.py` passa extensão real para cálculo de escala; `main.py` + `pythonBridge.ts` + `dxfRequest.ts` + Swagger com novos campos ABNT (designer, numero_desenho, revisao, verificado_por, aprovado_por); `test_dxf_abnt.py` (32 testes); Python 78→110 testes; `rateLimiter.ts` 100% stmt/funcs/lines (generalRateLimiter handler coberto); Backend 206→207 testes; cobertura 97.65%→97.94% stmts, 98.05%→99.02% funcs
 - [x] **Cobertura enterprise — 214 testes backend, 93.05% branches**: `analyticsService.ts` **100% stmt/branch/lines** (era 97.61%/84.61%); `ibgeService.ts` **100% stmt/branch/lines** (era 96.73%/73.21%); +7 novos testes: USE_FIRESTORE=true branches (record() + initAnalyticsFromFirestore()), mapMunicipio com dados incompletos (fallbacks `?? 0`), getEstados sem regiao, extractCentroid com geometry nula, FeatureCollection malformada, getEstados non-array; cobertura total: 98.68% stmts, **93.05% branches** (era 86.48%), 99.21% lines
+- [x] **Cobertura DXF engine Python — 179 testes, dxf_generator 94%**: novo `test_dxf_drawing.py` (69 testes): `TestDetermineLayer` (14 tags OSM→layer), `TestMergeContiguousLines` (7 fusões), `TestAddTerrainFromGrid` (6), `TestAddContourLines` (4), `TestDrawGeometry` (9 tipos geométricos + coords canônicas), `TestDrawPoint` (10 layers/tags), `TestDrawStreetOffsets` (6 tipos de via), `TestDrawLinestring` (3), `TestAddFeaturesIntegration` (5 integração com audit headless); `cacheService.ts` **100% branch** (layers null/undefined → `{}`); `incraService.ts` 88.46%→92.3% branch (getParcelasSummary default radius); Python 110→**179 testes**; `dxf_generator.py` 57%→**94%**; `dxf_drawing.py` 70%→**78%**; backend 217 testes, branches 93.05%→**93.82%**
 
 ### 🔄 Em Desenvolvimento / Melhorias Pendentes
 _(sem itens pendentes no momento)_
@@ -317,10 +318,10 @@ npm run docker:dev          # Inicia ambiente completo Docker
 npm run dev                 # Frontend + Backend (sem Docker)
 
 # Testes
-npm run test:backend        # Jest (214 testes, 98.68% stmts, 93.05% branches)
-npm run test:frontend       # Vitest
+npm run test:backend        # Jest (217 testes, 98.68% stmts, 93.82% branches)
+npm run test:frontend       # Vitest (45 testes)
 npm run test:e2e            # Playwright
-cd py_engine && python -m pytest tests/ -v  # Python (110 testes)
+cd py_engine && python3 -m pytest tests/ -v  # Python (179 testes, 80% cobertura)
 
 # Build e Deploy
 npm run build               # Build frontend
@@ -392,7 +393,8 @@ PYTHONDONTWRITEBYTECODE=1
 | 2026-02-21 | **Versionamento zerado e coerente**: VERSION → `0.1.0`; novo `server/version.ts` (fonte central SERVER_VERSION); `health.ts`, `index.ts`, `swagger.ts` importam SERVER_VERSION (eliminadas 5 strings hardcoded `1.2.0`); `update-version.sh` e `check-version.sh` atualizados para gerenciar `server/version.ts` + `src/constants.ts`; `tests/version.test.ts` ampliado com 2 novos checks (APP_VERSION e SERVER_VERSION); docs/CHANGELOG.md e docs/RAG.md atualizados | Dev Fullstack Sênior |
 | 2026-02-21 | **Análise de maturidade — correção de versão para 1.0.0**: avaliação técnica conclui que `0.1.0` (pré-estável, API instável) é incoerente com a maturidade real do projeto (produção Cloud Run, 7 workflows CI/CD, 207 testes backend 97.94% cobertura, 110 testes Python, 18.333+ linhas, DDD completo, APIs governamentais BR, compliance ABNT); VERSION → `1.0.0` (primeiro release estável); CHANGELOG.md atualizado com justificativa técnica | Dev Fullstack Sênior |
 | 2026-02-21 | **Cobertura enterprise — 214 testes backend, 93.05% branches**: `analyticsService.ts` 100% stmt/branch/lines; `ibgeService.ts` 100% stmt/branch/lines; +7 novos testes: USE_FIRESTORE=true branches, mapMunicipio fallbacks `?? 0`, getEstados sem regiao, extractCentroid com geometry nula/FeatureCollection malformada; branches: 86.48% → **93.05%**, stmts: 97.94% → **98.68%**, lines: 98.74% → **99.21%** | Dev Fullstack Sênior |
+| 2026-02-21 | **Cobertura DXF engine Python — 179 testes, dxf_generator 94%**: novo `test_dxf_drawing.py` (69 testes); `TestDetermineLayer` (14 tags), `TestMergeContiguousLines` (7), `TestAddTerrainFromGrid` (6), `TestAddContourLines` (4), `TestDrawGeometry` (9), `TestDrawPoint` (10), `TestDrawStreetOffsets` (6), `TestDrawLinestring` (3), `TestAddFeaturesIntegration` (5 com audit headless); `cacheService.ts` 100% branch (null/undefined layers); `incraService.ts` 92.3% branch; Python 110→179 testes; dxf_generator 57%→94%; dxf_drawing 70%→78%; backend 217 testes; branches 93.05%→93.82% | Dev Fullstack Sênior |
 
 ---
 
-*Última atualização: 2026-02-21 | Versão do Documento: 1.9*
+*Última atualização: 2026-02-21 | Versão do Documento: 2.0*
