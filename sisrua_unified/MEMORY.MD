@@ -270,6 +270,13 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] Frontend React completo (MapSelector, AppSidebar, Settings, Landing)
 - [x] Coordenadas de teste canônicas em constants.py
 - [x] 61 testes Python (pytest) — todos passando (era 41)
+- [x] **78 testes Python** (pytest) — todos passando (era 61); contour_generator + logger + elevation_exception
+- [x] **206 testes backend** (Jest) — todos passando (era 198); cobertura 97.65% stmts, 86.48% branches
+- [x] `batchService.ts` 100% cobertura (era 55.55% branch)
+- [x] `dxfCleanupService.ts` 100% function coverage (setInterval callback coberto via fake timers)
+- [x] `geocodingService.ts` 89.74% branch (utmToLatLon testado com inputs inválidos e coords canônicas)
+- [x] `analyticsService.ts` 97.61% statements (buffer circular MAX_EVENTS coberto)
+- [x] **Bug corrigido: contour_generator.py** — API deprecated `cs.collections` → `cs.allsegs` (matplotlib >= 3.8)
 - [x] 187 testes backend (Jest) — todos passando (era 156)
 - [x] Cobertura backend > 94% (94.86% statements) — após adição de novos serviços cobertos
 - [x] elevationService.ts: 100% cobertura
@@ -377,7 +384,8 @@ PYTHONDONTWRITEBYTECODE=1
 | 2026-02-21 | **Persistência Firestore para Analytics**: `analyticsService.ts` — `persistToFirestore()` (async fire-and-forget, circuit breaker), `initFromFirestore()` (carga de eventos ao startup), `initAnalyticsFromFirestore()` exportada; `server/index.ts` chama init em produção; `analyticsFirestore.test.ts` (7 testes); backend 149→156 testes | Dev Fullstack Sênior |
 | 2026-02-21 | **Cobertura expandida — 3 novos arquivos de teste**: `dxfCleanupService.test.ts` (8 testes, 95% stmt), `jobStatusService.test.ts` (12 testes, 89% stmt), `analysisService.test.ts` (10 testes, 100% cobertura total); backend 157→187 testes; `analysisService.ts` 100% cobertura | Dev Fullstack Sênior |
 | 2026-02-21 | **Cobertura de caminhos de erro e timers**: analytics catch blocks (+2 testes 500 error em `/api/analytics` e `/api/analytics/events`); nominatim invalid coords/catch/optional fields (+4 testes → 100% cobertura total); rateLimiter handler dxfRateLimiter (+1 teste, 90.9%); jobStatusService cleanup interval com fake timers (+2 testes, 98.18%); backend 187→198 testes, cobertura 94.86%→97.06% statements | Dev Fullstack Sênior |
+| 2026-02-21 | **Enterprise improvements — cobertura e correção de bug crítico**: `batchService.ts` 100% coverage (erro de stream + valores não-string); `dnitService.ts` 91.66% branch (default-radius tests); `dxfCleanupService.ts` 100% funções (fake timers, setInterval callback); `geocodingService.ts` 89.74% branch (utmToLatLon zero-inputs + coords canônicas); `analyticsService.ts` 97.61% (buffer circular MAX_EVENTS); Bug corrigido: `contour_generator.py` — `cs.collections` depreciado → `cs.allsegs` (matplotlib >= 3.8); `test_contour_generator.py` (7 testes) + `test_logger.py` (9 testes) + `test_elevation.py` +1 (exception path); Python 61→78 testes; Backend 198→206 testes; cobertura 97.06%→97.65% stmts, 83.39%→86.48% branches | Dev Fullstack Sênior |
 
 ---
 
-*Última atualização: 2026-02-21 | Versão do Documento: 1.4*
+*Última atualização: 2026-02-21 | Versão do Documento: 1.5*

@@ -198,4 +198,16 @@ describe('AnalyticsService', () => {
             expect(s.avgRadius).toBe(500);
         });
     });
+
+    describe('buffer circular (MAX_EVENTS)', () => {
+        it('deve descartar evento mais antigo quando buffer está cheio', () => {
+            // Preenche o buffer com 5001 eventos para acionar shift()
+            const MAX_EVENTS = 5000;
+            for (let i = 0; i < MAX_EVENTS + 1; i++) {
+                svc.record(makeEvent({ timestamp: Date.now() + i, radius: 100 + i }));
+            }
+            // O buffer deve ter exatamente MAX_EVENTS eventos
+            expect(svc.getEventCount()).toBe(MAX_EVENTS);
+        });
+    });
 });

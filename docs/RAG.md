@@ -209,6 +209,16 @@ Todos os testes de integração DXF **devem** usar `TEST_LAT=-22.15018, TEST_LON
 - `jobStatusService.test.ts`: +2 testes com `jest.useFakeTimers()` e `jest.isolateModules()` para o callback do `setInterval` de limpeza → 98.18% cobertura
 - Backend: 187 → 198 testes; cobertura 94.86% → 97.06% statements
 
+### 2026-02 – Enterprise improvements — cobertura e correção de bug crítico
+- **Bug corrigido**: `contour_generator.py` — API deprecated `cs.collections` → `cs.allsegs` (compatível matplotlib >= 3.8)
+- `batchService.ts`: 100% cobertura (era 55.55% branch) — adicionados testes para erro de stream e valores não-string
+- `dnitService.ts`: 91.66% branch — testes para default-radius em `getObrasArteEspeciais` e `getRodoviasSummary`
+- `dxfCleanupService.ts`: 100% function coverage — setInterval callback coberto via `jest.useFakeTimers`
+- `geocodingService.ts`: 89.74% branch — `utmToLatLon` testado com inputs zero e coords canônicas
+- `analyticsService.ts`: 97.61% statements — buffer circular MAX_EVENTS coberto
+- Novos testes Python: `test_contour_generator.py` (7 testes), `test_logger.py` (9 testes), `test_elevation.py` +1
+- Python: 61 → 78 testes; Backend: 198 → 206 testes; cobertura 97.06% → 97.65% stmts, 83.39% → 86.48% branches
+
 ---
 
 ## 10. Checklist de Conformidade
