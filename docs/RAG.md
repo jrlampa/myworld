@@ -192,6 +192,11 @@ Todos os testes de integração DXF **devem** usar `TEST_LAT=-22.15018, TEST_LON
 - `AppSidebar.tsx` com abas ANÁLISE / MÉTRICAS
 - 14 novos testes unitários; 117 testes backend total
 
+### 2026-02 – Expansão de testes e métricas de analytics
+- `exportsByMode` adicionado ao `AnalyticsSummary` (diferencia circle vs polygon)
+- 3 novos arquivos de teste: `analyticsRoutes.test.ts` (integração HTTP endpoints), `dnitService.test.ts` (16 testes, 100% cobertura), `incraService.test.ts` (14 testes, 100% cobertura)
+- Backend: 117 → 149 testes; cobertura 94.79% → 95.37% statements
+
 ---
 
 ## 10. Checklist de Conformidade

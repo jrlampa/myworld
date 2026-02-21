@@ -30,6 +30,7 @@ export interface AnalyticsSummary {
     exportsLast24h: number;
     exportsLast7d: number;
     exportsByHour: number[];   // índice 0–23
+    exportsByMode: { circle: number; polygon: number };
     topRegions: RegionStat[];
     recentEvents: DxfExportEvent[];
 }
@@ -100,6 +101,9 @@ class AnalyticsService {
         const batchExports = this.events.filter((e) => e.isBatch).length;
         const singleExports = total - batchExports;
 
+        const circleExports = this.events.filter((e) => e.mode === 'circle').length;
+        const polygonExports = this.events.filter((e) => e.mode === 'polygon').length;
+
         const topRegions = this.computeTopRegions();
         const recentEvents = this.events.slice(-20).reverse();
 
@@ -115,6 +119,7 @@ class AnalyticsService {
             exportsLast24h,
             exportsLast7d,
             exportsByHour,
+            exportsByMode: { circle: circleExports, polygon: polygonExports },
             topRegions,
             recentEvents,
         };
