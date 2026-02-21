@@ -35,6 +35,11 @@ test_utm*.dxf
 test_utm_validation.py
 test_api_v*.dxf
 
+# Backup files (auto-generated, not to be committed)
+*.backup
+*.bak
+*.orig
+
 # Security: Executables and potentially dangerous files
 *.exe
 *.dll

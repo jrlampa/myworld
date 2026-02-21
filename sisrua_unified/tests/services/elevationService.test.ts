@@ -127,6 +127,24 @@ describe('fetchElevationGrid', () => {
     expect(point.lat).toBeCloseTo(center.lat, 0);
     expect(point.lng).toBeCloseTo(center.lng, 0);
   });
+
+  it('preserves elevation=0 values (covers "elevations[idx] || 0" right branch)', async () => {
+    const gridSize = 2;
+    // Mix of non-zero and zero elevations — zero triggers the right-side of `|| 0`
+    const mockJson = { elevation: [100, 0, 50, 0] };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockJson)
+    }) as any;
+
+    const grid = await fetchElevationGrid(center, radius, gridSize);
+
+    expect(grid[0][0].elevation).toBe(100);
+    expect(grid[0][1].elevation).toBe(0); // 0 || 0 → right branch evaluated
+    expect(grid[1][0].elevation).toBe(50);
+    expect(grid[1][1].elevation).toBe(0); // 0 || 0 → right branch evaluated
+  });
 });
 
 describe('fetchElevationProfile', () => {

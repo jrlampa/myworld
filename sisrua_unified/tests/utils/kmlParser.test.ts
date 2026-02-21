@@ -170,5 +170,16 @@ describe('kmlParser', () => {
       // mas getElementsByTagName('coordinates') retorna vazio → rejeita
       await expect(parseKml(makeKmlFile(xml))).rejects.toThrow('No coordinates found');
     });
+
+    it('deve rejeitar quando DOMParser.parseFromString lança exceção (catch lines 46-48)', async () => {
+      vi.stubGlobal('DOMParser', class {
+        parseFromString() {
+          throw new Error('XML parse engine failure');
+        }
+      });
+      mockFileReaderWithText('some content');
+
+      await expect(parseKml(makeKmlFile('some'))).rejects.toThrow('XML parse engine failure');
+    });
   });
 });

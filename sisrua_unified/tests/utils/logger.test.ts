@@ -183,4 +183,30 @@ describe('Logger', () => {
       expect(debugLogs).toHaveLength(0);
     });
   });
+
+  describe('isDevelopment() exception fallback (lines 15-16)', () => {
+    it('falls back to true (development) when process.env access throws', () => {
+      const envDescriptor = Object.getOwnPropertyDescriptor(process, 'env');
+      // Make every property access on process.env throw
+      const throwingProxy = new Proxy({} as NodeJS.ProcessEnv, {
+        get(_target: object, _prop: string | symbol) { throw new Error('process.env unavailable'); }
+      });
+      Object.defineProperty(process, 'env', {
+        get: () => throwingProxy,
+        configurable: true
+      });
+
+      // isDevelopment() catches the error and returns true (dev mode)
+      // Logger.info must not throw and must store the entry
+      Logger.clearLogs();
+      expect(() => Logger.info('fallback test')).not.toThrow();
+      const logs = Logger.getLogs();
+      expect(logs.some(l => l.message === 'fallback test')).toBe(true);
+
+      // Restore original process.env
+      if (envDescriptor) {
+        Object.defineProperty(process, 'env', envDescriptor);
+      }
+    });
+  });
 });
