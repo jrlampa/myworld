@@ -1,11 +1,12 @@
-import React from 'react';
-import { Download, Map as MapIcon, Search, Loader2, AlertCircle, Mountain, TrendingUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, Map as MapIcon, Search, Loader2, AlertCircle, Mountain, TrendingUp, BarChart2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnalysisStats, AppSettings, GeoLocation, SelectionMode } from '../types';
 import { MIN_RADIUS, MAX_RADIUS } from '../constants';
 import Dashboard from './Dashboard';
 import DxfLegend from './DxfLegend';
 import BatchUpload from './BatchUpload';
+import AnalyticsDashboard from './AnalyticsDashboard';
 import { ToastType } from './Toast';
 
 interface AppSidebarProps {
@@ -53,12 +54,39 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
     isDownloading, onDownloadDxf,
     onToast
 }) => {
+    const [activeTab, setActiveTab] = useState<'analysis' | 'analytics'>('analysis');
+
     return (
         <motion.aside
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             className={`w-[400px] border-r flex flex-col p-8 gap-8 overflow-y-auto z-20 shadow-2xl transition-all scrollbar-hide ${isDark ? 'bg-[#020617] border-white/5' : 'bg-white border-slate-200'}`}
         >
+            {/* Abas: Análise / Métricas */}
+            <div className={`flex p-1 rounded-xl border ${isDark ? 'bg-slate-900 border-white/5' : 'bg-slate-100 border-slate-200'}`}>
+                <button
+                    onClick={() => setActiveTab('analysis')}
+                    className={`flex-1 flex items-center justify-center gap-2 text-[10px] font-bold py-2 rounded-lg transition-all ${activeTab === 'analysis' ? 'bg-blue-600 text-white shadow-lg' : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    <TrendingUp size={12} />
+                    ANÁLISE
+                </button>
+                <button
+                    onClick={() => setActiveTab('analytics')}
+                    className={`flex-1 flex items-center justify-center gap-2 text-[10px] font-bold py-2 rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-blue-600 text-white shadow-lg' : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    <BarChart2 size={12} />
+                    MÉTRICAS
+                </button>
+            </div>
+
+            {/* Aba de Métricas SaaS */}
+            {activeTab === 'analytics' && (
+                <AnalyticsDashboard isDark={isDark} />
+            )}
+
+            {/* Aba de Análise OSM */}
+            {activeTab === 'analysis' && (<>
             {/* Cartão de Busca */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -261,6 +289,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
                     </motion.div>
                 )}
             </AnimatePresence>
+            </>)}
         </motion.aside>
     );
 };

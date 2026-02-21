@@ -16,6 +16,7 @@ import { dxfRateLimiter } from '../middleware/rateLimiter.js';
 import { dxfRequestSchema } from '../schemas/dxfRequest.js';
 import { batchRowSchema } from '../schemas/apiSchemas.js';
 import { parseBatchCsv, RawBatchRow } from '../services/batchService.js';
+import analyticsService from '../services/analyticsService.js';
 import multer from 'multer';
 import express from 'express';
 
@@ -40,6 +41,7 @@ function getBaseUrl(req: Request, port: string | number): string {
  * Gera arquivo DXF a partir de coordenadas e configurações.
  */
 router.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, res: Response) => {
+    const startTs = Date.now();
     try {
         const validation = dxfRequestSchema.safeParse(req.body);
         if (!validation.success) {
@@ -64,6 +66,7 @@ router.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, re
             if (fs.existsSync(cachedFilePath)) {
                 const baseUrl = getBaseUrl(req, process.env.PORT || 3001);
                 logger.info('DXF cache hit', { cacheKey, filename: cachedFilename, ip: req.ip });
+                analyticsService.record({ timestamp: startTs, lat, lon, radius, mode: resolvedMode as 'circle' | 'polygon', success: true, durationMs: Date.now() - startTs, isBatch: false });
                 return res.json({ status: 'success', message: 'DXF Gerado', url: `${baseUrl}/downloads/${cachedFilename}` });
             }
             deleteCachedFilename(cacheKey);
@@ -97,6 +100,7 @@ router.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, re
             createJob(taskId);
         }
 
+        analyticsService.record({ timestamp: startTs, lat, lon, radius, mode: resolvedMode as 'circle' | 'polygon', success: true, durationMs: Date.now() - startTs, isBatch: false });
         const responseStatus = alreadyCompleted ? 'success' : 'queued';
         return res.status(alreadyCompleted ? 200 : 202).json({
             status: responseStatus,
@@ -105,6 +109,17 @@ router.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, re
         });
     } catch (err: any) {
         logger.error('Erro na geração DXF', { error: err });
+        analyticsService.record({
+            timestamp: startTs,
+            lat: req.body?.lat ?? 0,
+            lon: req.body?.lon ?? 0,
+            radius: req.body?.radius ?? 0,
+            mode: 'circle',
+            success: false,
+            durationMs: Date.now() - startTs,
+            isBatch: false,
+            errorMessage: err.message,
+        });
         return res.status(500).json({ error: 'Falha na geração', details: err.message });
     }
 });

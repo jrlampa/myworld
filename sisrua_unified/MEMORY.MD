@@ -270,7 +270,7 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] Frontend React completo (MapSelector, AppSidebar, Settings, Landing)
 - [x] Coordenadas de teste canônicas em constants.py
 - [x] 61 testes Python (pytest) — todos passando (era 41)
-- [x] 103 testes backend (Jest) — todos passando (era 100)
+- [x] 117 testes backend (Jest) — todos passando (era 103)
 - [x] Cobertura backend > 94% (94.79% statements) — subiu de 93.22%
 - [x] elevationService.ts: 100% cobertura
 - [x] ibgeService.ts: 96.73% cobertura
@@ -286,9 +286,10 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] APIs brasileiras (IBGE, DNIT, INCRA)
 - [x] Headless DXF validation via ezdxf audit
 - [x] **Otimização de queries OSM para áreas grandes (>1km)** — `osmnx_client.py` com `_fetch_chunked()`: busca por grupos de tags, deduplicação, fallback por grupo; 20 novos testes unitários (test_osmnx_client.py)
+- [x] **Dashboard de analytics de uso (SaaS metrics)** — `server/services/analyticsService.ts` (in-memory, extensível Firestore); rota `GET /api/analytics`; `src/components/AnalyticsDashboard.tsx` (pt-BR, dark/light, charts Recharts); integração em `AppSidebar.tsx` via abas ANÁLISE/MÉTRICAS; 14 novos testes unitários (analyticsService.test.ts)
 
 ### 🔄 Em Desenvolvimento / Melhorias Pendentes
-- [ ] Dashboard de analytics de uso (SaaS metrics)
+- [ ] Persistência de métricas de analytics em Firestore (produção)
 
 ---
 
@@ -365,6 +366,7 @@ PYTHONDONTWRITEBYTECODE=1
 | 2026-02-21 | Criação deste MEMORY.MD; verificação de testes (98 passando) | Dev Fullstack Sênior |
 | 2026-02-21 | Elevação cobertura backend de 79% → 93.22%; testes 74→100: ElevationService (100%), IbgeService (96.73%), RateLimiter (81.81%); getMunicipiosPorEstado/getMalhaGeoJson/extractCentroid testados | Dev Fullstack Sênior |
 | 2026-02-21 | OSM query optimization: `_fetch_chunked()` em osmnx_client.py (chunked fetching para radius >1km); 20 novos testes (test_osmnx_client.py); cloudTasksService cobertura 85%→95% (+3 testes: dev mode, error path, getTaskStatus); Python 41→61 testes, Backend 100→103 testes, cobertura 93.22%→94.79% | Dev Fullstack Sênior |
+| 2026-02-21 | **Analytics Dashboard SaaS**: `analyticsService.ts` (in-memory, singleton, prune 7d, cluster regiões, top5); rota `/api/analytics`; `AnalyticsDashboard.tsx` (pt-BR, dark/light, KPI cards, gráficos por hora/tipo/status, top regiões, eventos recentes); `AppSidebar.tsx` com abas ANÁLISE/MÉTRICAS; `src/services/analyticsService.ts` (cliente fetch); instrumentação em `routes/dxf.ts`; 14 novos testes (117 total backend); TypeScript compila sem erros | Dev Fullstack Sênior |
 
 ---
 

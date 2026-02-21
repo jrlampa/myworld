@@ -183,10 +183,14 @@ Todos os testes de integração DXF **devem** usar `TEST_LAT=-22.15018, TEST_LON
 - Fallback por grupo: erro em um chunk não cancela os demais
 - 20 novos testes unitários (mocked) em `py_engine/tests/test_osmnx_client.py`
 
-### 2026-02 – Melhoria de cobertura cloudTasksService
-- 3 novos testes: dev mode direto, erro no dev mode, getTaskStatus
-- Cobertura 85.48% → 95.16% statements; 100% funções cobertas
-- Backend: 100 → 103 testes; cobertura geral 93.22% → 94.79%
+### 2026-02 – Analytics Dashboard SaaS implementado
+- `server/services/analyticsService.ts` — serviço in-memory com prune 7 dias, cluster regiões, top5
+- `server/routes/analytics.ts` — `GET /api/analytics` e `GET /api/analytics/events`
+- `src/components/AnalyticsDashboard.tsx` — dashboard pt-BR dark/light com KPI cards, gráficos Recharts
+- `src/services/analyticsService.ts` — cliente fetch frontend
+- Instrumentação em `routes/dxf.ts` (record por exportação)
+- `AppSidebar.tsx` com abas ANÁLISE / MÉTRICAS
+- 14 novos testes unitários; 117 testes backend total
 
 ---
 
@@ -205,3 +209,4 @@ Todos os testes de integração DXF **devem** usar `TEST_LAT=-22.15018, TEST_LON
 - [x] Testes DXF headless (ezdxf.readfile)
 - [x] Coordenadas de teste canônicas definidas
 - [x] .gitignore e .dockerignore atualizados
+- [x] Analytics Dashboard SaaS (métricas de uso, gráficos, KPIs, pt-BR)

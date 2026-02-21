@@ -25,6 +25,7 @@ import analysisRouter from './routes/analysis.js';
 import dxfRouter from './routes/dxf.js';
 import tasksRouter from './routes/tasks.js';
 import brazilianApisRouter from './routes/brazilianApis.js';
+import analyticsRouter from './routes/analytics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -152,6 +153,7 @@ app.use(analysisRouter);
 app.use(dxfRouter);
 app.use(tasksRouter);
 app.use(brazilianApisRouter);
+app.use(analyticsRouter);
 
 // ─── Frontend estático ────────────────────────────────────────────────────────
 
