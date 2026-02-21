@@ -18,6 +18,7 @@ import { generalRateLimiter } from './middleware/rateLimiter.js';
 import { specs } from './swagger.js';
 import { startFirestoreMonitoring, stopFirestoreMonitoring } from './services/firestoreService.js';
 import { initAnalyticsFromFirestore } from './services/analyticsService.js';
+import { SERVER_VERSION } from './version.js';
 
 // Rotas modularizadas
 import healthRouter from './routes/health.js';
@@ -193,7 +194,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 
 app.listen(port, async () => {
     const baseUrl = process.env.CLOUD_RUN_BASE_URL || `http://localhost:${port}`;
-    logger.info('Backend online', { service: 'sisRUA Unified Backend', version: '1.2.0', url: baseUrl, port });
+    logger.info('Backend online', { service: 'sisRUA Unified Backend', version: SERVER_VERSION, url: baseUrl, port });
 
     if (process.env.NODE_ENV === 'production' || process.env.USE_FIRESTORE === 'true') {
         try {

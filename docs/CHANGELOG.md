@@ -5,7 +5,23 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2026-02-18
+## [0.1.0] - 2026-02-21
+
+### Changed
+
+- **Versioning reset**: All version numbers zeroed and restarted from `0.1.0` as initial pre-stable release
+- **Central server version**: New `server/version.ts` — single source of truth for backend version (eliminates hardcoded strings in `health.ts`, `index.ts`, `swagger.ts`)
+- **ABNT NBR compliance**: `dxf_abnt.py` module for ABNT NBR 8196/10582/13142 (scales, title block, paper sizes)
+- **Update scripts**: `update-version.sh` and `check-version.sh` now also manage `server/version.ts` and `src/constants.ts`
+- **Version tests**: `tests/version.test.ts` extended to verify `src/constants.ts` (`APP_VERSION`) and `server/version.ts` (`SERVER_VERSION`)
+
+### Versioning Philosophy (starting at 0.1.0)
+
+> Major = 0 → software in initial development (pre-stable)  
+> Minor = 1 → first coherent feature-complete iteration  
+> Patch = 0 → no patches yet on this baseline
+
+## [Historical] Prior to 0.1.0
 
 ### Added
 

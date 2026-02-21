@@ -80,7 +80,7 @@ MAX_FILENAME_LENGTH = 255
 DXF_VERSION = 'R2013'
 # NOTE: Do not update PROJECT_VERSION manually. Use ./scripts/update-version.sh instead.
 # See VERSIONING.md for details about version management.
-PROJECT_VERSION = '1.0.0'
+PROJECT_VERSION = '0.1.0'
 
 # Validation
 MIN_POLYGON_POINTS = 3

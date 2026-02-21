@@ -10,7 +10,7 @@ interface UseFileOperationsProps {
 
 // NOTE: Do not update PROJECT_VERSION manually. Use ./scripts/update-version.sh instead.
 // See VERSIONING.md for details about version management.
-const PROJECT_VERSION = '1.0.0';
+const PROJECT_VERSION = '0.1.0';
 
 export function useFileOperations({
   appState,

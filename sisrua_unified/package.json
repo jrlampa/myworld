@@ -1,7 +1,7 @@
 {
   "name": "sisrua-unified",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Sistema de Exportação OSM para DXF - IMPORTANT: Do not update version manually. Use ./scripts/update-version.sh instead. See VERSIONING.md for details.",
   "type": "module",
   "scripts": {

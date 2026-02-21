@@ -1,11 +1,12 @@
 import swaggerJsdoc from 'swagger-jsdoc';
+import { SERVER_VERSION } from './version.js';
 
 const specs = swaggerJsdoc({
     definition: {
         openapi: '3.0.0',
         info: {
             title: 'sisRUA Unified API',
-            version: '1.2.0'
+            version: SERVER_VERSION
         },
         servers: [
             {

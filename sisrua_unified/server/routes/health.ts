@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { spawn } from 'child_process';
 import { logger } from '../utils/logger.js';
 import { getFirestoreService } from '../services/firestoreService.js';
+import { SERVER_VERSION } from '../version.js';
 
 const router = Router();
 
@@ -20,7 +21,7 @@ router.get('/health', async (_req: Request, res: Response) => {
             return res.json({
                 status: 'degraded',
                 service: 'sisRUA Unified Backend',
-                version: '1.2.0',
+                version: SERVER_VERSION,
                 python: 'unavailable',
                 error: 'Configuração inválida do comando Python'
             });
@@ -36,7 +37,7 @@ router.get('/health', async (_req: Request, res: Response) => {
         res.json({
             status: 'online',
             service: 'sisRUA Unified Backend',
-            version: '1.2.0',
+            version: SERVER_VERSION,
             python: pythonAvailable ? 'available' : 'unavailable',
             environment: process.env.NODE_ENV || 'development',
             dockerized: process.env.DOCKER_ENV === 'true',
@@ -46,7 +47,7 @@ router.get('/health', async (_req: Request, res: Response) => {
         res.json({
             status: 'degraded',
             service: 'sisRUA Unified Backend',
-            version: '1.2.0',
+            version: SERVER_VERSION,
             error: 'Erro ao verificar saúde do serviço'
         });
     }
