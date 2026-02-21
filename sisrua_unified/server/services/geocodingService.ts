@@ -1,3 +1,6 @@
+import { searchNominatim } from './nominatimService.js';
+import { resolveIbgeGeocode } from './ibgeService.js';
+
 export interface GeoLocation {
     lat: number;
     lng: number;
@@ -102,7 +105,12 @@ export class GeocodingService {
     }
 
     /**
-     * Resolves a query string into coordinates using explicit parsing only.
+     * Resolves a query string into coordinates.
+     * Resolution order:
+     *  0. Direct lat/lng
+     *  1. UTM coordinates
+     *  2. IBGE municipality search (Brazilian addresses)
+     *  3. Nominatim (OSM) geocoding – restricted to Brazil
      */
     static async resolveLocation(query: string): Promise<GeoLocation | null> {
         // 0. Try direct lat/lng
@@ -118,6 +126,18 @@ export class GeocodingService {
             if (coords) {
                 return { ...coords, label: `UTM ${utm.zone}${utm.hemisphere} ${utm.easting} ${utm.northing}` };
             }
+        }
+
+        // 2. Try IBGE municipality geocoding
+        const ibgeResult = await resolveIbgeGeocode(query);
+        if (ibgeResult) {
+            return { lat: ibgeResult.lat, lng: ibgeResult.lng, label: ibgeResult.label };
+        }
+
+        // 3. Try Nominatim (OSM) geocoding – Brazil only
+        const nominatim = await searchNominatim(query);
+        if (nominatim) {
+            return { lat: nominatim.lat, lng: nominatim.lng, label: nominatim.label };
         }
 
         return null;
