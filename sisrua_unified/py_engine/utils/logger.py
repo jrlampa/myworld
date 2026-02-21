@@ -19,6 +19,11 @@ class Logger:
         sys.stdout.flush()
 
     @staticmethod
+    def warn(message):
+        print(json.dumps({"status": "warn", "message": message}))
+        sys.stdout.flush()
+
+    @staticmethod
     def error(message):
         print(json.dumps({"status": "error", "message": message}))
         sys.stdout.flush()

@@ -156,5 +156,38 @@ const PAST_TTL_MS = 62 * 60 * 1000;
             });
             jest.useRealTimers();
         });
+
+        it('deve ser idempotente: dois arquivos distintos agendados corretamente', () => {
+            jest.useFakeTimers();
+            jest.isolateModules(() => {
+                const svc = require('../services/dxfCleanupService');
+                const os = require('os');
+                const path = require('path');
+                const fsReal = require('fs');
+                const ts = Date.now();
+
+                // Dois arquivos distintos — verifica que o interval não é duplicado
+                // (se fosse duplicado, cleanup correria duas vezes mas sem efeito colateral negativo;
+                // o ponto central é que ambos os arquivos são corretamente eliminados)
+                const file1 = path.join(os.tmpdir(), `test_idem_A_${ts}.dxf`);
+                const file2 = path.join(os.tmpdir(), `test_idem_B_${ts}.dxf`);
+                fsReal.writeFileSync(file1, 'DXF A');
+                fsReal.writeFileSync(file2, 'DXF B');
+
+                // Duas chamadas a scheduleDxfDeletion disparam startCleanupInterval internamente;
+                // a segunda deve ser no-op (guard line 89)
+                svc.scheduleDxfDeletion(file1);
+                svc.scheduleDxfDeletion(file2);
+
+                jest.advanceTimersByTime(62 * 60 * 1000);
+
+                // Ambos os arquivos devem ser deletados exatamente uma vez
+                expect(fsReal.existsSync(file1)).toBe(false);
+                expect(fsReal.existsSync(file2)).toBe(false);
+
+                svc.stopDxfCleanup();
+            });
+            jest.useRealTimers();
+        });
     });
 });

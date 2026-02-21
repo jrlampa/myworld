@@ -72,6 +72,20 @@ describe('Rate Limiter Middleware', () => {
             expect(res.status).toBe(200);
         });
 
+        it('deve usar "unknown" quando req.ip é undefined (sem Forwarded e sem IP)', async () => {
+            const app = express();
+            // Sobrescreve o getter req.ip com um retorno de undefined para cobrir
+            // o branch `req.ip || 'unknown'` na linha 38 do rateLimiter.ts
+            app.use((req: Request, _res: Response, next: NextFunction) => {
+                Object.defineProperty(req, 'ip', { get: () => undefined, configurable: true });
+                next();
+            });
+            app.use(generalRateLimiter);
+            app.get('/test', (_req, res) => res.json({ ok: true }));
+            const res = await request(app).get('/test');
+            expect(res.status).toBe(200);
+        });
+
         it('should allow request with multi-hop Forwarded header', async () => {
             const app = makeApp(generalRateLimiter);
             const res = await request(app)

@@ -57,6 +57,12 @@ class TestLogger:
         assert data["status"] == "error"
         assert data["message"] == "Erro crítico"
 
+    def test_warn_outputs_json(self):
+        output = _capture_stdout(Logger.warn, "Aviso de conciliação")
+        data = json.loads(output)
+        assert data["status"] == "warn"
+        assert data["message"] == "Aviso de conciliação"
+
     def test_success_outputs_json(self):
         output = _capture_stdout(Logger.success, "DXF gerado com sucesso")
         data = json.loads(output)
