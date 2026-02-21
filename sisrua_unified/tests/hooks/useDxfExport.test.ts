@@ -108,6 +108,19 @@ describe('useDxfExport', () => {
     expect(onError).toHaveBeenCalledWith('DXF Error: Network down');
   });
 
+  it('downloadDxf: non-Error rejection falls back to generic message (line 74 right)', async () => {
+    // String rejection (not Error) → right side of ternary: 'DXF generation failed'
+    (generateDXF as ReturnType<typeof vi.fn>).mockRejectedValueOnce('timeout');
+
+    const { result } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+    await act(async () => {
+      await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+    });
+
+    expect(onError).toHaveBeenCalledWith('DXF Error: DXF generation failed');
+  });
+
   it('downloadDxf: default projection (no explicit projection arg)', async () => {
     (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       status: 'success',
@@ -246,6 +259,25 @@ describe('useDxfExport', () => {
       expect(result.current.jobStatus).toBe('failed');
     });
 
+    it('polling: non-Error rejection in catch falls back to generic message (line 131 right)', async () => {
+      // String rejection (not Error) → right side: 'DXF generation failed'
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-err-str' });
+      (getDxfJobStatus as ReturnType<typeof vi.fn>).mockRejectedValueOnce('connection reset');
+
+      const { result } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2100);
+      });
+
+      expect(onError).toHaveBeenCalledWith('DXF Error: DXF generation failed');
+      expect(result.current.jobStatus).toBe('failed');
+    });
+
     it('polling: completed job with no URL throws catches as error', async () => {
       (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-nourl' });
       (getDxfJobStatus as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -288,6 +320,69 @@ describe('useDxfExport', () => {
       });
 
       expect(getDxfJobStatus).not.toHaveBeenCalled();
+      expect(onError).not.toHaveBeenCalled();
+    });
+
+    it('polling: stale isActive in try block skips processing after unmount (lines 92-93)', async () => {
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-stale-try' });
+
+      // Deferred promise: resolves only when we call resolveStatus()
+      let resolveStatus!: (v: Record<string, unknown>) => void;
+      const pendingStatus = new Promise<Record<string, unknown>>((res) => { resolveStatus = res; });
+      (getDxfJobStatus as ReturnType<typeof vi.fn>).mockReturnValueOnce(pendingStatus);
+
+      const { result, unmount } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      // Fire the interval → getDxfJobStatus() starts but is pending
+      act(() => { vi.advanceTimersByTime(2000); });
+      await Promise.resolve(); // let async callback begin
+      expect(getDxfJobStatus).toHaveBeenCalledOnce();
+
+      // Unmount → isActive = false, clearInterval
+      unmount();
+
+      // Resolve AFTER unmount → if (!isActive) return (lines 92-93)
+      await act(async () => {
+        resolveStatus({ status: 'processing', progress: 50, result: null, error: null });
+        await Promise.resolve();
+      });
+
+      expect(onError).not.toHaveBeenCalled();
+      expect(onSuccess).not.toHaveBeenCalled();
+    });
+
+    it('polling: stale isActive in catch block skips error after unmount (lines 128-130)', async () => {
+      (generateDXF as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ jobId: 'job-stale-catch' });
+
+      // Deferred rejecting promise
+      let rejectStatus!: (err: Error) => void;
+      const pendingStatus = new Promise<never>((_, rej) => { rejectStatus = rej; });
+      (getDxfJobStatus as ReturnType<typeof vi.fn>).mockReturnValueOnce(pendingStatus);
+
+      const { result, unmount } = renderHook(() => useDxfExport({ onSuccess, onError }));
+
+      await act(async () => {
+        await result.current.downloadDxf(CENTER, 500, 'circle', [], {}, 'utm');
+      });
+
+      // Fire interval → getDxfJobStatus() starts (pending)
+      act(() => { vi.advanceTimersByTime(2000); });
+      await Promise.resolve();
+      expect(getDxfJobStatus).toHaveBeenCalledOnce();
+
+      // Unmount → isActive = false
+      unmount();
+
+      // Reject AFTER unmount → catch block if (!isActive) return (lines 128-130)
+      await act(async () => {
+        rejectStatus(new Error('network timeout'));
+        await Promise.resolve();
+      });
+
       expect(onError).not.toHaveBeenCalled();
     });
   });

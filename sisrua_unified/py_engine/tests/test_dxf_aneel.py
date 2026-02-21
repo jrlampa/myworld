@@ -80,6 +80,11 @@ class TestClassifyVoltage:
         # '13800;11000' → max=13800 → MT
         assert classify_voltage('13800;11000') == 'MT'
 
+    def test_semicolon_only_empty_tensoes_defaults_mt(self):
+        # '; ;' → all entries empty after strip → tensoes=[] → line 59 → 'MT'
+        assert classify_voltage('; ;') == 'MT'
+        assert classify_voltage(';') == 'MT'
+
     def test_invalid_string_defaults_mt(self):
         assert classify_voltage('indeterminado') == 'MT'
 
@@ -225,3 +230,77 @@ class TestAneelIntegration:
         setup_aneel_layers(gen.doc)
         assert LAYER_AT in gen.doc.layers
         assert gen.doc.layers.get(LAYER_AT).dxf.color == 1  # vermelho
+
+
+# ─── _draw_point ANEEL branches ──────────────────────────────────────────────
+
+class TestDrawAneelPoints:
+    """Testa _draw_point para camadas ANEEL/PRODIST (dxf_drawing.py linhas 239-244)."""
+
+    @pytest.fixture
+    def gen_aneel(self, tmp_path):
+        """DXFGenerator com aneel_prodist=True e layers elétricos configurados."""
+        from dxf_generator import DXFGenerator
+        from dxf_aneel import setup_aneel_layers
+        g = DXFGenerator(str(tmp_path / "aneel_points.dxf"))
+        g.diff_x = 0.0
+        g.diff_y = 0.0
+        g.bounds = [0.0, 0.0, 100.0, 100.0]
+        g._offset_initialized = True
+        g.aneel_prodist = True
+        setup_aneel_layers(g.doc)
+        return g
+
+    def test_rede_at_uses_torre(self, gen_aneel):
+        """REDE_AT → bloco TORRE (linha 240)."""
+        import pandas as pd
+        from shapely.geometry import Point
+        gen_aneel._draw_point(Point(5, 5), LAYER_AT, 0, 0,
+                              pd.Series({'power': 'line', 'voltage': '138000'}))
+        refs = [e for e in gen_aneel.msp if e.dxftype() == 'INSERT']
+        assert any(e.dxf.name == 'TORRE' for e in refs), "REDE_AT deve usar bloco TORRE"
+
+    def test_rede_at_with_tower_tag_uses_torre(self, gen_aneel):
+        """REDE_AT com power=tower → bloco TORRE (linha 239 right branch)."""
+        import pandas as pd
+        from shapely.geometry import Point
+        gen_aneel._draw_point(Point(10, 10), LAYER_AT, 0, 0,
+                              pd.Series({'power': 'tower', 'voltage': '138000'}))
+        refs = [e for e in gen_aneel.msp if e.dxftype() == 'INSERT']
+        assert any(e.dxf.name == 'TORRE' for e in refs)
+
+    def test_transformador_uses_circle(self, gen_aneel):
+        """TRANSFORMADOR → círculo (linha 242)."""
+        import pandas as pd
+        from shapely.geometry import Point
+        gen_aneel._draw_point(Point(5, 5), LAYER_TRANSF, 0, 0,
+                              pd.Series({'power': 'transformer'}))
+        circles = [e for e in gen_aneel.msp if e.dxftype() == 'CIRCLE']
+        assert len(circles) > 0, "TRANSFORMADOR deve gerar CIRCLE"
+
+    def test_subestacao_uses_poste(self, gen_aneel):
+        """SUBESTACAO → bloco POSTE (linha 244)."""
+        import pandas as pd
+        from shapely.geometry import Point
+        gen_aneel._draw_point(Point(5, 5), LAYER_SE, 0, 0,
+                              pd.Series({'power': 'substation'}))
+        refs = [e for e in gen_aneel.msp if e.dxftype() == 'INSERT']
+        assert any(e.dxf.name == 'POSTE' for e in refs), "SUBESTACAO deve usar bloco POSTE"
+
+    def test_rede_mt_uses_poste(self, gen_aneel):
+        """REDE_MT → bloco POSTE (linha 244)."""
+        import pandas as pd
+        from shapely.geometry import Point
+        gen_aneel._draw_point(Point(5, 5), LAYER_MT, 0, 0,
+                              pd.Series({'power': 'line', 'voltage': '13800'}))
+        refs = [e for e in gen_aneel.msp if e.dxftype() == 'INSERT']
+        assert any(e.dxf.name == 'POSTE' for e in refs), "REDE_MT deve usar bloco POSTE"
+
+    def test_rede_bt_uses_poste(self, gen_aneel):
+        """REDE_BT → bloco POSTE (linha 244)."""
+        import pandas as pd
+        from shapely.geometry import Point
+        gen_aneel._draw_point(Point(5, 5), LAYER_BT, 0, 0,
+                              pd.Series({'power': 'minor_line', 'voltage': '220'}))
+        refs = [e for e in gen_aneel.msp if e.dxftype() == 'INSERT']
+        assert any(e.dxf.name == 'POSTE' for e in refs), "REDE_BT deve usar bloco POSTE"

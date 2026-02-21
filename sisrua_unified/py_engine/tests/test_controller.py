@@ -116,6 +116,12 @@ class TestBuildTags:
         assert "natural" in tags
         assert "amenity" in tags
 
+    def test_build_tags_aneel_prodist_adds_power(self, tmp_path):
+        """aneel_prodist=True → power=True adicionado às tags (linha 207)."""
+        ctrl = _make_controller(tmp_path, {"buildings": True}, aneel_prodist=True)
+        tags = ctrl._build_tags()
+        assert tags.get('power') is True
+
 
 # ─── TestRun ─────────────────────────────────────────────────────────────────
 
