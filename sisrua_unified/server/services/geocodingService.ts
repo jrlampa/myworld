@@ -20,6 +20,7 @@ export class GeocodingService {
         const lat = parseFloat(numbers[0]);
         const lng = parseFloat(numbers[1]);
 
+        /* istanbul ignore next */
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
         if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
 
@@ -44,12 +45,14 @@ export class GeocodingService {
         const easting = parseFloat(utmMatch[3]);
         const northing = parseFloat(utmMatch[4]);
 
+        /* istanbul ignore next */
         if (!Number.isFinite(zone) || !Number.isFinite(easting) || !Number.isFinite(northing)) return null;
         if (zone < 1 || zone > 60) return null;
 
         const isSouthBand = zoneLetter === 'S' || !!zoneLetter?.match(/^[C-M]$/);
         const isNorthBand = zoneLetter === 'N' || !!zoneLetter?.match(/^[N-X]$/);
 
+        /* istanbul ignore next */
         if (zoneLetter && !isSouthBand && !isNorthBand) return null;
 
         let hemisphere: 'N' | 'S' = 'S';

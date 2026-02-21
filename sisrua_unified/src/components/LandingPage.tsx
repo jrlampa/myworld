@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Map, Layers, Download, Globe, ChevronRight, Container, Sparkles, FileStack, Zap } from 'lucide-react';
+import { Map, Layers, Download, Globe, ChevronRight, Container, Sparkles, FileStack, Zap, Shield } from 'lucide-react';
 import { APP_VERSION } from '../constants';
 
 interface LandingPageProps {
@@ -80,6 +80,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
                 <Zap size={14} />
                 Cloud Run
               </span>
+              <span className="flex items-center gap-1.5 px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded-full text-green-400">
+                <Shield size={12} />
+                ABNT
+              </span>
+              <span className="flex items-center gap-1.5 px-2 py-0.5 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-yellow-400">
+                <Shield size={12} />
+                ANEEL/PRODIST
+              </span>
             </div>
           </motion.div>
         </div>
@@ -93,13 +101,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
         >
           {[
             { icon: Sparkles, title: 'IA Integrada', desc: 'Busca inteligente com GROQ AI e geocoding automático' },
-            { icon: Globe, title: 'Coordenadas UTM', desc: 'Projeção absoluta e relativa para AutoCAD' },
+            { icon: Globe, title: 'Coordenadas UTM', desc: 'Projeção absoluta e relativa para AutoCAD (SIRGAS 2000)' },
             { icon: Download, title: 'Exportação DXF 2.5D', desc: 'Arquivos CAD com elevação e camadas organizadas' },
             { icon: FileStack, title: 'Processamento em Lote', desc: 'Upload CSV e processamento assíncrono (Cloud Tasks)' },
             { icon: Layers, title: 'Camadas Avançadas', desc: 'Edifícios, vias, curvas de nível, vegetação e mais' },
             { icon: Map, title: 'Análise Espacial', desc: 'Perfis de elevação, seleção de polígonos e KML import' },
-            { icon: Container, title: 'Docker First', desc: 'Zero dependências, isolamento completo, multiplataforma' },
-            { icon: Zap, title: 'Cloud Native', desc: 'Deploy automatizado no Google Cloud Run' }
+            { icon: Shield, title: 'Conformidade ABNT', desc: 'Carimbo técnico NBR 10582, escala NBR 8196, papéis NBR 13142' },
+            { icon: Zap, title: 'ANEEL / PRODIST', desc: 'Redes AT/MT/BT classificadas conforme Módulo 6; buffers de segurança Módulo 3' }
           ].map((feature, index) => (
             <motion.div
               key={feature.title}
@@ -140,14 +148,21 @@ const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
           className="text-slate-500 text-sm mt-12 space-y-3"
         >
           <p className="text-base font-medium text-slate-400">
-            Plataforma completa de extração e análise geoespacial
+            Plataforma completa de extração, análise e conformidade geoespacial
           </p>
           <div className="flex items-center justify-center gap-6 text-xs">
             <span>React + TypeScript</span>
             <span>•</span>
-            <span>Python + OSMnx</span>
+            <span>Python + OSMnx + ezdxf</span>
             <span>•</span>
             <span>Docker + Cloud Run</span>
+          </div>
+          <div className="flex items-center justify-center gap-6 text-xs text-slate-600">
+            <span>ABNT NBR 8196/10582/13142</span>
+            <span>•</span>
+            <span>ANEEL PRODIST Módulos 3 e 6</span>
+            <span>•</span>
+            <span>SIRGAS 2000 UTM</span>
           </div>
           <p className="text-xs text-slate-600">
             OpenStreetMap → Análise AI → DXF 2.5D para AutoCAD

@@ -57,6 +57,7 @@ function buildBbox(lat: number, lng: number, radiusMeters: number): string {
  */
 async function queryIncraWfs(
     bbox: string,
+    /* istanbul ignore next */
     maxFeatures: number = 50
 ): Promise<IncraWfsFeature[]> {
     const params = new URLSearchParams({

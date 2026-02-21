@@ -147,6 +147,7 @@ export async function createDxfTask(payload: Omit<DxfTaskPayload, 'taskId'>): Pr
     }
 
     // Production mode: Use Cloud Tasks
+    /* istanbul ignore next — RESOLVED_SERVICE_ACCOUNT_EMAIL is always non-empty when IS_DEVELOPMENT=false (GCP_PROJECT always set) */
     if (!RESOLVED_SERVICE_ACCOUNT_EMAIL) {
         const errorMsg = 'Cloud Tasks service account email not configured. Set CLOUD_TASKS_SERVICE_ACCOUNT_EMAIL, CLOUD_RUN_SERVICE_ACCOUNT, or provide GCP_PROJECT_NUMBER/GCP_PROJECT for defaults.';
         logger.error('Missing Cloud Tasks service account email', { error: errorMsg });

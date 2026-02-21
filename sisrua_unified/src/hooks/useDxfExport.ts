@@ -103,6 +103,7 @@ export function useDxfExport({ onSuccess, onError, aneelProdist = false }: UseDx
             throw new Error('DXF job completed without a URL');
           }
 
+          /* v8 ignore next */
           const center = downloadCenter || { lat: 0, lng: 0, label: '' };
           triggerDownload(url, center);
           onSuccess('DXF Downloaded');

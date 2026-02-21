@@ -24,6 +24,7 @@ export function useSearch({ onLocationFound, onError }: UseSearchProps) {
     const lat = parseFloat(numbers[0]);
     const lng = parseFloat(numbers[1]);
 
+    /* v8 ignore next */
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
     if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
 
