@@ -1,6 +1,27 @@
 import ezdxf
 from ezdxf.enums import TextEntityAlignment
 
+
+def _map_cad_lineweight(w: float) -> int:
+    """Maps a lineweight in mm to the nearest AutoCAD-accepted lineweight integer.
+
+    AutoCAD accepts: 0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50, 53 (≈ 0.60mm).
+    """
+    val = int(w * 100)
+    if val <= 5: return 5
+    if val <= 9: return 9
+    if val <= 13: return 13
+    if val <= 15: return 15
+    if val <= 18: return 18
+    if val <= 20: return 20
+    if val <= 25: return 25
+    if val <= 30: return 30
+    if val <= 35: return 35
+    if val <= 40: return 40
+    if val <= 50: return 50
+    return 53
+
+
 class DXFStyleManager:
     """Manages CAD layers, blocks, and styles to decouple logic from DXFGenerator."""
     
@@ -51,28 +72,11 @@ class DXFStyleManager:
             ('QUADRO', 7, 0.50), # Border
         ]
         
-        # Standard CAD lineweights mapped (mm to internal int)
-        # AutoCAD only accepts: 0, 5, 9, 13, 15, 18, 20, 25, 30, 35, 40, 50...
-        def map_weight(w):
-            val = int(w * 100)
-            if val <= 5: return 5
-            if val <= 9: return 9
-            if val <= 13: return 13
-            if val <= 15: return 15
-            if val <= 18: return 18
-            if val <= 20: return 20
-            if val <= 25: return 25
-            if val <= 30: return 30
-            if val <= 35: return 35
-            if val <= 40: return 40
-            if val <= 50: return 50
-            return 53
-
         for name, color, lineweight in layers:
             if name not in doc.layers:
                 doc.layers.new(name, dxfattribs={
                     'color': color,
-                    'lineweight': map_weight(lineweight)
+                    'lineweight': _map_cad_lineweight(lineweight)
                 })
 
     @staticmethod

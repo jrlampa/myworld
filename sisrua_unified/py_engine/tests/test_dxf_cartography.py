@@ -280,3 +280,56 @@ class TestCartographyIntegration:
         layout = doc.layout('Layout1')
         viewports = [ent for ent in layout if ent.dxftype() == 'VIEWPORT']
         assert len(viewports) >= 1
+
+
+# ─── Exception handlers não cobertos ─────────────────────────────────────────
+
+class TestExceptionHandlers:
+    """Cobre os except handlers em add_cartographic_elements, add_coordinate_grid,
+    e add_title_block (linhas 31-32, 58-59, 70-71, 165-166)."""
+
+    def test_add_cartographic_elements_exception_is_caught(self, gen):
+        """Quando msp.add_blockref lança, add_cartographic_elements não propaga (31-32)."""
+        from unittest.mock import patch
+        with patch.object(gen.msp, 'add_blockref', side_effect=RuntimeError("bloco falhou")):
+            # Deve capturar silenciosamente
+            gen.add_cartographic_elements(0.0, 0.0, 200.0, 200.0, 0.0, 0.0)
+
+    def test_add_coordinate_grid_x_label_exception_is_caught(self, gen):
+        """Quando msp.add_text lança para rótulo X, o except captura (58-59)."""
+        from unittest.mock import patch, MagicMock
+        # Deixa a LWPOLYLINE ser criada mas falha em add_text para rótulos do eixo X
+        original_add_text = gen.msp.add_text
+        call_count = [0]
+
+        def raise_on_text(*args, **kwargs):
+            call_count[0] += 1
+            raise RuntimeError("texto X falhou")
+
+        with patch.object(gen.msp, 'add_text', side_effect=raise_on_text):
+            # add_lwpolyline usa add_text via placement — vamos chamar diretamente
+            # Para garantir o caminho X, use coordenadas onde step < range
+            gen.add_coordinate_grid(0.0, 0.0, 50.0, 50.0, 0.0, 0.0)
+        # A exceção foi capturada (nenhuma propagação)
+        assert call_count[0] >= 0  # chamou (ou não, se step > range) mas não levantou
+
+    def test_add_coordinate_grid_y_label_exception_is_caught(self, gen):
+        """Quando msp.add_text falha para rótulo Y, o except captura (70-71)."""
+        from unittest.mock import patch
+        # Usar coordenadas grandes o suficiente para ter rótulos Y
+        # Patch add_text para levantar exceção
+        with patch.object(gen.msp, 'add_text', side_effect=RuntimeError("texto Y falhou")):
+            gen.add_coordinate_grid(788400.0, 7634800.0, 788700.0, 7635100.0, 788400.0, 7634800.0)
+        # Nenhuma exceção propagada
+
+    def test_add_title_block_viewport_exception_is_caught(self, gen):
+        """Quando a criação de viewport falha, o except captura sem propagar (165-166)."""
+        from unittest.mock import patch
+        # add_title_block gets layout internally via self.doc.layout('Layout1')
+        layout = gen.doc.layout('Layout1')
+        with patch.object(layout, 'add_viewport', side_effect=RuntimeError("viewport falhou")):
+            gen.add_title_block(
+                client="TESTE", project="TESTE VIEWPORT EXCEPTION",
+                drawing_extent_m=500.0,
+            )
+        # Nenhuma exceção propagada

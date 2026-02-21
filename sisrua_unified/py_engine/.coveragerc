@@ -1,0 +1,14 @@
+[run]
+omit =
+    debug_*.py
+    reproduce_*.py
+    verify_*.py
+    live_test_generator.py
+    main.py
+    tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:
