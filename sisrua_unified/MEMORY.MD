@@ -270,7 +270,11 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] Frontend React completo (MapSelector, AppSidebar, Settings, Landing)
 - [x] Coordenadas de teste canônicas em constants.py
 - [x] 41 testes Python (pytest) — todos passando
-- [x] 74 testes backend (Jest) — todos passando
+- [x] 100 testes backend (Jest) — todos passando (era 74)
+- [x] Cobertura backend > 90% (93.22% statements) — META ATINGIDA
+- [x] elevationService.ts: 100% cobertura (getElevationProfile totalmente testado)
+- [x] ibgeService.ts: 96.73% cobertura (getMunicipiosPorEstado, getMalhaGeoJson, extractCentroid)
+- [x] rateLimiter.ts: 81.81% cobertura (keyGenerator testado via supertest)
 - [x] E2E tests (Playwright) — configurados
 - [x] Docker multi-stage (Ubuntu 24.04, Node 22, Python 3.12)
 - [x] Swagger/OpenAPI documentation
@@ -279,10 +283,9 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] SIRGAS 2000 UTM CRS (pyproj)
 - [x] Batch processing (CSV upload)
 - [x] APIs brasileiras (IBGE, DNIT, INCRA)
+- [x] Headless DXF validation via ezdxf audit (substituto ao accoreconsole.exe em Linux/CI)
 
 ### 🔄 Em Desenvolvimento / Melhorias Pendentes
-- [x] Headless DXF validation via ezdxf audit (substituto ao accoreconsole.exe em Linux/CI)
-- [ ] Cobertura de testes > 90% (atualmente ~79% backend, Python ok)
 - [ ] Otimização de queries OSM para áreas grandes (>1km radius)
 - [ ] Dashboard de analytics de uso (SaaS metrics)
 
@@ -296,10 +299,10 @@ npm run docker:dev          # Inicia ambiente completo Docker
 npm run dev                 # Frontend + Backend (sem Docker)
 
 # Testes
-npm run test:backend        # Jest (74 testes)
+npm run test:backend        # Jest (100 testes, >93% cobertura)
 npm run test:frontend       # Vitest
 npm run test:e2e            # Playwright
-cd py_engine && python -m pytest tests/ -v  # Python (24 testes)
+cd py_engine && python -m pytest tests/ -v  # Python (41 testes)
 
 # Build e Deploy
 npm run build               # Build frontend
@@ -359,7 +362,8 @@ PYTHONDONTWRITEBYTECODE=1
 | Data | Ação | Responsável |
 |------|------|-------------|
 | 2026-02-21 | Criação deste MEMORY.MD; verificação de testes (98 passando) | Dev Fullstack Sênior |
+| 2026-02-21 | Elevação cobertura backend de 79% → 93.22%; testes 74→100: ElevationService (100%), IbgeService (96.73%), RateLimiter (81.81%); getMunicipiosPorEstado/getMalhaGeoJson/extractCentroid testados | Dev Fullstack Sênior |
 
 ---
 
-*Última atualização: 2026-02-21 | Versão do Documento: 1.0*
+*Última atualização: 2026-02-21 | Versão do Documento: 1.1*
