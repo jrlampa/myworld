@@ -24,6 +24,7 @@ import jobsRouter from './routes/jobs.js';
 import analysisRouter from './routes/analysis.js';
 import dxfRouter from './routes/dxf.js';
 import tasksRouter from './routes/tasks.js';
+import brazilianApisRouter from './routes/brazilianApis.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -150,6 +151,7 @@ app.use(jobsRouter);
 app.use(analysisRouter);
 app.use(dxfRouter);
 app.use(tasksRouter);
+app.use(brazilianApisRouter);
 
 // ─── Frontend estático ────────────────────────────────────────────────────────
 
