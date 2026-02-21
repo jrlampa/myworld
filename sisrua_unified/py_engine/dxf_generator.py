@@ -160,6 +160,9 @@ class DXFGenerator:
         processed = set()
         dist_threshold = 0.5 # Max 50cm gap for auto-merging
         
+        def get_dist(pa, pb):
+            return math.sqrt((pa[0]-pb[0])**2 + (pa[1]-pb[1])**2)
+
         for i, (line, tags) in enumerate(lines_with_tags):
             if i in processed: continue
             
@@ -179,10 +182,6 @@ class DXFGenerator:
                     p1_start, p1_end = curr_line.coords[0], curr_line.coords[-1]
                     p2_start, p2_end = other_line.coords[0], other_line.coords[-1]
                     
-                    # Helper to check distance
-                    def get_dist(pa, pb):
-                        return math.sqrt((pa[0]-pb[0])**2 + (pa[1]-pb[1])**2)
-
                     new_coords = None
                     if get_dist(p1_end, p2_start) < dist_threshold:
                         new_coords = list(curr_line.coords) + list(other_line.coords)[1:]

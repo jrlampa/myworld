@@ -21,16 +21,10 @@ def generate_contours(grid_points, interval=1.0):
         rows = len(grid_points)
         cols = len(grid_points[0])
         
-        X = np.zeros((rows, cols))
-        Y = np.zeros((rows, cols))
-        Z = np.zeros((rows, cols))
-        
-        for r in range(rows):
-            for c in range(cols):
-                x, y, z = grid_points[r][c]
-                X[r, c] = x
-                Y[r, c] = y
-                Z[r, c] = z
+        arr = np.array(grid_points, dtype=float)  # shape: (rows, cols, 3)
+        X = arr[:, :, 0]
+        Y = arr[:, :, 1]
+        Z = arr[:, :, 2]
                 
         # Determine levels
         min_z = np.min(Z)
