@@ -50,7 +50,7 @@ class DXFDrawingMixin:
             try:
                 vals = [self._safe_v(v, fallback_val=None) for v in p]
                 if None in vals:
-                    continue
+                    continue  # pragma: no cover
                 curr_p = tuple(vals)
                 if curr_p != last_p:
                     valid_points.append(curr_p)

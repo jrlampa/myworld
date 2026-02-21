@@ -1,20 +1,20 @@
 /**
- * Tests for IBGE service
+ * Tests for IBGE service — core municipality/state/mesh queries
+ * Covers: searchMunicipios, getMunicipioPorCodigo, getEstados,
+ *         getMunicipiosPorEstado, getMalhaGeoJson
  */
 import {
     searchMunicipios,
     getMunicipioPorCodigo,
     getEstados,
-    resolveIbgeGeocode,
     getMalhaGeoJson,
     getMunicipiosPorEstado,
 } from '../services/ibgeService';
 
-// Mock fetch globally
 const mockFetch = jest.fn();
 global.fetch = mockFetch as any;
 
-describe('IbgeService', () => {
+describe('IbgeService — core', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
@@ -83,7 +83,6 @@ describe('IbgeService', () => {
         });
 
         it('deve mapear municipio com dados incompletos usando fallback ?? 0', async () => {
-            // Dados mínimos: sem microrregiao, UF, regiao → ativa todos os ?? 0 / ?? ''
             const minimalData = [{ id: 99, nome: 'SemDados', microrregiao: null }];
             mockFetch.mockResolvedValueOnce({ ok: true, json: async () => minimalData });
 
@@ -171,7 +170,6 @@ describe('IbgeService', () => {
         });
 
         it('deve usar fallback ?? quando estado não tem regiao', async () => {
-            // Estado sem regiao → ativa os ?? 0 / ?? '' em getEstados
             const mockData = [{ id: 1, sigla: 'DF', nome: 'Distrito Federal', regiao: null }];
             mockFetch.mockResolvedValueOnce({ ok: true, json: async () => mockData });
 
@@ -185,140 +183,6 @@ describe('IbgeService', () => {
             mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ error: 'fail' }) });
             const result = await getEstados();
             expect(result).toEqual([]);
-        });
-    });
-
-    describe('resolveIbgeGeocode', () => {
-        it('should resolve municipality and extract centroid', async () => {
-            // First call: searchMunicipios
-            const mockMunicipios = [
-                {
-                    id: 3304557,
-                    nome: 'Nova Friburgo',
-                    microrregiao: {
-                        id: 33012,
-                        nome: 'Nova Friburgo',
-                        mesorregiao: {
-                            id: 3304,
-                            nome: 'Centro Fluminense',
-                            UF: {
-                                id: 33,
-                                sigla: 'RJ',
-                                nome: 'Rio de Janeiro',
-                                regiao: { id: 3, sigla: 'SE', nome: 'Sudeste' },
-                            },
-                        },
-                    },
-                },
-            ];
-
-            // Second call: getMalhaGeoJson
-            const mockMalha = {
-                type: 'FeatureCollection',
-                features: [
-                    {
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Polygon',
-                            coordinates: [
-                                [
-                                    [-42.93, -22.16],
-                                    [-42.90, -22.16],
-                                    [-42.90, -22.13],
-                                    [-42.93, -22.13],
-                                    [-42.93, -22.16],
-                                ],
-                            ],
-                        },
-                    },
-                ],
-            };
-
-            mockFetch
-                .mockResolvedValueOnce({ ok: true, json: async () => mockMunicipios })
-                .mockResolvedValueOnce({ ok: true, json: async () => mockMalha });
-
-            const result = await resolveIbgeGeocode('Nova Friburgo');
-
-            expect(result).not.toBeNull();
-            expect(result?.municipio.nome).toBe('Nova Friburgo');
-            expect(result?.lat).toBeDefined();
-            expect(result?.lng).toBeDefined();
-            expect(result?.label).toContain('Nova Friburgo');
-            expect(result?.label).toContain('RJ');
-        });
-
-        it('should return null when municipality not found', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: true,
-                json: async () => [],
-            });
-
-            const result = await resolveIbgeGeocode('Cidade Inexistente XYZ');
-            expect(result).toBeNull();
-        });
-
-        it('should return null when malha GeoJSON is not found', async () => {
-            const mockMunicipios = [
-                {
-                    id: 3304557,
-                    nome: 'Nova Friburgo',
-                    microrregiao: {
-                        id: 33012,
-                        nome: 'Nova Friburgo',
-                        mesorregiao: {
-                            id: 3304,
-                            nome: 'Centro Fluminense',
-                            UF: {
-                                id: 33,
-                                sigla: 'RJ',
-                                nome: 'Rio de Janeiro',
-                                regiao: { id: 3, sigla: 'SE', nome: 'Sudeste' },
-                            },
-                        },
-                    },
-                },
-            ];
-
-            mockFetch
-                .mockResolvedValueOnce({ ok: true, json: async () => mockMunicipios })
-                .mockResolvedValueOnce({ ok: false, status: 404 }); // getMalhaGeoJson fails
-
-            const result = await resolveIbgeGeocode('Nova Friburgo');
-            expect(result).toBeNull();
-        });
-
-        it('should return null when centroid cannot be extracted from empty GeoJSON', async () => {
-            const mockMunicipios = [
-                {
-                    id: 3304557,
-                    nome: 'Nova Friburgo',
-                    microrregiao: {
-                        id: 33012,
-                        nome: 'Nova Friburgo',
-                        mesorregiao: {
-                            id: 3304,
-                            nome: 'Centro Fluminense',
-                            UF: {
-                                id: 33,
-                                sigla: 'RJ',
-                                nome: 'Rio de Janeiro',
-                                regiao: { id: 3, sigla: 'SE', nome: 'Sudeste' },
-                            },
-                        },
-                    },
-                },
-            ];
-
-            // GeoJSON with no coordinates → centroid extraction returns null
-            const emptyGeojson = { type: 'FeatureCollection', features: [] };
-
-            mockFetch
-                .mockResolvedValueOnce({ ok: true, json: async () => mockMunicipios })
-                .mockResolvedValueOnce({ ok: true, json: async () => emptyGeojson });
-
-            const result = await resolveIbgeGeocode('Nova Friburgo');
-            expect(result).toBeNull();
         });
     });
 
@@ -410,104 +274,6 @@ describe('IbgeService', () => {
 
             const result = await getMalhaGeoJson(3304557);
             expect(result).toBeNull();
-        });
-    });
-
-    describe('resolveIbgeGeocode — diverse GeoJSON geometry types', () => {
-        const municipioMock = [
-            {
-                id: 3304557,
-                nome: 'Teste',
-                microrregiao: {
-                    id: 33012,
-                    nome: 'Teste',
-                    mesorregiao: {
-                        id: 3304,
-                        nome: 'Teste',
-                        UF: { id: 33, sigla: 'RJ', nome: 'Rio de Janeiro', regiao: { id: 3, sigla: 'SE', nome: 'Sudeste' } },
-                    },
-                },
-            },
-        ];
-
-        async function resolveWith(geojson: object) {
-            mockFetch
-                .mockResolvedValueOnce({ ok: true, json: async () => municipioMock })
-                .mockResolvedValueOnce({ ok: true, json: async () => geojson });
-            return resolveIbgeGeocode('Teste');
-        }
-
-        it('should extract centroid from Point geometry', async () => {
-            const geojson = { type: 'Point', coordinates: [-42.92, -22.15] };
-            const result = await resolveWith(geojson);
-            expect(result).not.toBeNull();
-            expect(result?.lat).toBeCloseTo(-22.15, 2);
-        });
-
-        it('should extract centroid from LineString geometry', async () => {
-            const geojson = {
-                type: 'LineString',
-                coordinates: [[-42.92, -22.15], [-42.90, -22.13]],
-            };
-            const result = await resolveWith(geojson);
-            expect(result).not.toBeNull();
-        });
-
-        it('should extract centroid from MultiPolygon geometry', async () => {
-            const geojson = {
-                type: 'MultiPolygon',
-                coordinates: [
-                    [[[-42.93, -22.16], [-42.90, -22.16], [-42.90, -22.13], [-42.93, -22.13], [-42.93, -22.16]]],
-                ],
-            };
-            const result = await resolveWith(geojson);
-            expect(result).not.toBeNull();
-        });
-
-        it('should extract centroid from GeometryCollection', async () => {
-            const geojson = {
-                type: 'GeometryCollection',
-                geometries: [
-                    { type: 'Point', coordinates: [-42.92, -22.15] },
-                ],
-            };
-            const result = await resolveWith(geojson);
-            expect(result).not.toBeNull();
-        });
-
-        it('should extract centroid from Feature (not FeatureCollection)', async () => {
-            const geojson = {
-                type: 'Feature',
-                geometry: {
-                    type: 'Polygon',
-                    coordinates: [
-                        [[-42.93, -22.16], [-42.90, -22.16], [-42.90, -22.13], [-42.93, -22.13], [-42.93, -22.16]],
-                    ],
-                },
-            };
-            const result = await resolveWith(geojson);
-            expect(result).not.toBeNull();
-        });
-
-        it('deve retornar null quando geojson malformado causa exceção em extractCentroid', async () => {
-            // FeatureCollection com features=null dispara TypeError no for...of
-            const geojson = { type: 'FeatureCollection', features: null };
-            const result = await resolveWith(geojson as any);
-            expect(result).toBeNull();
-        });
-
-        it('deve ignorar feature com geometry nula em FeatureCollection', async () => {
-            // Feature com geometry=null → ativa o `if (!geometry) return;` em collectCoords
-            const geojson = {
-                type: 'FeatureCollection',
-                features: [
-                    { geometry: null },
-                    { geometry: { type: 'Point', coordinates: [-42.92, -22.15] } },
-                ],
-            };
-            const result = await resolveWith(geojson);
-            expect(result).not.toBeNull();
-            expect(result?.lat).toBeCloseTo(-22.15, 2);
         });
     });
 });

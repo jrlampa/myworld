@@ -237,6 +237,29 @@ class TestRun:
             ctrl.run()
             mock_cad.assert_called_once_with(mock_dxf_inst)
 
+    @patch("controller.fetch_osm_data")
+    @patch("controller.run_spatial_audit")
+    @patch("controller.DXFGenerator")
+    def test_run_with_aneel_prodist_calls_setup_layers(self, MockDXF, mock_audit, mock_fetch, tmp_path):
+        """run() com aneel_prodist=True → setup_aneel_layers chamado (linhas 74-80)."""
+        gdf = _make_gdf()
+        mock_fetch.return_value = gdf
+        mock_audit.return_value = (
+            {"violations": 0, "coverageScore": 0,
+             "powerLineViolations": [], "closestPowerLine": None},
+            gdf.copy()
+        )
+        mock_dxf_inst = MagicMock()
+        mock_dxf_inst.bounds = None
+        MockDXF.return_value = mock_dxf_inst
+
+        ctrl = _make_controller(tmp_path, {"buildings": True}, aneel_prodist=True)
+        # Patch in source module so inline `from dxf_aneel import setup_aneel_layers` gets the mock
+        with patch("dxf_aneel.setup_aneel_layers") as mock_setup:
+            ctrl.run()
+            # setup_aneel_layers should be called with the DXF document
+            mock_setup.assert_called_once_with(mock_dxf_inst.doc)
+
 
 # ─── TestFetchFeatures ────────────────────────────────────────────────────────
 

@@ -445,3 +445,65 @@ class TestSaveException:
         with patch.object(gen.doc, 'saveas', side_effect=OSError("disco cheio")):
             with pytest.raises(OSError, match="disco cheio"):
                 gen.save()
+
+
+# ─── dxf_drawing.py line 124: deduplicate_epsilon([]) → return [] ────────────
+
+class TestDrawBuildingAnnotationEmptyPoints:
+    """Cobre deduplicate_epsilon([]) → return [] em _draw_building_annotation (linha 124)."""
+
+    def test_empty_points_list_returns_empty_no_hatch(self, gen):
+        """points=[] → deduplicate_epsilon([]) → return [] → sem hachura (linha 124)."""
+        poly = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)])
+        gen._draw_building_annotation(poly, 0.0, 0.0, [])
+        hatches = [e for e in gen.msp if e.dxftype() == 'HATCH']
+        assert len(hatches) == 0
+
+
+# ─── dxf_drawing.py lines 178-179: parallel_offset fallback ──────────────────
+
+class TestDrawStreetOffsetsFallback:
+    """Cobre o ramo 'else: parallel_offset' quando offset_curve não está disponível (linhas 178-179)."""
+
+    def test_parallel_offset_used_when_no_offset_curve(self, gen):
+        """MagicMock sem offset_curve → hasattr() = False → parallel_offset chamado (linhas 178-179)."""
+        valid_side = LineString([(0, 5), (100, 5)])
+        # spec sem 'offset_curve' → hasattr(mock_line, 'offset_curve') = False
+        mock_line = MagicMock(spec=['parallel_offset'])
+        mock_line.parallel_offset.return_value = valid_side
+        tags = pd.Series({'highway': 'residential'})
+        gen._draw_street_offsets(mock_line, tags, 0.0, 0.0)
+        assert mock_line.parallel_offset.called
+
+
+# ─── dxf_drawing.py line 183: side_geom.is_empty → continue ──────────────────
+
+class TestDrawStreetOffsetsEmptyGeom:
+    """Cobre side_geom.is_empty=True → continue (linha 183)."""
+
+    def test_empty_offset_geometry_skipped(self, gen):
+        """offset_curve retorna LineString vazia → is_empty=True → continue (linha 183)."""
+        tags = pd.Series({'highway': 'residential'})
+        empty_line = LineString()  # geometria vazia: is_empty=True
+        mock_line = MagicMock()
+        mock_line.offset_curve.return_value = empty_line
+        gen._draw_street_offsets(mock_line, tags, 0.0, 0.0)
+        # Nenhuma polilinha de meio-fio deve ser adicionada
+        polylines = [e for e in gen.msp if e.dxftype() == 'LWPOLYLINE'
+                     and e.dxf.layer == 'VIAS_MEIO_FIO']
+        assert len(polylines) == 0
+
+
+# ─── dxf_generator.py lines 233-234: add_text raises in _draw_street_label ───
+
+class TestDrawStreetLabelAddTextException:
+    """Cobre o segundo except em _draw_street_label quando msp.add_text falha (linhas 233-234)."""
+
+    def test_add_text_exception_caught_does_not_raise(self, gen):
+        """msp.add_text() lança RuntimeError → except Exception as te: Logger.info (linhas 233-234)."""
+        line = LineString([(0, 0), (100, 0)])
+        with patch.object(gen.msp, 'add_text', side_effect=RuntimeError("DXF writer error")):
+            gen._draw_street_label(line, "Rua Teste", 0.0, 0.0)  # não deve lançar
+        # Sem texto adicionado (add_text lançou e foi capturado)
+        texts = [e for e in gen.msp if e.dxftype() == 'TEXT']
+        assert len(texts) == 0

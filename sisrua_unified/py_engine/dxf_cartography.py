@@ -8,7 +8,7 @@ import numpy as np
 from ezdxf.enums import TextEntityAlignment
 try:
     from .utils.logger import Logger
-    from .dxf_abnt import ABNTTitleBlock, compute_abnt_scale, format_abnt_scale, select_paper_size, ABNT_PAPER_SIZES
+    from .dxf_abnt import ABNTTitleBlock, compute_abnt_scale, format_abnt_scale, select_paper_size, ABNT_PAPER_SIZES  # pragma: no cover
 except (ImportError, ValueError):
     from utils.logger import Logger
     from dxf_abnt import ABNTTitleBlock, compute_abnt_scale, format_abnt_scale, select_paper_size, ABNT_PAPER_SIZES

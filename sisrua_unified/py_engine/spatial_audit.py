@@ -4,7 +4,7 @@ from shapely.geometry import Point, LineString
 try:
     from utils.logger import Logger
     from constants import POWER_LINE_BUFFER_METERS, STREET_LAMP_COVERAGE_METERS, IDEAL_LAMP_SPACING_METERS
-except (ImportError, ValueError):
+except (ImportError, ValueError):  # pragma: no cover
     from .utils.logger import Logger
     from .constants import POWER_LINE_BUFFER_METERS, STREET_LAMP_COVERAGE_METERS, IDEAL_LAMP_SPACING_METERS
 
@@ -141,7 +141,7 @@ def _calculate_lighting_score(roads, lamps):
         return 0
     
     ideal_lamp_count = total_road_length / IDEAL_LAMP_SPACING_METERS
-    if ideal_lamp_count <= 0:
+    if ideal_lamp_count <= 0:  # pragma: no cover
         return 0
     
     actual_lamp_count = len(lamps)

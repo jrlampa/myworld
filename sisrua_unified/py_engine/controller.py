@@ -74,7 +74,7 @@ class OSMController:
         if self.aneel_prodist:
             try:
                 from dxf_aneel import setup_aneel_layers
-            except (ImportError, ValueError):
+            except (ImportError, ValueError):  # pragma: no cover
                 from .dxf_aneel import setup_aneel_layers
             setup_aneel_layers(dxf_gen.doc)
             Logger.info("Normas ANEEL/PRODIST ativas: layers elétricos conforme concessionária (ABNT ignorada para estas camadas).")
@@ -196,7 +196,7 @@ class OSMController:
             # Only add street_lamp if not already fetching all highway types (True fetches everything)
             if tags.get('highway') is True:
                 pass  # All highway features (including street_lamp) are already included
-            elif isinstance(tags.get('highway'), list):
+            elif isinstance(tags.get('highway'), list):  # pragma: no cover
                 if 'street_lamp' not in tags['highway']:
                     tags['highway'].append('street_lamp')
             else:

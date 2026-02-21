@@ -86,7 +86,7 @@ class DXFGenerator(DXFDrawingMixin, DXFCartographyMixin):
             if self.aneel_prodist:
                 try:
                     from dxf_aneel import get_aneel_layer
-                except (ImportError, ValueError):
+                except (ImportError, ValueError):  # pragma: no cover
                     from .dxf_aneel import get_aneel_layer
                 return get_aneel_layer(dict(tags))
             if tags['power'] in ['line', 'tower', 'substation']:

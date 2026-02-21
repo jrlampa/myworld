@@ -129,7 +129,7 @@ def setup_aneel_layers(doc) -> None:
     """
     try:
         from dxf_styles import _map_cad_lineweight
-    except (ImportError, ValueError):
+    except (ImportError, ValueError):  # pragma: no cover
         from .dxf_styles import _map_cad_lineweight
 
     for name, color, lineweight_mm, linetype in ANEEL_LAYER_DEFS:
