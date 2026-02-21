@@ -123,4 +123,46 @@ describe('cloudTasksService', () => {
     await expect(createDxfTask(basePayload)).rejects.toThrow('Failed to create Cloud Task');
     expect(generateDxfMock).not.toHaveBeenCalled();
   });
+
+  it('generates DXF directly in development mode (IS_DEVELOPMENT=true)', async () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'development',
+      GCP_PROJECT: ''
+    };
+    jest.resetModules();
+
+    const { createDxfTask } = await import('../services/cloudTasksService');
+
+    const result = await createDxfTask(basePayload);
+
+    expect(result.alreadyCompleted).toBe(true);
+    expect(result.taskId).toBe('test-uuid');
+    expect(generateDxfMock).toHaveBeenCalledTimes(1);
+    expect(createTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('throws when direct DXF generation fails in development mode', async () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'development',
+      GCP_PROJECT: ''
+    };
+    jest.resetModules();
+    generateDxfMock.mockRejectedValue(new Error('Python bridge error'));
+
+    const { createDxfTask } = await import('../services/cloudTasksService');
+
+    await expect(createDxfTask(basePayload)).rejects.toThrow('DXF generation failed: Python bridge error');
+  });
+
+  it('getTaskStatus returns placeholder status for any taskId', async () => {
+    const { getTaskStatus } = await import('../services/cloudTasksService');
+
+    const result = await getTaskStatus('some-task-id');
+
+    expect(result.taskId).toBe('some-task-id');
+    expect(result.status).toBe('unknown');
+    expect(typeof result.message).toBe('string');
+  });
 });

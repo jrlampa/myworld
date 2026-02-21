@@ -176,9 +176,17 @@ Todos os testes de integração DXF **devem** usar `TEST_LAT=-22.15018, TEST_LON
 - Interface migrada para português do Brasil
 - Labels, mensagens de erro, tooltips em pt-BR
 
-### 2026-02 – Coordenadas de teste canônicas
-- Definidas em `src/constants.ts` e `py_engine/constants.py`
-- lat=-22.15018, lon=-42.92185 (Muriaé, MG)
+### 2026-02 – Otimização de queries OSM para áreas grandes
+- `osmnx_client.py` refatorado com estratégia de chunked fetching para raios >1km
+- Novas funções: `_fetch_chunked()`, `_intersect_tags()`, `_project_gdf()`
+- Deduplicação automática de features por índice no merge
+- Fallback por grupo: erro em um chunk não cancela os demais
+- 20 novos testes unitários (mocked) em `py_engine/tests/test_osmnx_client.py`
+
+### 2026-02 – Melhoria de cobertura cloudTasksService
+- 3 novos testes: dev mode direto, erro no dev mode, getTaskStatus
+- Cobertura 85.48% → 95.16% statements; 100% funções cobertas
+- Backend: 100 → 103 testes; cobertura geral 93.22% → 94.79%
 
 ---
 
