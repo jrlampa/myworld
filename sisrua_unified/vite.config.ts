@@ -40,13 +40,20 @@ export default defineConfig(({ mode }) => {
       coverage: {
         provider: 'v8',
         reporter: ['text', 'json', 'html'],
+        include: ['src/**/*.{ts,tsx}'],
         exclude: [
           'node_modules/',
           'tests/',
           'legacy_src/',
           '*.config.ts',
           'dist/',
-          'build/'
+          'build/',
+          // React UI components are tested via Playwright E2E (e2e/ directory),
+          // not unit tests. Only hooks, services, utils, and config are unit-tested.
+          'src/components/**',
+          'src/App.tsx',
+          'src/index.tsx',
+          'src/types.ts'
         ]
       }
     },
