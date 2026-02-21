@@ -81,6 +81,20 @@ describe('IbgeService', () => {
             const result = await searchMunicipios('Cidade');
             expect(result).toEqual([]);
         });
+
+        it('deve mapear municipio com dados incompletos usando fallback ?? 0', async () => {
+            // Dados mínimos: sem microrregiao, UF, regiao → ativa todos os ?? 0 / ?? ''
+            const minimalData = [{ id: 99, nome: 'SemDados', microrregiao: null }];
+            mockFetch.mockResolvedValueOnce({ ok: true, json: async () => minimalData });
+
+            const result = await searchMunicipios('SemDados');
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe(99);
+            expect(result[0].uf.id).toBe(0);
+            expect(result[0].uf.sigla).toBe('');
+            expect(result[0].microrregiao.id).toBe(0);
+            expect(result[0].regiao.id).toBe(0);
+        });
     });
 
     describe('getMunicipioPorCodigo', () => {
@@ -154,6 +168,23 @@ describe('IbgeService', () => {
             expect(result).toHaveLength(2);
             expect(result[0].sigla).toBe('RJ');
             expect(result[1].sigla).toBe('SP');
+        });
+
+        it('deve usar fallback ?? quando estado não tem regiao', async () => {
+            // Estado sem regiao → ativa os ?? 0 / ?? '' em getEstados
+            const mockData = [{ id: 1, sigla: 'DF', nome: 'Distrito Federal', regiao: null }];
+            mockFetch.mockResolvedValueOnce({ ok: true, json: async () => mockData });
+
+            const result = await getEstados();
+            expect(result).toHaveLength(1);
+            expect(result[0].regiao.id).toBe(0);
+            expect(result[0].regiao.sigla).toBe('');
+        });
+
+        it('deve retornar array vazio quando API retorna não-array', async () => {
+            mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ error: 'fail' }) });
+            const result = await getEstados();
+            expect(result).toEqual([]);
         });
     });
 
@@ -456,6 +487,27 @@ describe('IbgeService', () => {
             };
             const result = await resolveWith(geojson);
             expect(result).not.toBeNull();
+        });
+
+        it('deve retornar null quando geojson malformado causa exceção em extractCentroid', async () => {
+            // FeatureCollection com features=null dispara TypeError no for...of
+            const geojson = { type: 'FeatureCollection', features: null };
+            const result = await resolveWith(geojson as any);
+            expect(result).toBeNull();
+        });
+
+        it('deve ignorar feature com geometry nula em FeatureCollection', async () => {
+            // Feature com geometry=null → ativa o `if (!geometry) return;` em collectCoords
+            const geojson = {
+                type: 'FeatureCollection',
+                features: [
+                    { geometry: null },
+                    { geometry: { type: 'Point', coordinates: [-42.92, -22.15] } },
+                ],
+            };
+            const result = await resolveWith(geojson);
+            expect(result).not.toBeNull();
+            expect(result?.lat).toBeCloseTo(-22.15, 2);
         });
     });
 });
