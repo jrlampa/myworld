@@ -42,6 +42,12 @@ interface DxfOptions {
     mode?: string;
     polygon?: string;
     projection?: string;
+    /** Campos ABNT NBR 10582 (opcionais) */
+    designer?: string;
+    numero_desenho?: string;
+    revisao?: string;
+    verificado_por?: string;
+    aprovado_por?: string;
 }
 
 // Permanent error patterns that indicate non-retriable failures
@@ -214,6 +220,13 @@ const generateDxfInternal = (options: DxfOptions): Promise<string> => {
         if (options.layers) {
             args.push('--layers', JSON.stringify(options.layers));
         }
+
+        // ABNT NBR 10582 optional metadata
+        if (options.designer) args.push('--designer', String(options.designer));
+        if (options.numero_desenho) args.push('--numero_desenho', String(options.numero_desenho));
+        if (options.revisao) args.push('--revisao', String(options.revisao));
+        if (options.verificado_por) args.push('--verificado_por', String(options.verificado_por));
+        if (options.aprovado_por) args.push('--aprovado_por', String(options.aprovado_por));
 
         logger.info('Spawning Python process for DXF generation', {
             command,

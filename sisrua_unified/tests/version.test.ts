@@ -56,24 +56,50 @@ describe('Version Consistency', () => {
     expect(match![1]).toBe(expectedVersion);
   });
 
+  it('src/constants.ts should have matching APP_VERSION', () => {
+    const srcConstantsPath = join(projectRoot, 'src', 'constants.ts');
+    const srcConstantsContent = readFileSync(srcConstantsPath, 'utf-8');
+    
+    const match = srcConstantsContent.match(/APP_VERSION\s*=\s*["']([^"']+)["']/);
+    expect(match).toBeTruthy();
+    expect(match![1]).toBe(expectedVersion);
+  });
+
+  it('server/version.ts should have matching SERVER_VERSION', () => {
+    const serverVersionPath = join(projectRoot, 'server', 'version.ts');
+    const serverVersionContent = readFileSync(serverVersionPath, 'utf-8');
+    
+    const match = serverVersionContent.match(/SERVER_VERSION\s*=\s*['"]([^'"]+)['"]/);
+    expect(match).toBeTruthy();
+    expect(match![1]).toBe(expectedVersion);
+  });
+
   it('all version declarations should be identical', () => {
     // This is a meta-test that ensures all the above tests are in sync
     const packageJsonPath = join(projectRoot, 'package.json');
     const constantsPath = join(projectRoot, 'py_engine', 'constants.py');
     const useFileOpsPath = join(projectRoot, 'src', 'hooks', 'useFileOperations.ts');
+    const srcConstantsPath = join(projectRoot, 'src', 'constants.ts');
+    const serverVersionPath = join(projectRoot, 'server', 'version.ts');
     
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     const constantsContent = readFileSync(constantsPath, 'utf-8');
     const useFileOpsContent = readFileSync(useFileOpsPath, 'utf-8');
+    const srcConstantsContent = readFileSync(srcConstantsPath, 'utf-8');
+    const serverVersionContent = readFileSync(serverVersionPath, 'utf-8');
     
     const pyMatch = constantsContent.match(/PROJECT_VERSION\s*=\s*['"]([^'"]+)['"]/);
     const tsMatch = useFileOpsContent.match(/const\s+PROJECT_VERSION\s*=\s*['"]([^'"]+)['"]/);
+    const appVerMatch = srcConstantsContent.match(/APP_VERSION\s*=\s*["']([^"']+)["']/);
+    const serverVerMatch = serverVersionContent.match(/SERVER_VERSION\s*=\s*['"]([^'"]+)['"]/);
     
     const versions = [
       expectedVersion,
       packageJson.version,
       pyMatch![1],
       tsMatch![1],
+      appVerMatch![1],
+      serverVerMatch![1],
     ];
     
     // All versions should be identical

@@ -11,7 +11,7 @@
 | Campo | Valor |
 |---|---|
 | **Nome** | sisRUA Unified |
-| **Versão** | 1.2.0 (backend/server) / 1.0.0 (package.json) |
+| **Versão** | 1.0.0 |
 | **Objetivo** | Exportar dados OSM para DXF 2.5D georreferenciado |
 | **Stack** | Node.js 22 + TypeScript (backend/frontend) + Python 3.12 (motor DXF) |
 | **Deploy** | Docker → Google Cloud Run (southamerica-east1) |

@@ -106,5 +106,16 @@ describe('Rate Limiter Middleware', () => {
             const res = await request(app).get('/test');
             expect(res.status).toBe(200);
         });
+
+        it('deve chamar o handler do generalRateLimiter ao exceder 100 req/15min', async () => {
+            const app = makeApp(generalRateLimiter);
+            const uniqueIp = '198.51.100.99'; // IP dedicado a este teste
+            for (let i = 0; i < 100; i++) {
+                await request(app).get('/test').set('Forwarded', `for=${uniqueIp}`);
+            }
+            const res = await request(app).get('/test').set('Forwarded', `for=${uniqueIp}`);
+            expect(res.status).toBe(429);
+            expect(res.body.error).toBeDefined();
+        });
     });
 });

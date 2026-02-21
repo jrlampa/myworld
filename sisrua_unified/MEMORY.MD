@@ -74,6 +74,7 @@ sisrua_unified/
 │   ├── dxf_generator.py        # Classe principal DXFGenerator
 │   ├── dxf_drawing.py          # Mixin: desenho de geometrias (polígonos, linhas, pontos)
 │   ├── dxf_cartography.py      # Mixin: legenda, carimbo, grade de coordenadas
+│   ├── dxf_abnt.py             # Conformidade ABNT NBR 8196/10582/13142 (escala, carimbo)
 │   ├── dxf_styles.py           # Estilos CAD (layers, linetypes, texto)
 │   ├── osmnx_client.py         # Cliente OSM (via osmnx)
 │   ├── elevation_client.py     # Cliente de elevação (Open-Elevation)
@@ -300,6 +301,7 @@ Layers criados por `dxf_styles.py` (`DXFStyleManager.setup_layers`):
 - [x] **Persistência de métricas de analytics em Firestore** — `analyticsService.ts`: `persistToFirestore()` (fire-and-forget, circuit breaker), `initFromFirestore()` (carga na inicialização), `initAnalyticsFromFirestore()` exportada; `server/index.ts` chama init em produção; 7 novos testes (analyticsFirestore.test.ts); backend 149→156 testes
 - [x] **Cobertura de testes expandida para serviços sem testes** — 3 novos arquivos de teste: `dxfCleanupService.test.ts` (8 testes, 95% cobertura), `jobStatusService.test.ts` (12 testes, 89% cobertura), `analysisService.test.ts` (10 testes, 100% cobertura); backend 157→187 testes; `analysisService.ts` agora com 100% de cobertura
 - [x] **Cobertura de testes aprimorada — caminhos de erro e timers** — `analyticsRoutes.test.ts`: +2 testes para catch blocks (analytics e events 500 error); `nominatimService.test.ts`: +4 testes (coords inválidas, catch reverseGeocode, display_name ausente, importance=0); `rateLimiter.test.ts`: +1 teste handler dxfRateLimiter; `jobStatusService.test.ts`: +2 testes fake timer (cleanup interval); backend 187→198 testes; cobertura 94.86%→97.06% statements; `nominatimService.ts` e `analytics.ts` agora 100% cobertura; `jobStatusService.ts` 98.18% (era 89.09%)
+- [x] **ABNT NBR 8196/10582/13142 compliance** — novo módulo `dxf_abnt.py`: `compute_abnt_scale()` (escala padrão), `select_paper_size()` (A0-A4 automático), `ABNTTitleBlock` (carimbo completo com todos os campos NBR 10582); `dxf_cartography.py` atualizado para usar `ABNTTitleBlock`; `dxf_generator.py` passa extensão real para cálculo de escala; `main.py` + `pythonBridge.ts` + `dxfRequest.ts` + Swagger com novos campos ABNT (designer, numero_desenho, revisao, verificado_por, aprovado_por); `test_dxf_abnt.py` (32 testes); Python 78→110 testes; `rateLimiter.ts` 100% stmt/funcs/lines (generalRateLimiter handler coberto); Backend 206→207 testes; cobertura 97.65%→97.94% stmts, 98.05%→99.02% funcs
 
 ### 🔄 Em Desenvolvimento / Melhorias Pendentes
 _(sem itens pendentes no momento)_
@@ -314,10 +316,10 @@ npm run docker:dev          # Inicia ambiente completo Docker
 npm run dev                 # Frontend + Backend (sem Docker)
 
 # Testes
-npm run test:backend        # Jest (198 testes, >97% cobertura)
+npm run test:backend        # Jest (207 testes, >97% cobertura)
 npm run test:frontend       # Vitest
 npm run test:e2e            # Playwright
-cd py_engine && python -m pytest tests/ -v  # Python (61 testes)
+cd py_engine && python -m pytest tests/ -v  # Python (110 testes)
 
 # Build e Deploy
 npm run build               # Build frontend
@@ -385,7 +387,10 @@ PYTHONDONTWRITEBYTECODE=1
 | 2026-02-21 | **Cobertura expandida — 3 novos arquivos de teste**: `dxfCleanupService.test.ts` (8 testes, 95% stmt), `jobStatusService.test.ts` (12 testes, 89% stmt), `analysisService.test.ts` (10 testes, 100% cobertura total); backend 157→187 testes; `analysisService.ts` 100% cobertura | Dev Fullstack Sênior |
 | 2026-02-21 | **Cobertura de caminhos de erro e timers**: analytics catch blocks (+2 testes 500 error em `/api/analytics` e `/api/analytics/events`); nominatim invalid coords/catch/optional fields (+4 testes → 100% cobertura total); rateLimiter handler dxfRateLimiter (+1 teste, 90.9%); jobStatusService cleanup interval com fake timers (+2 testes, 98.18%); backend 187→198 testes, cobertura 94.86%→97.06% statements | Dev Fullstack Sênior |
 | 2026-02-21 | **Enterprise improvements — cobertura e correção de bug crítico**: `batchService.ts` 100% coverage (erro de stream + valores não-string); `dnitService.ts` 91.66% branch (default-radius tests); `dxfCleanupService.ts` 100% funções (fake timers, setInterval callback); `geocodingService.ts` 89.74% branch (utmToLatLon zero-inputs + coords canônicas); `analyticsService.ts` 97.61% (buffer circular MAX_EVENTS); Bug corrigido: `contour_generator.py` — `cs.collections` depreciado → `cs.allsegs` (matplotlib >= 3.8); `test_contour_generator.py` (7 testes) + `test_logger.py` (9 testes) + `test_elevation.py` +1 (exception path); Python 61→78 testes; Backend 198→206 testes; cobertura 97.06%→97.65% stmts, 83.39%→86.48% branches | Dev Fullstack Sênior |
+| 2026-02-21 | **ABNT NBR 8196/10582/13142 — carimbo técnico conforme norma**: novo módulo `dxf_abnt.py` (compute_abnt_scale, select_paper_size, ABNTTitleBlock); `dxf_cartography.py` usa ABNTTitleBlock com todos os campos normalizados; `dxf_generator.py` calcula extensão real para escala; campos ABNT propagados por toda a stack (main.py → pythonBridge.ts → dxfRequest.ts → cloudTasksService.ts → Swagger); `test_dxf_abnt.py` (32 testes); `rateLimiter.ts` 100% cobertura; Python 78→110 testes; Backend 206→207 testes | Dev Fullstack Sênior |
+| 2026-02-21 | **Versionamento zerado e coerente**: VERSION → `0.1.0`; novo `server/version.ts` (fonte central SERVER_VERSION); `health.ts`, `index.ts`, `swagger.ts` importam SERVER_VERSION (eliminadas 5 strings hardcoded `1.2.0`); `update-version.sh` e `check-version.sh` atualizados para gerenciar `server/version.ts` + `src/constants.ts`; `tests/version.test.ts` ampliado com 2 novos checks (APP_VERSION e SERVER_VERSION); docs/CHANGELOG.md e docs/RAG.md atualizados | Dev Fullstack Sênior |
+| 2026-02-21 | **Análise de maturidade — correção de versão para 1.0.0**: avaliação técnica conclui que `0.1.0` (pré-estável, API instável) é incoerente com a maturidade real do projeto (produção Cloud Run, 7 workflows CI/CD, 207 testes backend 97.94% cobertura, 110 testes Python, 18.333+ linhas, DDD completo, APIs governamentais BR, compliance ABNT); VERSION → `1.0.0` (primeiro release estável); CHANGELOG.md atualizado com justificativa técnica | Dev Fullstack Sênior |
 
 ---
 
-*Última atualização: 2026-02-21 | Versão do Documento: 1.5*
+*Última atualização: 2026-02-21 | Versão do Documento: 1.8*

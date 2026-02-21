@@ -272,9 +272,21 @@ class DXFGenerator(DXFDrawingMixin, DXFCartographyMixin):
         """Finalização profissional e salvamento do DXF."""
         try:
             self.add_legend()
+            # Estimativa da extensão real do modelo para cálculo de escala ABNT NBR 8196
+            drawing_extent = max(
+                abs(self.bounds[2] - self.bounds[0]),
+                abs(self.bounds[3] - self.bounds[1]),
+                1.0,
+            )
             self.add_title_block(
                 client=self.project_info.get('client', 'CLIENTE PADRÃO'),
-                project=self.project_info.get('project', 'EXTRAÇÃO ESPACIAL OSM')
+                project=self.project_info.get('project', 'EXTRAÇÃO ESPACIAL OSM'),
+                designer=self.project_info.get('designer', 'sisRUA AI'),
+                numero_desenho=self.project_info.get('numero_desenho', 'SR-0001'),
+                verificado_por=self.project_info.get('verificado_por', ''),
+                aprovado_por=self.project_info.get('aprovado_por', ''),
+                revisao=self.project_info.get('revisao', 'A'),
+                drawing_extent_m=drawing_extent,
             )
             output_dir = os.path.dirname(self.filename)
             if output_dir and output_dir != '.':

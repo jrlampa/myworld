@@ -1,6 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import cors from 'cors';
+import { SERVER_VERSION } from '../version';
 
 // Mock the pythonBridge module before importing the app
 jest.mock('../pythonBridge', () => ({
@@ -21,7 +22,7 @@ describe('API Endpoints', () => {
       res.json({
         status: 'ok',
         service: 'sisRUA DXF Generator',
-        version: '1.2.0',
+        version: SERVER_VERSION,
         timestamp: new Date().toISOString()
       });
     });
@@ -34,7 +35,7 @@ describe('API Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('status', 'ok');
       expect(response.body).toHaveProperty('service', 'sisRUA DXF Generator');
-      expect(response.body).toHaveProperty('version', '1.2.0');
+      expect(response.body).toHaveProperty('version', SERVER_VERSION);
       expect(response.body).toHaveProperty('timestamp');
     });
 

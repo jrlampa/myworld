@@ -93,6 +93,28 @@ if [ -f "$TS_FILE" ]; then
     echo -e "${GREEN}✓ Updated src/hooks/useFileOperations.ts${NC}"
 fi
 
+# Update src/constants.ts (APP_VERSION)
+SRC_CONSTANTS_FILE="$PROJECT_ROOT/src/constants.ts"
+if [ -f "$SRC_CONSTANTS_FILE" ]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/APP_VERSION = \"[^\"]*\"/APP_VERSION = \"$NEW_VERSION\"/" "$SRC_CONSTANTS_FILE"
+    else
+        sed -i "s/APP_VERSION = \"[^\"]*\"/APP_VERSION = \"$NEW_VERSION\"/" "$SRC_CONSTANTS_FILE"
+    fi
+    echo -e "${GREEN}✓ Updated src/constants.ts${NC}"
+fi
+
+# Update server/version.ts (SERVER_VERSION)
+SERVER_VERSION_FILE="$PROJECT_ROOT/server/version.ts"
+if [ -f "$SERVER_VERSION_FILE" ]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        sed -i '' "s/SERVER_VERSION = '[^']*'/SERVER_VERSION = '$NEW_VERSION'/" "$SERVER_VERSION_FILE"
+    else
+        sed -i "s/SERVER_VERSION = '[^']*'/SERVER_VERSION = '$NEW_VERSION'/" "$SERVER_VERSION_FILE"
+    fi
+    echo -e "${GREEN}✓ Updated server/version.ts${NC}"
+fi
+
 echo ""
 echo -e "${GREEN}================================================${NC}"
 echo -e "${GREEN}Version updated successfully to $NEW_VERSION!${NC}"

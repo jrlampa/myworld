@@ -4,13 +4,14 @@ Responsabilidade: elementos cartográficos do DXF (grade de coordenadas,
 legenda, carimbo/title block, norte e escala).
 """
 import math
-import datetime
 import numpy as np
 from ezdxf.enums import TextEntityAlignment
 try:
     from .utils.logger import Logger
+    from .dxf_abnt import ABNTTitleBlock, compute_abnt_scale, format_abnt_scale, select_paper_size, ABNT_PAPER_SIZES
 except (ImportError, ValueError):
     from utils.logger import Logger
+    from dxf_abnt import ABNTTitleBlock, compute_abnt_scale, format_abnt_scale, select_paper_size, ABNT_PAPER_SIZES
 
 
 class DXFCartographyMixin:
@@ -105,65 +106,77 @@ class DXFCartographyMixin:
             ).set_placement((start_x + 12, start_y + y_offset - 1))
             y_offset -= 8
 
-    def add_title_block(self, client="N/A", project="Projeto Urbanístico", designer="sisRUA AI"):
-        """Cria carimbo profissional A3 no Paper Space."""
+    def add_title_block(
+        self,
+        client: str = "N/A",
+        project: str = "Projeto Urbanístico",
+        designer: str = "sisRUA AI",
+        numero_desenho: str = "SR-0001",
+        verificado_por: str = "",
+        aprovado_por: str = "",
+        revisao: str = "A",
+        drawing_extent_m: float = 500.0,
+    ):
+        """Cria carimbo ABNT NBR 10582 no Paper Space com escala ABNT NBR 8196."""
         layout = self.doc.layout('Layout1')
-        width, height = 420, 297
 
+        # Seleciona formato de papel conforme ABNT NBR 13142
+        paper_code = select_paper_size(drawing_extent_m)
+        width, height = ABNT_PAPER_SIZES[paper_code]
+
+        # Borda externa da folha
         layout.add_lwpolyline(
             [(0, 0), (width, 0), (width, height), (0, height)],
             close=True,
             dxfattribs={'layer': 'QUADRO', 'lineweight': 50}
         )
 
+        # Viewport — posiciona o modelo no papel
         cx = (self.bounds[0] + self.bounds[2]) / 2
         cy = (self.bounds[1] + self.bounds[3]) / 2
         view_x = cx - self.diff_x
         view_y = cy - self.diff_y
 
-        v_height = max(abs(self.bounds[2] - self.bounds[0]), abs(self.bounds[3] - self.bounds[1])) * 1.2
-        if v_height < 50:
-            v_height = 200
+        tb_h = ABNTTitleBlock.BLOCK_HEIGHT
+        viewport_h = height - tb_h - 20.0
+        viewport_w = width - 20.0
 
-        vp = layout.add_viewport(
-            center=(width / 2, height / 2 + 20),
-            size=(width - 40, height - 80),
-            view_center_point=(view_x, view_y),
-            view_height=200
+        # Calcula escala ABNT NBR 8196
+        model_extent = max(
+            abs(self.bounds[2] - self.bounds[0]),
+            abs(self.bounds[3] - self.bounds[1]),
         )
-        vp.dxf.status = 1
+        if model_extent < 1.0:
+            model_extent = drawing_extent_m * 2.0
+        scale_denom = compute_abnt_scale(model_extent, min(viewport_w, viewport_h))
+        scale_str = format_abnt_scale(scale_denom)
 
-        cb_x, cb_y = width - 185, 0
-        cb_w, cb_h = 185, 50
-
-        layout.add_lwpolyline(
-            [(cb_x, cb_y), (cb_x + cb_w, cb_y), (cb_x + cb_w, cb_y + cb_h), (cb_x, cb_y + cb_h)],
-            close=True,
-            dxfattribs={'layer': 'QUADRO'}
-        )
-        layout.add_line((cb_x, cb_y + 25), (cb_x + cb_w, cb_y + 25), dxfattribs={'layer': 'QUADRO'})
-        layout.add_line((cb_x + 100, cb_y), (cb_x + 100, cb_y + 25), dxfattribs={'layer': 'QUADRO'})
-
-        date_str = datetime.date.today().strftime("%d/%m/%Y")
-        p_name = str(project).upper()
-        c_name = str(client)
-        d_name = str(designer)
-
-        def add_layout_text(text, pos, height, style='PRO_STYLE'):
-            t = layout.add_text(text, dxfattribs={'height': height, 'style': style})
-            t.dxf.halign = 0
-            t.dxf.valign = 0
-            t.dxf.insert = pos
-            t.dxf.align_point = pos
-            return t
-
-        add_layout_text(f"PROJETO: {p_name[:50]}", (cb_x + 5, cb_y + 35), 4)
-        add_layout_text(f"CLIENTE: {c_name[:50]}", (cb_x + 5, cb_y + 15), 3)
-        add_layout_text(f"DATA: {date_str}", (cb_x + 105, cb_y + 15), 2.5)
-        add_layout_text("ENGINE: sisRUA Unified v1.5", (cb_x + 105, cb_y + 5), 2)
-        add_layout_text(f"RESPONSÁVEL: {d_name[:50]}", (cb_x + 5, cb_y + 5), 2.5)
+        # view_height é o tamanho real do modelo que deve caber no viewport
+        view_h = (viewport_h / 1000.0) * scale_denom  # mm → m convertido para escala
 
         try:
-            layout.add_blockref('LOGO', (cb_x + cb_w - 20, cb_y + cb_h - 10))
-        except Exception as e:
-            Logger.error(f"Erro ao adicionar referência de bloco LOGO: {e}")
+            vp = layout.add_viewport(
+                center=(width / 2, (height + tb_h) / 2),
+                size=(viewport_w, viewport_h),
+                view_center_point=(view_x, view_y),
+                view_height=max(view_h, 50.0),
+            )
+            vp.dxf.status = 1
+        except Exception as exc:
+            Logger.error(f"Erro ao criar viewport ABNT: {exc}")
+
+        # Posiciona o carimbo ABNT no canto inferior direito
+        cb_x = width - ABNTTitleBlock.BLOCK_WIDTH
+        cb_y = 0.0
+
+        title_block = ABNTTitleBlock(
+            empresa=client,
+            projeto=str(project).upper(),
+            numero_desenho=numero_desenho,
+            escala=scale_str,
+            elaborado_por=designer,
+            verificado_por=verificado_por,
+            aprovado_por=aprovado_por,
+            revisao=revisao,
+        )
+        title_block.draw_on_layout(layout, cb_x, cb_y)

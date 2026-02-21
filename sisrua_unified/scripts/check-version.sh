@@ -61,5 +61,23 @@ else
     exit 1
 fi
 
+# Check src/constants.ts APP_VERSION
+SRC_CONSTANTS_VERSION=$(grep "APP_VERSION = " "$PROJECT_ROOT/src/constants.ts" | sed 's/.*APP_VERSION = "\(.*\)".*/\1/')
+if [ "$SRC_CONSTANTS_VERSION" = "$EXPECTED_VERSION" ]; then
+    echo "src/constants.ts: ${GREEN}$SRC_CONSTANTS_VERSION ✓${NC}"
+else
+    echo "src/constants.ts: ${RED}$SRC_CONSTANTS_VERSION ✗ (expected $EXPECTED_VERSION)${NC}"
+    exit 1
+fi
+
+# Check server/version.ts SERVER_VERSION
+SERVER_VERSION=$(grep "SERVER_VERSION = " "$PROJECT_ROOT/server/version.ts" | sed "s/.*SERVER_VERSION = '\(.*\)'.*/\1/")
+if [ "$SERVER_VERSION" = "$EXPECTED_VERSION" ]; then
+    echo "server/version.ts: ${GREEN}$SERVER_VERSION ✓${NC}"
+else
+    echo "server/version.ts: ${RED}$SERVER_VERSION ✗ (expected $EXPECTED_VERSION)${NC}"
+    exit 1
+fi
+
 echo ""
 echo -e "${GREEN}✅ All versions are consistent!${NC}"
