@@ -197,6 +197,11 @@ Todos os testes de integração DXF **devem** usar `TEST_LAT=-22.15018, TEST_LON
 - 3 novos arquivos de teste: `analyticsRoutes.test.ts` (integração HTTP endpoints), `dnitService.test.ts` (16 testes, 100% cobertura), `incraService.test.ts` (14 testes, 100% cobertura)
 - Backend: 117 → 149 testes; cobertura 94.79% → 95.37% statements
 
+### 2026-02 – Cobertura expandida para serviços sem testes
+- 3 novos arquivos de teste: `dxfCleanupService.test.ts` (8 testes, 95% statements), `jobStatusService.test.ts` (12 testes, 89% statements), `analysisService.test.ts` (10 testes, 100% cobertura)
+- `analysisService.ts` agora com 100% de cobertura (statements, branches, funcs, lines)
+- Backend: 157 → 187 testes
+
 ---
 
 ## 10. Checklist de Conformidade
