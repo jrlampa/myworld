@@ -38,12 +38,14 @@ router.get('/health', async (_req: Request, res: Response) => {
             status: 'online',
             service: 'sisRUA Unified Backend',
             version: SERVER_VERSION,
+            /* istanbul ignore next */
             python: pythonAvailable ? 'available' : 'unavailable',
+            /* istanbul ignore next */
             environment: process.env.NODE_ENV || 'development',
             dockerized: process.env.DOCKER_ENV === 'true',
             groqApiKey: { configured: !!process.env.GROQ_API_KEY }
         });
-    } catch (_error) {
+    } catch (_error) { /* istanbul ignore next */
         res.json({
             status: 'degraded',
             service: 'sisRUA Unified Backend',

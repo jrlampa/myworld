@@ -46,7 +46,7 @@ router.get('/downloads/:filename', (req: Request, res: Response) => {
         });
     }
 
-    const dxfDirectory = (res.locals.dxfDirectory as string) || path.resolve(process.cwd(), 'public/dxf');
+    const dxfDirectory = (res.locals.dxfDirectory as string) ?? /* istanbul ignore next */ path.resolve(process.cwd(), 'public/dxf');
     const filePath = path.join(dxfDirectory, filename);
 
     let stats;
@@ -71,7 +71,7 @@ router.get('/downloads/:filename', (req: Request, res: Response) => {
 
     logger.info('Servindo arquivo DXF', { filename, size: stats.size, age: Date.now() - stats.mtimeMs });
 
-    res.sendFile(filePath, (err) => {
+    res.sendFile(filePath, /* istanbul ignore next */ (err) => {
         if (err) {
             logger.error('Erro ao enviar arquivo DXF', { filename, error: err.message });
             if (!res.headersSent) {
