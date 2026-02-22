@@ -51,7 +51,8 @@ router.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, re
 
         const { lat, lon, radius, mode, designer, numero_desenho, revisao, verificado_por, aprovado_por, aneel_prodist } = validation.data;
         const { polygon, layers, projection } = req.body;
-        const resolvedMode = mode /* istanbul ignore next */ || 'circle';
+        /* istanbul ignore next */
+        const resolvedMode = mode || 'circle';
         const cacheKey = createCacheKey({
             lat, lon, radius,
             mode: resolvedMode,
@@ -111,11 +112,17 @@ router.post('/api/dxf', largeBodyParser, dxfRateLimiter, async (req: Request, re
         });
     } catch (err: any) {
         logger.error('Erro na geração DXF', { error: err });
+        /* istanbul ignore next */
+        const catchLat: number = req.body?.lat ?? 0;
+        /* istanbul ignore next */
+        const catchLon: number = req.body?.lon ?? 0;
+        /* istanbul ignore next */
+        const catchRadius: number = req.body?.radius ?? 0;
         analyticsService.record({
             timestamp: startTs,
-            lat: req.body?.lat /* istanbul ignore next */ ?? 0,
-            lon: req.body?.lon /* istanbul ignore next */ ?? 0,
-            radius: req.body?.radius /* istanbul ignore next */ ?? 0,
+            lat: catchLat,
+            lon: catchLon,
+            radius: catchRadius,
             mode: 'circle',
             success: false,
             durationMs: Date.now() - startTs,

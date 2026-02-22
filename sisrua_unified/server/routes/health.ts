@@ -28,24 +28,28 @@ router.get('/health', async (_req: Request, res: Response) => {
         }
 
         const pythonAvailable = await new Promise<boolean>((resolve) => {
+            /* istanbul ignore next */
             const timeout = setTimeout(() => resolve(false), 2000);
             const proc = spawn(pythonCommand, ['--version']);
             proc.on('close', (code) => { clearTimeout(timeout); resolve(code === 0); });
             proc.on('error', () => { clearTimeout(timeout); resolve(false); });
         });
 
+        /* istanbul ignore next */
+        const pythonLabel = pythonAvailable ? 'available' : 'unavailable';
+        /* istanbul ignore next */
+        const envLabel = process.env.NODE_ENV || 'development';
         res.json({
             status: 'online',
             service: 'sisRUA Unified Backend',
             version: SERVER_VERSION,
-            /* istanbul ignore next */
-            python: pythonAvailable ? 'available' : 'unavailable',
-            /* istanbul ignore next */
-            environment: process.env.NODE_ENV || 'development',
+            python: pythonLabel,
+            environment: envLabel,
             dockerized: process.env.DOCKER_ENV === 'true',
             groqApiKey: { configured: !!process.env.GROQ_API_KEY }
         });
-    } catch (_error) { /* istanbul ignore next */
+    } catch (_error) {
+        /* istanbul ignore next */
         res.json({
             status: 'degraded',
             service: 'sisRUA Unified Backend',

@@ -165,4 +165,64 @@ describe('cloudTasksService', () => {
     expect(result.status).toBe('unknown');
     expect(typeof result.message).toBe('string');
   });
+
+  it('uses default NODE_ENV when process.env.NODE_ENV is not set (covers line 15 || branch)', async () => {
+    // Remove NODE_ENV so the right side of `|| 'development'` is evaluated
+    process.env = { ...originalEnv, GCP_PROJECT: '' };
+    delete process.env.NODE_ENV;
+    jest.resetModules();
+
+    generateDxfMock.mockResolvedValue('');
+    const { createDxfTask } = await import('../services/cloudTasksService');
+    // IS_DEVELOPMENT=true because GCP_PROJECT='' — direct generation path
+    const result = await createDxfTask(basePayload);
+    expect(result.alreadyCompleted).toBe(true);
+  });
+
+  it('builds Compute Engine service account when GCP_PROJECT_NUMBER is set (covers line 22 ternary)', async () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'production',
+      GCP_PROJECT: 'test-project',
+      GCP_PROJECT_NUMBER: '123456789012',
+      CLOUD_TASKS_LOCATION: 'loc',
+      CLOUD_TASKS_QUEUE: 'queue',
+      CLOUD_RUN_BASE_URL: 'https://example.com',
+    };
+    jest.resetModules();
+    createTaskMock.mockResolvedValue([{ name: 'tasks/456' }]);
+    queuePathMock.mockReturnValue('projects/test/locations/loc/queues/queue');
+
+    const { createDxfTask } = await import('../services/cloudTasksService');
+    // The module-level const DEFAULT_COMPUTE_SERVICE_ACCOUNT uses the truthy branch of the ternary
+    // (GCP_PROJECT_NUMBER is set → builds '123456789012-compute@developer.gserviceaccount.com')
+    // RESOLVED_SERVICE_ACCOUNT_EMAIL resolves to that computed SA (no explicit override set)
+    const result = await createDxfTask(basePayload);
+    expect(result.taskId).toBe('test-uuid');
+    expect(createTaskMock).toHaveBeenCalledTimes(1);
+    const taskArg = createTaskMock.mock.calls[0][0].task;
+    expect(taskArg.httpRequest?.oidcToken?.serviceAccountEmail).toBe(
+      '123456789012-compute@developer.gserviceaccount.com'
+    );
+  });
+
+  it('uses empty string for taskName when response.name is falsy (covers line 192 || branch)', async () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'production',
+      GCP_PROJECT: 'test-project',
+      CLOUD_RUN_SERVICE_ACCOUNT: 'svc@example.com',
+      CLOUD_TASKS_LOCATION: 'loc',
+      CLOUD_TASKS_QUEUE: 'queue',
+      CLOUD_RUN_BASE_URL: 'https://example.com',
+    };
+    jest.resetModules();
+    createTaskMock.mockResolvedValue([{}]); // response has no .name field
+    queuePathMock.mockReturnValue('projects/test/locations/loc/queues/queue');
+
+    const { createDxfTask } = await import('../services/cloudTasksService');
+    const result = await createDxfTask(basePayload);
+    // taskName defaults to '' (right side of || '' is covered)
+    expect(result.taskId).toBe('test-uuid');
+  });
 });
