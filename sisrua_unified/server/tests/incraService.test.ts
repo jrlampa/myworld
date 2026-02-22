@@ -126,6 +126,19 @@ describe('incraService', () => {
             expect(result[0].codigo).toBe('incra.42');
         });
 
+        it('deve retornar codigo vazio quando todas as propriedades de código são nulas (linha 103 — fallback \'\')', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () =>
+                    makeFeatureCollection([{ id: undefined as any, properties: {} }]),
+            });
+
+            const result = await getParcelasCertificadas(TEST_LAT, TEST_LON, TEST_RADIUS);
+
+            // Todos os campos codigo são null/undefined → fallback para ''
+            expect(result[0].codigo).toBe('');
+        });
+
         it('deve usar raio padrão de 1000m quando não especificado', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -224,6 +237,20 @@ describe('incraService', () => {
 
             expect(result.municipios).toHaveLength(1);
             expect(result.municipios[0]).toBe('Muriaé');
+        });
+
+        it('deve usar raio padrão de 1000m em getParcelasSummary quando não especificado', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: async () => makeFeatureCollection([
+                    { properties: { parcela_codigo: 'X1', area_ha: 5.0, municipio: 'Muriaé' } },
+                ]),
+            });
+
+            const result = await getParcelasSummary(TEST_LAT, TEST_LON);
+
+            expect(result.total).toBe(1);
+            expect(result.areaTotal_ha).toBe(5.0);
         });
     });
 });

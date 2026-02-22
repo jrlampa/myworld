@@ -109,4 +109,53 @@ describe('useKmlImport', () => {
       expect(mockOnError).toHaveBeenCalled();
     });
   });
+
+  it('non-Error rejection — uses "KML import failed" fallback message', async () => {
+    // Covers `error instanceof Error ? error.message : 'KML import failed'` right branch
+    (parseKml as ReturnType<typeof vi.fn>).mockRejectedValueOnce('ABORT_ERR');
+
+    const mockFile = new File(['<kml></kml>'], 'test.kml', {
+      type: 'application/vnd.google-earth.kml+xml'
+    });
+
+    const { result } = renderHook(() =>
+      useKmlImport({
+        onImportSuccess: mockOnImportSuccess,
+        onError: mockOnError
+      })
+    );
+
+    await act(async () => {
+      await result.current.importKml(mockFile);
+    });
+
+    await waitFor(() => {
+      expect(mockOnError).toHaveBeenCalledWith('KML import failed');
+    });
+  });
+
+  it('null result from parseKml — triggers !points branch (empty guard)', async () => {
+    // parseKml resolves with null → `!points` is true → throws 'No valid points found'
+    // Covers the short-circuit left branch of `if (!points || points.length === 0)`
+    (parseKml as ReturnType<typeof vi.fn>).mockResolvedValueOnce(null);
+
+    const mockFile = new File(['<kml></kml>'], 'null.kml', {
+      type: 'application/vnd.google-earth.kml+xml'
+    });
+
+    const { result } = renderHook(() =>
+      useKmlImport({
+        onImportSuccess: mockOnImportSuccess,
+        onError: mockOnError
+      })
+    );
+
+    await act(async () => {
+      await result.current.importKml(mockFile);
+    });
+
+    await waitFor(() => {
+      expect(mockOnError).toHaveBeenCalledWith('No valid points found in KML file');
+    });
+  });
 });

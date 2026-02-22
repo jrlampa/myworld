@@ -69,8 +69,9 @@ class AnalyticsService {
             this.events.shift();
         }
         if (USE_FIRESTORE) {
-            this.persistToFirestore(event).catch(() => {
-                // Erro já logado em persistToFirestore
+            this.persistToFirestore(event).catch(/* istanbul ignore next */ () => {
+                // Error already logged in persistToFirestore — its internal try/catch
+                // prevents any rejection from escaping; this .catch() is defensive only
             });
         }
     }

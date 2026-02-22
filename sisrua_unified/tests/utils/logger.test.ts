@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Logger from '../../src/utils/logger';
 
 describe('Logger', () => {
@@ -101,6 +101,112 @@ describe('Logger', () => {
       const logs = Logger.getLogs();
       
       expect(logs[0].timestamp).toBeInstanceOf(Date);
+    });
+  });
+
+  describe('development mode (NODE_ENV=development) — lines 40-50, 67-68', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    });
+
+    it('should call console.log for info in development mode (lines 40-44)', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      Logger.info('Dev info message');
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[INFO]'),
+        'Dev info message'
+      );
+    });
+
+    it('should call console.warn for warn in development mode (lines 42-43)', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      Logger.warn('Dev warn message');
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[WARN]'),
+        'Dev warn message'
+      );
+    });
+
+    it('should call console.error for error in development mode (line 41)', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      Logger.error('Dev error message');
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[ERROR]'),
+        'Dev error message'
+      );
+    });
+
+    it('should include extra data in console when provided (lines 47-48)', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const extra = { key: 'value' };
+
+      Logger.info('Info with data', extra);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[INFO]'),
+        'Info with data',
+        extra
+      );
+    });
+
+    it('should log debug in development mode (lines 67-68)', () => {
+      vi.stubEnv('NODE_ENV', 'development');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      Logger.debug('Debug message');
+
+      const logs = Logger.getLogs();
+      const debugLogs = logs.filter(l => l.level === 'debug');
+      expect(debugLogs).toHaveLength(1);
+      expect(consoleSpy).toHaveBeenCalled();
+    });
+
+    it('should not log debug outside development mode', () => {
+      vi.stubEnv('NODE_ENV', 'test');
+      Logger.clearLogs();
+
+      Logger.debug('Ignored message');
+
+      const logs = Logger.getLogs();
+      const debugLogs = logs.filter(l => l.level === 'debug');
+      expect(debugLogs).toHaveLength(0);
+    });
+  });
+
+  describe('isDevelopment() exception fallback (lines 15-16)', () => {
+    it('falls back to true (development) when process.env access throws', () => {
+      const envDescriptor = Object.getOwnPropertyDescriptor(process, 'env');
+      // Make every property access on process.env throw
+      const throwingProxy = new Proxy({} as NodeJS.ProcessEnv, {
+        get(_target: object, _prop: string | symbol) { throw new Error('process.env unavailable'); }
+      });
+      Object.defineProperty(process, 'env', {
+        get: () => throwingProxy,
+        configurable: true
+      });
+
+      // isDevelopment() catches the error and returns true (dev mode)
+      // Logger.info must not throw and must store the entry
+      Logger.clearLogs();
+      expect(() => Logger.info('fallback test')).not.toThrow();
+      const logs = Logger.getLogs();
+      expect(logs.some(l => l.message === 'fallback test')).toBe(true);
+
+      // Restore original process.env
+      if (envDescriptor) {
+        Object.defineProperty(process, 'env', envDescriptor);
+      }
     });
   });
 });

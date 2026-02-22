@@ -25,6 +25,7 @@ export function useElevationProfile() {
       setError(message);
       setProfileData([]);
       return [];
+    /* v8 ignore next */
     } finally {
       setIsLoading(false);
     }

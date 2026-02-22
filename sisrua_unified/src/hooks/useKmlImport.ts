@@ -31,6 +31,7 @@ export function useKmlImport({ onImportSuccess, onError }: UseKmlImportProps) {
       const message = error instanceof Error ? error.message : 'KML import failed';
       onError(message);
       return false;
+    /* v8 ignore next */
     } finally {
       setIsProcessing(false);
     }

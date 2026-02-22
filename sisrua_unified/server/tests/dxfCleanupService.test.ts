@@ -156,5 +156,93 @@ const PAST_TTL_MS = 62 * 60 * 1000;
             });
             jest.useRealTimers();
         });
+
+        it('deve ser idempotente: dois arquivos distintos agendados corretamente', () => {
+            jest.useFakeTimers();
+            jest.isolateModules(() => {
+                const svc = require('../services/dxfCleanupService');
+                const os = require('os');
+                const path = require('path');
+                const fsReal = require('fs');
+                const ts = Date.now();
+
+                // Dois arquivos distintos — verifica que o interval não é duplicado
+                // (se fosse duplicado, cleanup correria duas vezes mas sem efeito colateral negativo;
+                // o ponto central é que ambos os arquivos são corretamente eliminados)
+                const file1 = path.join(os.tmpdir(), `test_idem_A_${ts}.dxf`);
+                const file2 = path.join(os.tmpdir(), `test_idem_B_${ts}.dxf`);
+                fsReal.writeFileSync(file1, 'DXF A');
+                fsReal.writeFileSync(file2, 'DXF B');
+
+                // Duas chamadas a scheduleDxfDeletion disparam startCleanupInterval internamente;
+                // a segunda deve ser no-op (guard line 89)
+                svc.scheduleDxfDeletion(file1);
+                svc.scheduleDxfDeletion(file2);
+
+                jest.advanceTimersByTime(62 * 60 * 1000);
+
+                // Ambos os arquivos devem ser deletados exatamente uma vez
+                expect(fsReal.existsSync(file1)).toBe(false);
+                expect(fsReal.existsSync(file2)).toBe(false);
+
+                svc.stopDxfCleanup();
+            });
+            jest.useRealTimers();
+        });
+    });
+
+    describe('TTL configuration branches (lines 10-12)', () => {
+        const origEnv = process.env;
+
+        afterEach(() => {
+            process.env = origEnv;
+            jest.useRealTimers();
+        });
+
+        it('usa DXF_TTL_MS do env quando definido (branch parseInt — linha 11)', () => {
+            jest.useFakeTimers();
+            jest.isolateModules(() => {
+                // Set a custom TTL of 5 seconds (5000 ms)
+                process.env = { ...origEnv, DXF_TTL_MS: '5000' };
+                const svc = require('../services/dxfCleanupService');
+                const os = require('os');
+                const pathMod = require('path');
+                const fsReal = require('fs');
+
+                const filePath = pathMod.join(os.tmpdir(), `test_custom_ttl_${Date.now()}.dxf`);
+                fsReal.writeFileSync(filePath, 'DXF');
+
+                svc.scheduleDxfDeletion(filePath);
+
+                // Advance past both the custom TTL (5 s) and CLEANUP_CHECK_INTERVAL (2 min)
+                // Minimum needed: 5 s TTL + 2 min interval = ~125 s; 3 min (180 s) provides margin
+                jest.advanceTimersByTime(3 * 60 * 1000);
+
+                expect(fsReal.existsSync(filePath)).toBe(false);
+                svc.stopDxfCleanup();
+            });
+        });
+
+        it('usa DEFAULT_TTL_PROD quando NODE_ENV=production (branch linha 12)', () => {
+            jest.useFakeTimers();
+            jest.isolateModules(() => {
+                process.env = { ...origEnv, NODE_ENV: 'production', DXF_TTL_MS: '' };
+                const svc = require('../services/dxfCleanupService');
+                const os = require('os');
+                const pathMod = require('path');
+                const fsReal = require('fs');
+
+                const filePath = pathMod.join(os.tmpdir(), `test_prod_ttl_${Date.now()}.dxf`);
+                fsReal.writeFileSync(filePath, 'DXF');
+
+                svc.scheduleDxfDeletion(filePath);
+
+                // Advance past 62 min (> DEFAULT_TTL_PROD = 60 min) + CLEANUP_CHECK_INTERVAL (2 min)
+                jest.advanceTimersByTime(65 * 60 * 1000);
+
+                expect(fsReal.existsSync(filePath)).toBe(false);
+                svc.stopDxfCleanup();
+            });
+        });
     });
 });

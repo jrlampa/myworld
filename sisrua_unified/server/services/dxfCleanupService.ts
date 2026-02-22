@@ -22,9 +22,12 @@ const scheduledDeletions = new Map<string, ScheduledFile>();
 let cleanupIntervalId: NodeJS.Timeout | null = null;
 
 /**
- * Schedule a DXF file for deletion after 10 minutes
+ * Schedule a DXF file for deletion after TTL.
+ * Starts the cleanup interval lazily on first call (idempotent).
  */
 export function scheduleDxfDeletion(filePath: string): void {
+    startCleanupInterval();
+
     const deleteAt = Date.now() + DXF_FILE_TTL_MS;
     
     scheduledDeletions.set(filePath, {
@@ -116,6 +119,3 @@ export function stopDxfCleanup(): void {
 export function triggerCleanupNow(): void {
     performCleanup();
 }
-
-// Start cleanup interval on module load
-startCleanupInterval();

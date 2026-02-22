@@ -119,6 +119,25 @@ describe('GeocodingService', () => {
       expect(result?.lng).toBeLessThan(0);
     });
   });
+
+  describe('parseUtm — zona inválida (linhas 47-48)', () => {
+    it('deve retornar null para zona 0 (zone < 1)', async () => {
+      // O regex (\d{1,2}) casa "0", mas zone < 1 deve invalidar
+      const result = await GeocodingService.resolveLocation('0K 788547 7634925');
+      expect(result).toBeNull();
+    });
+
+    it('deve retornar null para zona 61 (zone > 60)', async () => {
+      // O regex \d{1,2} casa "61", mas zone > 60 deve invalidar
+      const result = await GeocodingService.resolveLocation('61K 788547 7634925');
+      expect(result).toBeNull();
+    });
+
+    it('deve retornar null para zona 99 (zone > 60)', async () => {
+      const result = await GeocodingService.resolveLocation('99K 788547 7634925');
+      expect(result).toBeNull();
+    });
+  });
 });
 
 

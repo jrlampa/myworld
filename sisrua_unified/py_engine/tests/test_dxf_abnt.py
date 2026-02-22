@@ -224,3 +224,40 @@ class TestABNTTitleBlock:
         block.draw_on_layout(layout, origin_x=0.0, origin_y=0.0)
         entities = list(layout)
         assert len(entities) > 0
+
+
+# ─── Casos não cobertos: linha 75 (maior escala) e linhas 183-184 (draw exception) ───
+
+class TestComputeAbntScaleFallback:
+    """Cobre a linha 75: return ABNT_STANDARD_SCALES[-1] quando nenhum candidato cabe."""
+
+    def test_very_large_extent_returns_largest_scale(self):
+        """Extensão enorme (100km) com viewport pequeno (1mm) excede todas as escalas padrão."""
+        # raw_scale = (100000m * 1000mm/m) / 1mm = 100_000_000 → maior que 100000
+        result = compute_abnt_scale(drawing_extent_m=100_000.0, viewport_mm=1.0)
+        assert result == ABNT_STANDARD_SCALES[-1]  # 100000
+
+
+class TestABNTTitleBlockDrawException:
+    """Cobre linhas 183-184: except Exception ao desenhar carimbo."""
+
+    def _make_block(self, **kwargs):
+        defaults = dict(
+            empresa='SISRUA TESTES', projeto='Cobertura draw exception',
+            numero_desenho='SR-001', revisao='A', elaborado_por='Dev',
+            verificado_por='QA', aprovado_por='TL',
+        )
+        defaults.update(kwargs)
+        return ABNTTitleBlock(**defaults)
+
+    def test_draw_exception_does_not_propagate(self):
+        """Se _draw_border() levanta exceção, draw_on_layout captura silenciosamente."""
+        import ezdxf
+        from unittest.mock import patch
+        doc = ezdxf.new('R2013')
+        layout = doc.layout('Layout1')
+        block = self._make_block()
+        # Patch _draw_border to raise
+        with patch.object(block, '_draw_border', side_effect=RuntimeError("border fail")):
+            # Não deve propagar a exceção
+            block.draw_on_layout(layout, origin_x=0.0, origin_y=0.0)

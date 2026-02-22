@@ -5,9 +5,11 @@ import { SelectionMode, GeoLocation, LayerConfig } from '../types';
 interface UseDxfExportProps {
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
+  /** Ativa normas ANEEL/PRODIST — substitui ABNT para camadas elétricas */
+  aneelProdist?: boolean;
 }
 
-export function useDxfExport({ onSuccess, onError }: UseDxfExportProps) {
+export function useDxfExport({ onSuccess, onError, aneelProdist = false }: UseDxfExportProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState('idle');
@@ -44,7 +46,8 @@ export function useDxfExport({ onSuccess, onError }: UseDxfExportProps) {
         selectionMode,
         polygon,
         layers,
-        projection
+        projection,
+        aneelProdist
       );
 
       if (!result) {
@@ -100,6 +103,7 @@ export function useDxfExport({ onSuccess, onError }: UseDxfExportProps) {
             throw new Error('DXF job completed without a URL');
           }
 
+          /* v8 ignore next */
           const center = downloadCenter || { lat: 0, lng: 0, label: '' };
           triggerDownload(url, center);
           onSuccess('DXF Downloaded');

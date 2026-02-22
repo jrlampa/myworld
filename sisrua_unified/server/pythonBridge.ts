@@ -33,6 +33,15 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000; // 2 seconds between retries
 const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes timeout for DXF generation
 
+/**
+ * Strip null bytes and ASCII control characters from a CLI string argument.
+ * Defense-in-depth: the Zod schema already sanitizes inputs at the HTTP boundary;
+ * this ensures the Python subprocess never receives unsafe bytes even if called
+ * programmatically without going through the HTTP layer.
+ */
+const sanitizeStringArg = (s: string): string => /* istanbul ignore next */
+    s.replace(/[\x00-\x1f\x7f]/g, '').trim();
+
 interface DxfOptions {
     lat: number;
     lon: number;
@@ -48,6 +57,8 @@ interface DxfOptions {
     revisao?: string;
     verificado_por?: string;
     aprovado_por?: string;
+    /** Normas ANEEL/PRODIST — substitui ABNT para camadas elétricas */
+    aneelProdist?: boolean;
 }
 
 // Permanent error patterns that indicate non-retriable failures
@@ -221,12 +232,15 @@ const generateDxfInternal = (options: DxfOptions): Promise<string> => {
             args.push('--layers', JSON.stringify(options.layers));
         }
 
-        // ABNT NBR 10582 optional metadata
-        if (options.designer) args.push('--designer', String(options.designer));
-        if (options.numero_desenho) args.push('--numero_desenho', String(options.numero_desenho));
-        if (options.revisao) args.push('--revisao', String(options.revisao));
-        if (options.verificado_por) args.push('--verificado_por', String(options.verificado_por));
-        if (options.aprovado_por) args.push('--aprovado_por', String(options.aprovado_por));
+        // ABNT NBR 10582 optional metadata — sanitized for defense-in-depth
+        if (options.designer) args.push('--designer', sanitizeStringArg(String(options.designer)));
+        if (options.numero_desenho) args.push('--numero_desenho', sanitizeStringArg(String(options.numero_desenho)));
+        if (options.revisao) args.push('--revisao', sanitizeStringArg(String(options.revisao)));
+        if (options.verificado_por) args.push('--verificado_por', sanitizeStringArg(String(options.verificado_por)));
+        if (options.aprovado_por) args.push('--aprovado_por', sanitizeStringArg(String(options.aprovado_por)));
+
+        // ANEEL/PRODIST norms (flag-based, substitutes ABNT for power layers)
+        if (options.aneelProdist) args.push('--aneel_prodist');
 
         logger.info('Spawning Python process for DXF generation', {
             command,

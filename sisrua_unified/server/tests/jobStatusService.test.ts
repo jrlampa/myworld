@@ -177,5 +177,26 @@ describe('JobStatusService', () => {
                 svc.stopCleanupInterval();
             });
         });
+
+        it('startCleanupInterval é idempotente: segunda chamada não duplica o intervalo', () => {
+            jest.useFakeTimers();
+            jest.isolateModules(() => {
+                const svc = require('../services/jobStatusService');
+                const id1 = `idem-${Math.random()}`;
+                const id2 = `idem-${Math.random()}`;
+
+                // Primeira criação de job inicia o interval internamente
+                svc.createJob(id1);
+                // Segunda criação: startCleanupInterval é chamado novamente mas deve ser no-op
+                svc.createJob(id2);
+
+                // Ambos os jobs devem existir (sem efeitos colaterais de duplo interval)
+                expect(svc.getJob(id1)).not.toBeNull();
+                expect(svc.getJob(id2)).not.toBeNull();
+
+                svc.stopCleanupInterval();
+            });
+            jest.useRealTimers();
+        });
     });
 });

@@ -49,6 +49,7 @@ class DXFGenerator(DXFDrawingMixin, DXFCartographyMixin):
         self.msp = self.doc.modelspace()
         self.project_info = {}
         self._offset_initialized = False
+        self.aneel_prodist = False
 
     def add_features(self, gdf):
         """
@@ -82,6 +83,12 @@ class DXFGenerator(DXFDrawingMixin, DXFCartographyMixin):
     def determine_layer(self, tags, row):
         """Mapeia tags OSM para Camadas DXF."""
         if 'power' in tags and not pd.isna(tags['power']):
+            if self.aneel_prodist:
+                try:
+                    from dxf_aneel import get_aneel_layer
+                except (ImportError, ValueError):  # pragma: no cover
+                    from .dxf_aneel import get_aneel_layer
+                return get_aneel_layer(dict(tags))
             if tags['power'] in ['line', 'tower', 'substation']:
                 return 'INFRA_POWER_HV'
             return 'INFRA_POWER_LV'

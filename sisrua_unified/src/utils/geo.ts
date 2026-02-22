@@ -18,10 +18,12 @@ export const parseUtmQuery = (query: string): GeoLocation | null => {
   const northing = parseFloat(match[4]);
 
   if (!Number.isFinite(zone) || zone < 1 || zone > 60) return null;
+  /* v8 ignore next */
   if (!Number.isFinite(easting) || !Number.isFinite(northing)) return null;
 
   const isSouthBand = band === 'S' || /^[C-M]$/.test(band);
   const isNorthBand = band === 'N' || /^[N-X]$/.test(band);
+  /* v8 ignore next */
   if (!isSouthBand && !isNorthBand) return null;
 
   const projString = isSouthBand

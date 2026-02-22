@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import pandas as pd
 import osmnx as ox
 from shapely.geometry import Point
@@ -15,7 +16,7 @@ from utils.logger import Logger
 from utils.geo import sirgas2000_utm_epsg
 
 class OSMController:
-    def __init__(self, lat, lon, radius, output_file, layers_config, crs, export_format='dxf', selection_mode='circle', polygon=None):
+    def __init__(self, lat, lon, radius, output_file, layers_config, crs, export_format='dxf', selection_mode='circle', polygon=None, aneel_prodist=False):
         self.lat = lat
         self.lon = lon
         self.radius = radius
@@ -25,6 +26,7 @@ class OSMController:
         self.export_format = export_format.lower()
         self.selection_mode = selection_mode
         self.polygon = polygon
+        self.aneel_prodist = aneel_prodist
         self.project_metadata = {
             'client': 'CLIENTE PADRÃO',
             'project': 'EXTRACAO ESPACIAL'
@@ -33,6 +35,7 @@ class OSMController:
 
     def run(self):
         """Orchestrates the Osm2Dxf flow."""
+        t_start = time.time()
         Logger.info(f"OSM Audit & Export Starting (Format: {self.export_format})", progress=5)
         
         # 1. Prepare Layers
@@ -42,7 +45,9 @@ class OSMController:
 
         # 2. Fetch Features
         Logger.info("Step 1/5: Fetching OSM features...", progress=10)
+        t0 = time.time()
         gdf = self._fetch_features(tags)
+        Logger.timed("osm_fetch", time.time() - t0)
         if gdf is None or gdf.empty:
             Logger.info("No architectural features found in the specified area. Generating empty DXF.")
             dxf_gen = DXFGenerator(self.output_file)
@@ -57,7 +62,9 @@ class OSMController:
 
         # 3. Spatial GIS Audit (Authoritative Logic)
         Logger.info("Step 2/5: Running spatial audit...", progress=30)
+        t0 = time.time()
         analysis_gdf = self._run_audit(gdf)
+        Logger.timed("spatial_audit", time.time() - t0)
 
         # 4. Preview Data (GeoJSON)
         self._send_geojson_preview(gdf, analysis_gdf)
@@ -66,15 +73,26 @@ class OSMController:
         # AUTHORITATIVE FIX: Check if we want Georeferenced (Absolute) or Localized (0,0)
         use_georef = self.layers_config.get('georef', True)
         
-        Logger.info(f"Step 3/5: Initializing DXF Generation (Georef: {use_georef})...", progress=50)
+        Logger.info(f"Step 3/5: Initializing DXF Generation (Georef: {use_georef}, ANEEL: {self.aneel_prodist})...", progress=50)
         dxf_gen = DXFGenerator(self.output_file)
+        dxf_gen.aneel_prodist = self.aneel_prodist
+
+        if self.aneel_prodist:
+            try:
+                from dxf_aneel import setup_aneel_layers
+            except (ImportError, ValueError):  # pragma: no cover
+                from .dxf_aneel import setup_aneel_layers
+            setup_aneel_layers(dxf_gen.doc)
+            Logger.info("Normas ANEEL/PRODIST ativas: layers elétricos conforme concessionária (ABNT ignorada para estas camadas).")
         
         if use_georef:
             dxf_gen.diff_x = 0.0
             dxf_gen.diff_y = 0.0
             dxf_gen._offset_initialized = True
             
+        t0 = time.time()
         dxf_gen.add_features(gdf) # Features set the offset ONLY if not initialized above
+        Logger.timed("add_features", time.time() - t0)
 
         # 6. Terrain & Contours (Optional)
         if self.layers_config.get('terrain', False):
@@ -88,6 +106,7 @@ class OSMController:
         Logger.info("Step 5/5: Finalizing export package...", progress=90)
         dxf_gen.save()
         self._export_csv_metadata(gdf)
+        Logger.timed("total", time.time() - t_start)
         Logger.success(f"Audit Complete: Generated {self.output_file}")
 
     def _fetch_features(self, tags):
@@ -96,7 +115,7 @@ class OSMController:
                  return fetch_osm_data(self.lat, self.lon, self.radius, tags, crs=self.crs, polygon=self.polygon)
             return fetch_osm_data(self.lat, self.lon, self.radius, tags, crs=self.crs)
         except Exception as e:
-            Logger.error(f"OSM Fetch Error: {str(e)}")
+            Logger.exception("OSM Fetch Error", e)
             return None
 
     def _run_audit(self, gdf):
@@ -116,7 +135,7 @@ class OSMController:
             Logger.info(f"Spatial Audit: {audit_summary['violations']} violations detected.")
             return analysis_gdf
         except Exception as se:
-            Logger.error(f"Spatial Audit internal failure: {se}")
+            Logger.exception("Spatial Audit internal failure", se)
             return None
 
     def _process_terrain(self, gdf, dxf_gen):
@@ -145,7 +164,7 @@ class OSMController:
                 if self.layers_config.get('contours', False):
                     self._add_contours(grid_rows, dxf_gen)
         except Exception as e:
-            Logger.error(f"Terrain submodule failure: {str(e)}")
+            Logger.exception("Terrain submodule failure", e)
 
     def _add_contours(self, grid_rows, dxf_gen):
         try:
@@ -155,7 +174,7 @@ class OSMController:
                 dxf_gen.add_contour_lines(contours)
                 Logger.info(f"Integrated {len(contours)} contour lines.")
         except Exception as ce:
-            Logger.error(f"Contour math error: {ce}")
+            Logger.exception("Contour math error", ce)
 
     def _add_cad_essentials(self, dxf_gen):
         min_x, min_y, max_x, max_y = dxf_gen.bounds
@@ -172,7 +191,7 @@ class OSMController:
             df_csv.to_csv(csv_file, index=False)
             Logger.info(f"Metadata exported to {os.path.basename(csv_file)}")
         except Exception as e:
-            Logger.error(f"CSV Metadata Export failed: {e}")
+            Logger.exception("CSV Metadata Export failed", e)
 
     def _build_tags(self):
         tags = {}
@@ -186,11 +205,15 @@ class OSMController:
             # Only add street_lamp if not already fetching all highway types (True fetches everything)
             if tags.get('highway') is True:
                 pass  # All highway features (including street_lamp) are already included
-            elif isinstance(tags.get('highway'), list):
+            elif isinstance(tags.get('highway'), list):  # pragma: no cover
                 if 'street_lamp' not in tags['highway']:
                     tags['highway'].append('street_lamp')
             else:
                 tags['highway'] = ['street_lamp']
+        if self.aneel_prodist:
+            # 'power': True is OSM tag filter syntax: fetch all OSM elements that have ANY power tag.
+            # This does not modify individual feature tags — each fetched element has its own tags.
+            tags['power'] = True  # Infraestrutura elétrica (ANEEL/PRODIST)
         return tags
 
     def _send_geojson_preview(self, gdf, analysis_gdf=None):
@@ -225,4 +248,4 @@ class OSMController:
             payload['audit_summary'] = self.audit_summary
             Logger.geojson(payload)
         except Exception as e:
-            Logger.error(f"GeoJSON Sync Error: {str(e)}")
+            Logger.exception("GeoJSON Sync Error", e)

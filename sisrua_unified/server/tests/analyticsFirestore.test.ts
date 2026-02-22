@@ -152,3 +152,53 @@ describe('AnalyticsService — persistência Firestore', () => {
         });
     });
 });
+
+// ─── Testes com USE_FIRESTORE=true ────────────────────────────────────────────
+
+describe('AnalyticsService — branches com USE_FIRESTORE=true', () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+        process.env = { ...originalEnv, USE_FIRESTORE: 'true' };
+        jest.resetModules();
+        mockSafeWrite.mockResolvedValue(undefined);
+    });
+
+    afterEach(() => {
+        process.env = originalEnv;
+        jest.resetModules();
+        jest.clearAllMocks();
+    });
+
+    it('record() deve disparar persistToFirestore quando USE_FIRESTORE=true', async () => {
+        const { AnalyticsService } = await import('../services/analyticsService');
+        const svc = new AnalyticsService();
+        const event = makeEvent();
+
+        svc.record(event);
+
+        // Flush microtask queue — dynamic import + promise chain resolves within this tick
+        await new Promise(resolve => setImmediate(resolve));
+
+        expect(mockSafeWrite).toHaveBeenCalledTimes(1);
+        expect(mockSafeWrite).toHaveBeenCalledWith(
+            'analytics_events',
+            expect.any(String),
+            event
+        );
+    });
+
+    it('initAnalyticsFromFirestore() deve chamar initFromFirestore quando USE_FIRESTORE=true', async () => {
+        const mockGet = jest.fn().mockResolvedValue({ docs: [] });
+        const mockLimit = jest.fn().mockReturnValue({ get: mockGet });
+        const mockOrderBy = jest.fn().mockReturnValue({ limit: mockLimit });
+        const mockWhere = jest.fn().mockReturnValue({ orderBy: mockOrderBy });
+        const mockCollection = jest.fn().mockReturnValue({ where: mockWhere });
+        mockGetDb.mockReturnValue({ collection: mockCollection });
+
+        const { initAnalyticsFromFirestore } = await import('../services/analyticsService');
+        await expect(initAnalyticsFromFirestore()).resolves.not.toThrow();
+
+        expect(mockCollection).toHaveBeenCalledWith('analytics_events');
+    });
+});

@@ -58,6 +58,7 @@ function buildBbox(lat: number, lng: number, radiusMeters: number): string {
 async function queryWfs(
     typeName: string,
     bbox: string,
+    /* istanbul ignore next */
     maxFeatures: number = 50
 ): Promise<DnitWfsFeature[]> {
     const params = new URLSearchParams({

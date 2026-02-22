@@ -4,7 +4,7 @@ import geopandas as gpd
 try:
     from utils.logger import Logger
     from constants import MAX_FETCH_RADIUS_METERS
-except (ImportError, ValueError):
+except (ImportError, ValueError):  # pragma: no cover
     from .utils.logger import Logger
     from .constants import MAX_FETCH_RADIUS_METERS
 

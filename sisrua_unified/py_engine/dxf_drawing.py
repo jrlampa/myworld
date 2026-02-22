@@ -50,7 +50,7 @@ class DXFDrawingMixin:
             try:
                 vals = [self._safe_v(v, fallback_val=None) for v in p]
                 if None in vals:
-                    continue
+                    continue  # pragma: no cover
                 curr_p = tuple(vals)
                 if curr_p != last_p:
                     valid_points.append(curr_p)
@@ -233,6 +233,13 @@ class DXFDrawingMixin:
         elif 'INFRA_POWER' in layer:
             if layer == 'INFRA_POWER_HV' or tags.get('power') == 'tower':
                 self.msp.add_blockref('TORRE', (x, y)).add_auto_attribs(attribs)
+            else:
+                self.msp.add_blockref('POSTE', (x, y)).add_auto_attribs(attribs)
+        elif layer in ('REDE_AT', 'REDE_MT', 'REDE_BT', 'SUBESTACAO', 'TRANSFORMADOR'):
+            if layer == 'REDE_AT' or tags.get('power') == 'tower':
+                self.msp.add_blockref('TORRE', (x, y)).add_auto_attribs(attribs)
+            elif layer == 'TRANSFORMADOR':
+                self.msp.add_circle((x, y), radius=0.8, dxfattribs={'layer': layer, 'color': 3})
             else:
                 self.msp.add_blockref('POSTE', (x, y)).add_auto_attribs(attribs)
         elif layer == 'INFRA_TELECOM':

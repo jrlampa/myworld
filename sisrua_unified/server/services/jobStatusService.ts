@@ -49,10 +49,9 @@ export function stopCleanupInterval() {
     }
 }
 
-// Start cleanup interval on module load
-startCleanupInterval();
-
 export function createJob(id: string): JobInfo {
+    startCleanupInterval();
+
     const job: JobInfo = {
         id,
         status: 'queued',

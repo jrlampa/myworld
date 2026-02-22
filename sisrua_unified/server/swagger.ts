@@ -56,6 +56,7 @@ const specs = swaggerJsdoc({
                         revisao: { type: 'string', maxLength: 3, description: 'Letra de revisão (ABNT NBR 10582)', example: 'A' },
                         verificado_por: { type: 'string', maxLength: 60, description: 'Verificado por (ABNT NBR 10582)', example: 'Eng. Maria Souza' },
                         aprovado_por: { type: 'string', maxLength: 60, description: 'Aprovado por (ABNT NBR 10582)', example: 'Arq. Carlos Lima' },
+                        aneel_prodist: { type: 'boolean', default: false, description: 'Aplicar normas ANEEL/PRODIST para infraestrutura elétrica (substitui ABNT para camadas AT/MT/BT)' },
                     }
                 },
                 DxfQueuedResponse: {

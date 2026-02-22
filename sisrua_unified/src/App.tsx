@@ -55,7 +55,8 @@ function App() {
         furniture: true,
         labels: true,
         dimensions: false,
-        grid: false
+        grid: false,
+        power: false
       },
       projectMetadata: {
         projectName: 'PROJETO OSM-01',
@@ -64,7 +65,8 @@ function App() {
         date: new Date().toLocaleDateString('pt-BR'),
         scale: 'N/A',
         revision: 'R00'
-      }
+      },
+      aneelProdist: false
     }
   });
 
@@ -100,7 +102,8 @@ function App() {
 
   const { downloadDxf, isDownloading, jobId, jobStatus, jobProgress } = useDxfExport({
     onSuccess: (message) => showToast(message, 'success'),
-    onError: (message) => showToast(message, 'error')
+    onError: (message) => showToast(message, 'error'),
+    aneelProdist: settings.aneelProdist
   });
 
   const { importKml } = useKmlImport({
@@ -121,7 +124,20 @@ function App() {
 
   const { profileData: elevationProfileData, loadProfile: loadElevationProfile, clearProfile } = useElevationProfile();
 
-  const updateSettings = (newSettings: AppSettings) => setAppState({ ...appState, settings: newSettings }, true);
+  const updateSettings = (newSettings: AppSettings) => {
+    if (newSettings.aneelProdist && !settings.aneelProdist) {
+      showToast(
+        '⚡ Normas ANEEL/PRODIST aplicadas. Padrão ABNT ignorado para infraestrutura elétrica conforme regulação da concessionária.',
+        'info'
+      );
+    } else if (!newSettings.aneelProdist && settings.aneelProdist) {
+      showToast(
+        '📐 Normas ABNT restauradas. Padrão ANEEL/PRODIST desativado para infraestrutura elétrica.',
+        'info'
+      );
+    }
+    setAppState({ ...appState, settings: newSettings }, true);
+  };
   const handleMapClick = (newCenter: GeoLocation) => { setAppState({ ...appState, center: newCenter }, true); clearData(); };
   const handleSelectionModeChange = (mode: SelectionMode) => setAppState({ ...appState, selectionMode: mode, polygon: [], measurePath: [] }, true);
 
