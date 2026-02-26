@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --enterprise-blue: #1e3a8a;
+  --enterprise-blue-light: #3b82f6;
+  --enterprise-accent: #06b6d4;
+  --bg-gradient-start: #f0f2f5;
+  --bg-gradient-end: #e6e9ef;
+}
+
+.dark {
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --bg-gradient-start: #020617;
+  --bg-gradient-end: #0f172a;
+}
+
+@layer base {
+  body {
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    background-attachment: fixed;
+    @apply transition-colors duration-500;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+  }
+  
+  .glass-hover {
+    @apply transition-all duration-300;
+  }
+  
+  .glass-hover:hover {
+    background: rgba(255, 255, 255, 0.1);
+    @apply -translate-y-0.5 shadow-xl;
+  }
+}
